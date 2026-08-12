@@ -48,34 +48,33 @@ export function OnboardingScreen({
       <StatusBar style="light" />
       <NebulaBackground />
 
-      <Animated.View
-        style={[
-          styles.content,
-          {
+      <View style={styles.content}>
+        <Animated.View
+          style={{
             opacity,
             transform: [{ translateY }],
-          },
-        ]}
-      >
-        <View style={styles.copy}>
-          <Text style={styles.title}>
-            Smarter Trading,{'\n'}Bigger Opportunities
-          </Text>
-          <Text style={styles.subtitle}>
-            Join EZTRADE and grow your assets with AI-driven strategies and real
-            market opportunities.
-          </Text>
-        </View>
+          }}
+        >
+          <View style={styles.copy}>
+            <Text style={styles.title}>
+              Smarter Trading,{'\n'}Bigger Opportunities
+            </Text>
+            <Text style={styles.subtitle}>
+              Join EZTRADE and grow your assets with AI-driven strategies and
+              real market opportunities.
+            </Text>
+          </View>
 
-        <HeroIllustration />
+          <HeroIllustration />
 
-        <PaginationDots total={4} activeIndex={0} />
+          <PaginationDots total={4} activeIndex={0} />
+        </Animated.View>
 
         <View style={styles.actions}>
           <PrimaryButton label="Get Started" onPress={onGetStarted} />
           <GhostButton label="Login" onPress={onLogin} />
         </View>
-      </Animated.View>
+      </View>
     </View>
   );
 }
@@ -87,6 +86,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    zIndex: 1,
     paddingHorizontal: 28,
     paddingTop: 64,
     paddingBottom: 36,

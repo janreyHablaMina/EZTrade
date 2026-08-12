@@ -72,7 +72,7 @@ export function NebulaBackground() {
   });
 
   return (
-    <View style={StyleSheet.absoluteFill}>
+    <View style={[StyleSheet.absoluteFill, styles.noPointer]}>
       <LinearGradient
         colors={[colors.bgDeep, colors.bg, '#120628', colors.bg]}
         locations={[0, 0.35, 0.7, 1]}

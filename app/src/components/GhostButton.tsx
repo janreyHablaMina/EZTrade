@@ -10,10 +10,17 @@ type GhostButtonProps = PressableProps & {
   label: string;
 };
 
-export function GhostButton({ label, style, ...props }: GhostButtonProps) {
+export function GhostButton({
+  label,
+  style,
+  onPress,
+  ...props
+}: GhostButtonProps) {
   return (
     <Pressable
       {...props}
+      onPress={onPress}
+      accessibilityRole="button"
       style={({ pressed }) => [
         styles.button,
         pressed && styles.pressed,

@@ -11,10 +11,17 @@ type PrimaryButtonProps = PressableProps & {
   label: string;
 };
 
-export function PrimaryButton({ label, style, ...props }: PrimaryButtonProps) {
+export function PrimaryButton({
+  label,
+  style,
+  onPress,
+  ...props
+}: PrimaryButtonProps) {
   return (
     <Pressable
       {...props}
+      onPress={onPress}
+      accessibilityRole="button"
       style={({ pressed }) => [
         styles.pressable,
         pressed && styles.pressed,
@@ -26,6 +33,7 @@ export function PrimaryButton({ label, style, ...props }: PrimaryButtonProps) {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
+        pointerEvents="none"
       >
         <Text style={styles.label}>{label}</Text>
       </LinearGradient>

@@ -7,11 +7,13 @@ import {
 } from '@expo-google-fonts/outfit';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
+import { HomeScreen } from './src/screens/HomeScreen';
+import { LoginScreen } from './src/screens/LoginScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { colors } from './src/theme/colors';
 
-type Screen = 'splash' | 'onboarding';
+type Screen = 'splash' | 'onboarding' | 'login' | 'home';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -40,14 +42,29 @@ export default function App() {
     return <SplashScreen fontsReady />;
   }
 
+  if (screen === 'login') {
+    return (
+      <LoginScreen
+        onLogin={() => setScreen('home')}
+        onGoogleLogin={() => setScreen('home')}
+        onForgotPassword={() => {
+          // Frontend only for now
+        }}
+        onRegister={() => {
+          // Frontend only for now
+        }}
+      />
+    );
+  }
+
+  if (screen === 'home') {
+    return <HomeScreen />;
+  }
+
   return (
     <OnboardingScreen
-      onGetStarted={() => {
-        // Frontend only for now
-      }}
-      onLogin={() => {
-        // Frontend only for now
-      }}
+      onGetStarted={() => setScreen('login')}
+      onLogin={() => setScreen('login')}
     />
   );
 }
