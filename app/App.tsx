@@ -1,5 +1,53 @@
+import {
+  Outfit_400Regular,
+  Outfit_500Medium,
+  Outfit_700Bold,
+  Outfit_800ExtraBold,
+  useFonts,
+} from '@expo-google-fonts/outfit';
+import { useEffect, useState } from 'react';
+import { View } from 'react-native';
+import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { SplashScreen } from './src/screens/SplashScreen';
+import { colors } from './src/theme/colors';
+
+type Screen = 'splash' | 'onboarding';
 
 export default function App() {
-  return <SplashScreen />;
+  const [fontsLoaded] = useFonts({
+    Outfit_400Regular,
+    Outfit_500Medium,
+    Outfit_700Bold,
+    Outfit_800ExtraBold,
+  });
+  const [screen, setScreen] = useState<Screen>('splash');
+
+  useEffect(() => {
+    if (!fontsLoaded) return;
+
+    const timer = setTimeout(() => {
+      setScreen('onboarding');
+    }, 2600);
+
+    return () => clearTimeout(timer);
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+  }
+
+  if (screen === 'splash') {
+    return <SplashScreen fontsReady />;
+  }
+
+  return (
+    <OnboardingScreen
+      onGetStarted={() => {
+        // Frontend only for now
+      }}
+      onLogin={() => {
+        // Frontend only for now
+      }}
+    />
+  );
 }

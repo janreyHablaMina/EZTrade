@@ -1,14 +1,8 @@
-import {
-  Outfit_400Regular,
-  Outfit_500Medium,
-  Outfit_700Bold,
-  Outfit_800ExtraBold,
-  useFonts,
-} from '@expo-google-fonts/outfit';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef } from 'react';
 import {
   Animated,
+  Platform,
   StyleSheet,
   Text,
   View,
@@ -18,54 +12,49 @@ import { CandlestickChart } from '../components/CandlestickChart';
 import { NebulaBackground } from '../components/NebulaBackground';
 import { colors } from '../theme/colors';
 
-export function SplashScreen() {
-  const [fontsLoaded] = useFonts({
-    Outfit_400Regular,
-    Outfit_500Medium,
-    Outfit_700Bold,
-    Outfit_800ExtraBold,
-  });
+const useNativeDriver = Platform.OS !== 'web';
 
+type SplashScreenProps = {
+  fontsReady?: boolean;
+};
+
+export function SplashScreen({ fontsReady = true }: SplashScreenProps) {
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const logoScale = useRef(new Animated.Value(0.86)).current;
   const textOpacity = useRef(new Animated.Value(0)).current;
   const textTranslate = useRef(new Animated.Value(16)).current;
 
   useEffect(() => {
-    if (!fontsLoaded) return;
+    if (!fontsReady) return;
 
     Animated.sequence([
       Animated.parallel([
         Animated.timing(logoOpacity, {
           toValue: 1,
           duration: 700,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
         Animated.spring(logoScale, {
           toValue: 1,
           friction: 7,
           tension: 60,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
       ]),
       Animated.parallel([
         Animated.timing(textOpacity, {
           toValue: 1,
           duration: 550,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
         Animated.timing(textTranslate, {
           toValue: 0,
           duration: 550,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
       ]),
     ]).start();
-  }, [fontsLoaded, logoOpacity, logoScale, textOpacity, textTranslate]);
-
-  if (!fontsLoaded) {
-    return <View style={styles.root} />;
-  }
+  }, [fontsReady, logoOpacity, logoScale, textOpacity, textTranslate]);
 
   return (
     <View style={styles.root}>

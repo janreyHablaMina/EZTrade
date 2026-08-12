@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Dimensions, StyleSheet, View } from 'react-native';
+import { Animated, Dimensions, Platform, StyleSheet, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Line, Rect, Stop } from 'react-native-svg';
 import { colors } from '../theme/colors';
+
+const useNativeDriver = Platform.OS !== 'web';
 
 const { width } = Dimensions.get('window');
 
@@ -39,7 +41,7 @@ export function CandlestickChart() {
       toValue: 1,
       duration: 800,
       delay: 350,
-      useNativeDriver: true,
+      useNativeDriver,
     }).start();
 
     Animated.stagger(
@@ -48,7 +50,7 @@ export function CandlestickChart() {
         Animated.timing(anim, {
           toValue: 1,
           duration: 420,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
       ),
     ).start();
@@ -70,7 +72,6 @@ export function CandlestickChart() {
           ],
         },
       ]}
-      pointerEvents="none"
     >
       <View style={styles.glow} />
       <View style={styles.chart}>
@@ -153,6 +154,7 @@ const styles = StyleSheet.create({
     height: CHART_HEIGHT + 36,
     alignItems: 'flex-end',
     justifyContent: 'flex-end',
+    pointerEvents: 'none',
   },
   glow: {
     position: 'absolute',

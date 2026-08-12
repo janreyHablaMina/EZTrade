@@ -1,9 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo, useRef } from 'react';
-import { Animated, Dimensions, StyleSheet, View } from 'react-native';
+import { Animated, Dimensions, Platform, StyleSheet, View } from 'react-native';
 import { colors } from '../theme/colors';
 
 const { width, height } = Dimensions.get('window');
+const useNativeDriver = Platform.OS !== 'web';
 
 function StarField() {
   const stars = useMemo(
@@ -19,7 +20,7 @@ function StarField() {
   );
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <View style={[StyleSheet.absoluteFill, styles.noPointer]}>
       {stars.map((star) => (
         <View
           key={star.key}
@@ -48,12 +49,12 @@ export function NebulaBackground() {
         Animated.timing(pulse, {
           toValue: 1,
           duration: 4200,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
         Animated.timing(pulse, {
           toValue: 0,
           duration: 4200,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
       ]),
     );
@@ -105,6 +106,9 @@ export function NebulaBackground() {
 }
 
 const styles = StyleSheet.create({
+  noPointer: {
+    pointerEvents: 'none',
+  },
   orb: {
     position: 'absolute',
     borderRadius: 9999,
