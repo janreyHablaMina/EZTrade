@@ -17,6 +17,7 @@ import {
 import { NebulaBackground } from '../components/NebulaBackground';
 import { colors } from '../theme/colors';
 import { AssetsScreen } from './AssetsScreen';
+import { ProfileScreen } from './ProfileScreen';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const ASSETS_CARD_WIDTH = SCREEN_WIDTH - 40; // content horizontal padding
@@ -77,6 +78,7 @@ const MARKET_ITEMS = [
 type HomeScreenProps = {
   userName?: string;
   onOpenPlans?: () => void;
+  onLogout?: () => void;
 };
 
 function greetingForNow() {
@@ -172,6 +174,7 @@ function CoinBadge({ symbol, color }: { symbol: string; color: string }) {
 export function HomeScreen({
   userName = 'John Doe',
   onOpenPlans,
+  onLogout,
 }: HomeScreenProps) {
   const [tab, setTab] = useState<TabKey>('home');
   const greeting = useMemo(() => greetingForNow(), []);
@@ -196,6 +199,16 @@ export function HomeScreen({
 
       {tab === 'assets' ? (
         <AssetsScreen onBack={() => setTab('home')} />
+      ) : tab === 'profile' ? (
+        <ProfileScreen
+          userName={userName}
+          onBack={() => setTab('home')}
+          onLogout={onLogout}
+          onOpenMenu={(key) => {
+            if (key === 'assets') setTab('assets');
+            if (key === 'plans') onOpenPlans?.();
+          }}
+        />
       ) : (
         <ScrollView
           contentContainerStyle={styles.content}

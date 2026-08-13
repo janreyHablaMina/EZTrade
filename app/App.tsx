@@ -70,7 +70,12 @@ export default function App() {
   }
 
   if (screen === 'home') {
-    return <HomeScreen onOpenPlans={() => setScreen('plans')} />;
+    return (
+      <HomeScreen
+        onOpenPlans={() => setScreen('plans')}
+        onLogout={() => setScreen('login')}
+      />
+    );
   }
 
   return (
