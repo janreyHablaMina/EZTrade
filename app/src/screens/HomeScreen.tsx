@@ -18,6 +18,7 @@ import { NebulaBackground } from '../components/NebulaBackground';
 import { colors } from '../theme/colors';
 import { AssetsScreen } from './AssetsScreen';
 import { ProfileScreen } from './ProfileScreen';
+import { TradeScreen } from './TradeScreen';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const ASSETS_CARD_WIDTH = SCREEN_WIDTH - 40; // content horizontal padding
@@ -209,6 +210,8 @@ export function HomeScreen({
             if (key === 'plans') onOpenPlans?.();
           }}
         />
+      ) : tab === 'trade' ? (
+        <TradeScreen onBack={() => setTab('home')} />
       ) : (
         <ScrollView
           contentContainerStyle={styles.content}
