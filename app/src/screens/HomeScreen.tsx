@@ -75,6 +75,7 @@ const MARKET_ITEMS = [
 
 type HomeScreenProps = {
   userName?: string;
+  onOpenPlans?: () => void;
 };
 
 function greetingForNow() {
@@ -167,7 +168,10 @@ function CoinBadge({ symbol, color }: { symbol: string; color: string }) {
   );
 }
 
-export function HomeScreen({ userName = 'John Doe' }: HomeScreenProps) {
+export function HomeScreen({
+  userName = 'John Doe',
+  onOpenPlans,
+}: HomeScreenProps) {
   const [tab, setTab] = useState<TabKey>('home');
   const greeting = useMemo(() => greetingForNow(), []);
   const initials = userName
@@ -207,14 +211,16 @@ export function HomeScreen({ userName = 'John Doe' }: HomeScreenProps) {
             </View>
           </View>
 
-          <LinearGradient
-            colors={['#9b5cff', '#6d28d9']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.vipBadge}
-          >
-            <Text style={styles.vipText}>VIP 1</Text>
-          </LinearGradient>
+          <Pressable onPress={onOpenPlans}>
+            <LinearGradient
+              colors={['#9b5cff', '#6d28d9']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.vipBadge}
+            >
+              <Text style={styles.vipText}>VIP 1</Text>
+            </LinearGradient>
+          </Pressable>
         </View>
 
         <LinearGradient
@@ -282,17 +288,19 @@ export function HomeScreen({ userName = 'John Doe' }: HomeScreenProps) {
           ))}
         </View>
 
-        <LinearGradient
-          colors={['#6366f1', '#7c3aed', '#9333ea']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.promo}
-        >
-          <Text style={styles.promoTitle}>Earn Daily with VIP Plan</Text>
-          <Text style={styles.promoSubtitle}>
-            Start trading now and grow your assets.
-          </Text>
-        </LinearGradient>
+        <Pressable onPress={onOpenPlans}>
+          <LinearGradient
+            colors={['#6366f1', '#7c3aed', '#9333ea']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.promo}
+          >
+            <Text style={styles.promoTitle}>Earn Daily with VIP Plan</Text>
+            <Text style={styles.promoSubtitle}>
+              Start trading now and grow your assets.
+            </Text>
+          </LinearGradient>
+        </Pressable>
 
         <Text style={styles.sectionTitle}>Market Overview</Text>
         <View style={styles.marketGrid}>
@@ -316,7 +324,16 @@ export function HomeScreen({ userName = 'John Doe' }: HomeScreenProps) {
         </View>
       </ScrollView>
 
-      <BottomTabBar active={tab} onChange={setTab} />
+      <BottomTabBar
+        active={tab}
+        onChange={(next) => {
+          if (next === 'plans') {
+            onOpenPlans?.();
+            return;
+          }
+          setTab(next);
+        }}
+      />
     </View>
   );
 }
