@@ -16,6 +16,7 @@ import {
 } from '../components/BottomTabBar';
 import { NebulaBackground } from '../components/NebulaBackground';
 import { colors } from '../theme/colors';
+import { AssetsScreen } from './AssetsScreen';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const ASSETS_CARD_WIDTH = SCREEN_WIDTH - 40; // content horizontal padding
@@ -193,136 +194,146 @@ export function HomeScreen({
       <StatusBar style="light" />
       <NebulaBackground />
 
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <View style={styles.userRow}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{initials}</Text>
+      {tab === 'assets' ? (
+        <AssetsScreen onBack={() => setTab('home')} />
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <View style={styles.userRow}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{initials}</Text>
+              </View>
+              <View>
+                <Text style={styles.greeting}>{greeting}</Text>
+                <Text style={styles.userName}>
+                  {userName}{' '}
+                  <Text style={styles.wave}>👋</Text>
+                </Text>
+              </View>
             </View>
-            <View>
-              <Text style={styles.greeting}>{greeting}</Text>
-              <Text style={styles.userName}>
-                {userName}{' '}
-                <Text style={styles.wave}>👋</Text>
-              </Text>
+
+            <Pressable onPress={onOpenPlans}>
+              <LinearGradient
+                colors={['#9b5cff', '#6d28d9']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.vipBadge}
+              >
+                <Text style={styles.vipText}>VIP 1</Text>
+              </LinearGradient>
+            </Pressable>
+          </View>
+
+          <LinearGradient
+            colors={['#8b5cf6', '#6d28d9', '#4c1d95']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.assetsCard}
+          >
+            <View style={styles.barChartWrap} pointerEvents="none">
+              <Svg
+                width={ASSETS_CARD_WIDTH}
+                height={BAR_CHART_HEIGHT}
+                viewBox={`0 0 ${ASSETS_CARD_WIDTH} ${BAR_CHART_HEIGHT}`}
+              >
+                {BG_BAR_HEIGHTS.map((barHeight, index) => {
+                  const gap = 6;
+                  const barWidth =
+                    (ASSETS_CARD_WIDTH - gap * (BG_BAR_HEIGHTS.length + 1)) /
+                    BG_BAR_HEIGHTS.length;
+                  const x = gap + index * (barWidth + gap);
+                  const y = BAR_CHART_HEIGHT - barHeight;
+                  const opacity = 0.08 + (index / BG_BAR_HEIGHTS.length) * 0.12;
+
+                  return (
+                    <Rect
+                      key={index}
+                      x={x}
+                      y={y}
+                      width={barWidth}
+                      height={barHeight}
+                      rx={6}
+                      fill={`rgba(255,255,255,${opacity.toFixed(2)})`}
+                    />
+                  );
+                })}
+              </Svg>
             </View>
+
+            <Text style={styles.assetsLabel}>Total Assets</Text>
+            <Text style={styles.assetsValue}>$12.50</Text>
+            <Text style={styles.assetsChange}>+20.00% today</Text>
+          </LinearGradient>
+
+          <View style={styles.statsRow}>
+            {[
+              { label: 'Daily Profit', value: '$2.50' },
+              { label: 'Total Profit', value: '$2.50' },
+              { label: 'Active Plan', value: 'VIP 1' },
+            ].map((stat) => (
+              <View key={stat.label} style={styles.statCard}>
+                <Text style={styles.statLabel}>{stat.label}</Text>
+                <Text style={styles.statValue}>{stat.value}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.actionsRow}>
+            {actions.map((action) => (
+              <Pressable
+                key={action.key}
+                style={styles.actionItem}
+                onPress={() => {
+                  if (action.key === 'assets') setTab('assets');
+                }}
+              >
+                <View style={styles.actionIcon}>
+                  <ActionIcon type={action.key} />
+                </View>
+                <Text style={styles.actionLabel}>{action.label}</Text>
+              </Pressable>
+            ))}
           </View>
 
           <Pressable onPress={onOpenPlans}>
             <LinearGradient
-              colors={['#9b5cff', '#6d28d9']}
+              colors={['#6366f1', '#7c3aed', '#9333ea']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.vipBadge}
+              style={styles.promo}
             >
-              <Text style={styles.vipText}>VIP 1</Text>
+              <Text style={styles.promoTitle}>Earn Daily with VIP Plan</Text>
+              <Text style={styles.promoSubtitle}>
+                Start trading now and grow your assets.
+              </Text>
             </LinearGradient>
           </Pressable>
-        </View>
 
-        <LinearGradient
-          colors={['#8b5cf6', '#6d28d9', '#4c1d95']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.assetsCard}
-        >
-          <View style={styles.barChartWrap} pointerEvents="none">
-            <Svg
-              width={ASSETS_CARD_WIDTH}
-              height={BAR_CHART_HEIGHT}
-              viewBox={`0 0 ${ASSETS_CARD_WIDTH} ${BAR_CHART_HEIGHT}`}
-            >
-              {BG_BAR_HEIGHTS.map((barHeight, index) => {
-                const gap = 6;
-                const barWidth =
-                  (ASSETS_CARD_WIDTH - gap * (BG_BAR_HEIGHTS.length + 1)) /
-                  BG_BAR_HEIGHTS.length;
-                const x = gap + index * (barWidth + gap);
-                const y = BAR_CHART_HEIGHT - barHeight;
-                const opacity = 0.08 + (index / BG_BAR_HEIGHTS.length) * 0.12;
-
-                return (
-                  <Rect
-                    key={index}
-                    x={x}
-                    y={y}
-                    width={barWidth}
-                    height={barHeight}
-                    rx={6}
-                    fill={`rgba(255,255,255,${opacity.toFixed(2)})`}
-                  />
-                );
-              })}
-            </Svg>
+          <Text style={styles.sectionTitle}>Market Overview</Text>
+          <View style={styles.marketGrid}>
+            {MARKET_ITEMS.map((item) => (
+              <View key={item.symbol} style={styles.marketCard}>
+                <View style={styles.marketTop}>
+                  <CoinBadge symbol={item.badge} color={item.color} />
+                  <Text style={styles.marketSymbol}>{item.symbol}</Text>
+                  <Text
+                    style={[
+                      styles.marketChange,
+                      !item.up && styles.marketChangeDown,
+                    ]}
+                  >
+                    {item.change}
+                  </Text>
+                </View>
+                <Text style={styles.marketPrice}>{item.price}</Text>
+              </View>
+            ))}
           </View>
-
-          <Text style={styles.assetsLabel}>Total Assets</Text>
-          <Text style={styles.assetsValue}>$12.50</Text>
-          <Text style={styles.assetsChange}>+20.00% today</Text>
-        </LinearGradient>
-
-        <View style={styles.statsRow}>
-          {[
-            { label: 'Daily Profit', value: '$2.50' },
-            { label: 'Total Profit', value: '$2.50' },
-            { label: 'Active Plan', value: 'VIP 1' },
-          ].map((stat) => (
-            <View key={stat.label} style={styles.statCard}>
-              <Text style={styles.statLabel}>{stat.label}</Text>
-              <Text style={styles.statValue}>{stat.value}</Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.actionsRow}>
-          {actions.map((action) => (
-            <Pressable key={action.key} style={styles.actionItem}>
-              <View style={styles.actionIcon}>
-                <ActionIcon type={action.key} />
-              </View>
-              <Text style={styles.actionLabel}>{action.label}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <Pressable onPress={onOpenPlans}>
-          <LinearGradient
-            colors={['#6366f1', '#7c3aed', '#9333ea']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.promo}
-          >
-            <Text style={styles.promoTitle}>Earn Daily with VIP Plan</Text>
-            <Text style={styles.promoSubtitle}>
-              Start trading now and grow your assets.
-            </Text>
-          </LinearGradient>
-        </Pressable>
-
-        <Text style={styles.sectionTitle}>Market Overview</Text>
-        <View style={styles.marketGrid}>
-          {MARKET_ITEMS.map((item) => (
-            <View key={item.symbol} style={styles.marketCard}>
-              <View style={styles.marketTop}>
-                <CoinBadge symbol={item.badge} color={item.color} />
-                <Text style={styles.marketSymbol}>{item.symbol}</Text>
-                <Text
-                  style={[
-                    styles.marketChange,
-                    !item.up && styles.marketChangeDown,
-                  ]}
-                >
-                  {item.change}
-                </Text>
-              </View>
-              <Text style={styles.marketPrice}>{item.price}</Text>
-            </View>
-          ))}
-        </View>
-      </ScrollView>
+        </ScrollView>
+      )}
 
       <BottomTabBar
         active={tab}
