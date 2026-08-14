@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../theme/colors';
 import { BackIcon } from './icons/BackIcon';
@@ -6,12 +7,14 @@ type ScreenHeaderProps = {
   title: string;
   onBack?: () => void;
   padded?: boolean;
+  right?: ReactNode;
 };
 
 export function ScreenHeader({
   title,
   onBack,
   padded = true,
+  right,
 }: ScreenHeaderProps) {
   return (
     <View style={[styles.header, padded && styles.padded]}>
@@ -19,7 +22,7 @@ export function ScreenHeader({
         <BackIcon />
       </Pressable>
       <Text style={styles.title}>{title}</Text>
-      <View style={styles.spacer} />
+      {right ? <View style={styles.right}>{right}</View> : <View style={styles.spacer} />}
     </View>
   );
 }
@@ -50,5 +53,11 @@ const styles = StyleSheet.create({
   },
   spacer: {
     width: 40,
+  },
+  right: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

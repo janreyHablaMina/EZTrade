@@ -177,8 +177,8 @@ export function TradeScreen({ onBack }: TradeScreenProps) {
 
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
-          <Text style={styles.statLabel}>Streak</Text>
-          <Text style={styles.statValue}>{claimed ? '4 days' : '3 days'}</Text>
+          <Text style={styles.statLabel}>Days Left</Text>
+          <Text style={styles.statValue}>{claimed ? '59 days' : '60 days'}</Text>
         </View>
         <View style={styles.statCard}>
           <Text style={styles.statLabel}>Today</Text>

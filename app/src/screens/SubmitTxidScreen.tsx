@@ -10,7 +10,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import Svg, { Path, Rect } from 'react-native-svg';
+import { CheckIcon } from '../components/icons/CheckIcon';
+import { NoteRow } from '../components/NoteRow';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
@@ -40,21 +42,6 @@ function HashIcon() {
         stroke="rgba(255,255,255,0.95)"
         strokeWidth={1.6}
         strokeLinecap="round"
-      />
-    </Svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <Svg width={28} height={28} viewBox="0 0 24 24" fill="none">
-      <Circle cx="12" cy="12" r="10" fill="rgba(34,197,94,0.2)" />
-      <Path
-        d="M7.5 12.5l3 3 6-6.5"
-        stroke="#86efac"
-        strokeWidth={2.2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
       />
     </Svg>
   );
@@ -112,7 +99,11 @@ export function SubmitTxidScreen({
               end={{ x: 0.9, y: 1 }}
               style={styles.iconCircle}
             >
-              {submitted ? <CheckIcon /> : <HashIcon />}
+              {submitted ? (
+                <CheckIcon size={28} color="#86efac" />
+              ) : (
+                <HashIcon />
+              )}
             </LinearGradient>
           </View>
 
@@ -174,14 +165,11 @@ export function SubmitTxidScreen({
             </>
           )}
 
-          <View style={styles.noteRow}>
-            <View style={styles.noteDot} />
-            <Text style={styles.noteText}>
-              {submitted
-                ? 'Keep this screen or return home — we’ll update your plan automatically.'
-                : `This should match the ${amount} USDT you sent for ${planName}.`}
-            </Text>
-          </View>
+          <NoteRow>
+            {submitted
+              ? 'Keep this screen or return home — we’ll update your plan automatically.'
+              : `This should match the ${amount} USDT you sent for ${planName}.`}
+          </NoteRow>
         </View>
       </ScrollView>
 
@@ -331,25 +319,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(221, 214, 254, 0.95)',
     lineHeight: 18,
-  },
-  noteRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-  },
-  noteDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.purpleBright,
-    marginTop: 6,
-  },
-  noteText: {
-    flex: 1,
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.62)',
-    lineHeight: 20,
   },
   footer: {
     paddingHorizontal: 20,

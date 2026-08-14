@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -9,37 +9,76 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { ChevronDown } from '../components/icons/ChevronDown';
+import { AmountField } from '../components/AmountField';
+import { ReceiptIcon } from '../components/icons/ReceiptIcon';
+import { NetworkPicker } from '../components/NetworkPicker';
+import { NoteRow } from '../components/NoteRow';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
+import {
+  ENFORCE_WITHDRAW_WINDOW,
+  MIN_USDT,
+  WITHDRAW_FEE_RATE,
+  WITHDRAW_PROCESS_FROM_HOUR,
+  WITHDRAW_REQUEST_UNTIL_HOUR,
+  type NetworkId,
+  getNetwork,
+  hourClockLabel,
+  isWithdrawOpen,
+  parseAmount,
+  withdrawPayout,
+} from '../lib/wallet';
 import { colors } from '../theme/colors';
 
-const NETWORKS = ['TRC20 (USDT)', 'ERC20 (USDT)', 'BEP20 (USDT)'] as const;
 const AVAILABLE = 12.5;
-const MIN_AMOUNT = 10;
-const FEE = 1;
+
+type WithdrawRequest = {
+  amount: number;
+  network: string;
+};
 
 type WithdrawScreenProps = {
   onBack?: () => void;
+  onViewStatus?: () => void;
+  request?: WithdrawRequest | null;
+  onRequested?: (request: WithdrawRequest) => void;
 };
 
-export function WithdrawScreen({ onBack }: WithdrawScreenProps) {
+export function WithdrawScreen({
+  onBack,
+  onViewStatus,
+  request = null,
+  onRequested,
+}: WithdrawScreenProps) {
   const [amount, setAmount] = useState('');
   const [address, setAddress] = useState('');
-  const [network, setNetwork] = useState<(typeof NETWORKS)[number]>(
-    'TRC20 (USDT)',
-  );
+  const [networkId, setNetworkId] = useState<NetworkId>('trc20');
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [open, setOpen] = useState(isWithdrawOpen);
+  const submitted = Boolean(request);
 
-  const parsed = Number(amount);
+  useEffect(() => {
+    const tick = () => setOpen(isWithdrawOpen());
+    tick();
+    const id = setInterval(tick, 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const entered = parseAmount(amount);
+  const parsed = request?.amount ?? entered;
+  const hasAmount = Number.isFinite(parsed) && parsed > 0;
+  const { fee: handlingFee, receive } = hasAmount
+    ? withdrawPayout(parsed)
+    : { fee: 0, receive: 0 };
+  const displayNetwork = request?.network ?? getNetwork(networkId).label;
   const validAmount =
-    Number.isFinite(parsed) && parsed >= MIN_AMOUNT && parsed <= AVAILABLE;
-  const canSubmit = validAmount && address.trim().length >= 20;
+    Number.isFinite(entered) && entered >= MIN_USDT && entered <= AVAILABLE;
+  const amountError = amount.trim().length > 0 && !validAmount;
+  const canSubmit = open && validAmount && address.trim().length > 0;
 
   const handleWithdraw = () => {
     if (!canSubmit) return;
-    setSubmitted(true);
+    onRequested?.({ amount: entered, network: getNetwork(networkId).label });
   };
 
   return (
@@ -47,7 +86,22 @@ export function WithdrawScreen({ onBack }: WithdrawScreenProps) {
       style={styles.root}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScreenHeader title="Withdraw" onBack={onBack} />
+      <ScreenHeader
+        title="Withdraw"
+        onBack={onBack}
+        right={
+          <Pressable
+            onPress={onViewStatus}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="View withdraw status"
+            style={styles.receiptBtn}
+          >
+            <ReceiptIcon />
+            {submitted ? <View style={styles.receiptDot} /> : null}
+          </Pressable>
+        }
+      />
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -58,16 +112,15 @@ export function WithdrawScreen({ onBack }: WithdrawScreenProps) {
           <View style={styles.card}>
             <Text style={styles.successTitle}>Withdraw requested</Text>
             <Text style={styles.intro}>
-              {parsed.toFixed(2)} USDT will be sent to your {network} wallet
-              after review.
+              You will receive {receive.toFixed(2)} USDT on {displayNetwork}{' '}
+              after the {WITHDRAW_FEE_RATE * 100}% handling fee. We process
+              withdrawals from {hourClockLabel(WITHDRAW_PROCESS_FROM_HOUR)} to
+              12:00 AM.
             </Text>
-            <View style={styles.noteRow}>
-              <View style={styles.noteDot} />
-              <Text style={styles.noteText}>
-                This usually takes a few minutes. You can track it in
-                Transactions.
-              </Text>
-            </View>
+            <NoteRow>
+              Status is Pending until we process it. Use View status to check
+              it, then come back here.
+            </NoteRow>
           </View>
         ) : (
           <>
@@ -76,61 +129,71 @@ export function WithdrawScreen({ onBack }: WithdrawScreenProps) {
               <Text style={styles.balanceValue}>{AVAILABLE.toFixed(2)} USDT</Text>
             </View>
 
-            <View style={styles.card}>
-              <View style={styles.fieldHead}>
-                <Text style={styles.fieldLabel}>Amount</Text>
-                <Pressable onPress={() => setAmount(String(AVAILABLE))}>
-                  <Text style={styles.maxText}>Max</Text>
-                </Pressable>
+            <View style={[styles.scheduleCard, open ? styles.scheduleOpen : styles.scheduleClosed]}>
+              <View style={[styles.scheduleDot, open ? styles.dotOpen : styles.dotClosed]} />
+              <View style={styles.scheduleCopy}>
+                <Text style={styles.scheduleTitle}>
+                  {ENFORCE_WITHDRAW_WINDOW
+                    ? open
+                      ? 'Withdrawals are open'
+                      : 'Withdrawals are closed'
+                    : 'Withdrawals are open'}
+                </Text>
+                <Text style={styles.scheduleText}>
+                  Later: request 12:00 AM –{' '}
+                  {hourClockLabel(WITHDRAW_REQUEST_UNTIL_HOUR)}. We process from{' '}
+                  {hourClockLabel(WITHDRAW_PROCESS_FROM_HOUR)} – 12:00 AM.
+                </Text>
               </View>
-              <View style={styles.field}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="0.00"
-                  placeholderTextColor="rgba(255,255,255,0.32)"
-                  keyboardType="decimal-pad"
-                  value={amount}
-                  onChangeText={setAmount}
-                />
-                <Text style={styles.suffix}>USDT</Text>
-              </View>
+            </View>
 
-              <View style={styles.networkWrap}>
-                <Text style={styles.fieldLabel}>Network</Text>
-                <Pressable
-                  style={styles.field}
-                  onPress={() => setPickerOpen((open) => !open)}
-                >
-                  <Text style={styles.fieldValue}>{network}</Text>
-                  <ChevronDown open={pickerOpen} />
-                </Pressable>
-                {pickerOpen ? (
-                  <View style={styles.picker}>
-                    {NETWORKS.map((item) => (
-                      <Pressable
-                        key={item}
-                        style={[
-                          styles.pickerItem,
-                          item === network && styles.pickerItemActive,
-                        ]}
-                        onPress={() => {
-                          setNetwork(item);
-                          setPickerOpen(false);
-                        }}
-                      >
-                        <Text
-                          style={[
-                            styles.pickerText,
-                            item === network && styles.pickerTextActive,
-                          ]}
-                        >
-                          {item}
-                        </Text>
-                      </Pressable>
-                    ))}
+            <View style={[styles.card, !open && styles.cardDisabled]}>
+              <AmountField
+                value={amount}
+                onChangeText={setAmount}
+                editable={open}
+                onMax={() => setAmount(String(AVAILABLE))}
+                error={
+                  amountError
+                    ? entered > AVAILABLE
+                      ? 'Not enough available balance.'
+                      : `Minimum withdraw is ${MIN_USDT} USDT.`
+                    : null
+                }
+              />
+
+              {hasAmount && !submitted ? (
+                <View style={styles.summary}>
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>Amount</Text>
+                    <Text style={styles.summaryValue}>
+                      {parsed.toFixed(2)} USDT
+                    </Text>
                   </View>
-                ) : null}
-              </View>
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>
+                      Handling fee ({WITHDRAW_FEE_RATE * 100}%)
+                    </Text>
+                    <Text style={styles.summaryFee}>
+                      -{handlingFee.toFixed(2)} USDT
+                    </Text>
+                  </View>
+                  <View style={[styles.summaryRow, styles.summaryTotalRow]}>
+                    <Text style={styles.summaryTotalLabel}>You receive</Text>
+                    <Text style={styles.summaryTotal}>
+                      {receive.toFixed(2)} USDT
+                    </Text>
+                  </View>
+                </View>
+              ) : null}
+
+              <NetworkPicker
+                value={networkId}
+                open={pickerOpen}
+                disabled={!open}
+                onOpenChange={setPickerOpen}
+                onChange={setNetworkId}
+              />
 
               <Text style={styles.fieldLabel}>Wallet address</Text>
               <View style={styles.field}>
@@ -140,17 +203,23 @@ export function WithdrawScreen({ onBack }: WithdrawScreenProps) {
                   placeholderTextColor="rgba(255,255,255,0.32)"
                   autoCapitalize="none"
                   autoCorrect={false}
+                  editable={open}
                   value={address}
                   onChangeText={setAddress}
                 />
               </View>
 
-              <View style={styles.noteRow}>
-                <View style={styles.noteDot} />
-                <Text style={styles.noteText}>
-                  Minimum {MIN_AMOUNT} USDT. Network fee is {FEE} USDT.
+              <NoteRow>
+                Minimum {MIN_USDT} USDT. A {WITHDRAW_FEE_RATE * 100}% handling
+                fee is deducted from the amount you withdraw.
+              </NoteRow>
+              {!open ? (
+                <Text style={styles.closedHint}>
+                  Come back between 12:00 AM and{' '}
+                  {hourClockLabel(WITHDRAW_REQUEST_UNTIL_HOUR)} to submit a
+                  request.
                 </Text>
-              </View>
+              ) : null}
             </View>
           </>
         )}
@@ -158,10 +227,15 @@ export function WithdrawScreen({ onBack }: WithdrawScreenProps) {
 
       <View style={styles.footer}>
         {submitted ? (
-          <PrimaryButton label="Back to Home" onPress={onBack} />
+          <>
+            <PrimaryButton label="View status" onPress={onViewStatus} />
+            <Pressable onPress={onBack} style={styles.secondaryBtn}>
+              <Text style={styles.secondaryText}>Back to Home</Text>
+            </Pressable>
+          </>
         ) : (
           <PrimaryButton
-            label="Withdraw"
+            label={open ? 'Withdraw' : 'Opens at 12:00 AM'}
             onPress={handleWithdraw}
             disabled={!canSubmit}
           />
@@ -174,6 +248,21 @@ export function WithdrawScreen({ onBack }: WithdrawScreenProps) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  receiptBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  receiptDot: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#fbbf24',
   },
   content: {
     paddingHorizontal: 20,
@@ -199,6 +288,60 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: colors.white,
   },
+  scheduleCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  scheduleOpen: {
+    backgroundColor: 'rgba(34, 197, 94, 0.12)',
+    borderColor: 'rgba(134, 239, 172, 0.28)',
+  },
+  scheduleClosed: {
+    backgroundColor: 'rgba(250, 204, 21, 0.1)',
+    borderColor: 'rgba(250, 204, 21, 0.28)',
+  },
+  scheduleDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 5,
+  },
+  dotOpen: {
+    backgroundColor: colors.green,
+  },
+  dotClosed: {
+    backgroundColor: '#facc15',
+  },
+  scheduleCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  scheduleTitle: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 14,
+    color: colors.white,
+  },
+  scheduleText: {
+    fontFamily: 'Outfit_400Regular',
+    fontSize: 12,
+    lineHeight: 18,
+    color: 'rgba(255,255,255,0.62)',
+  },
+  cardDisabled: {
+    opacity: 0.55,
+  },
+  closedHint: {
+    marginTop: 12,
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 13,
+    color: '#fde68a',
+    lineHeight: 19,
+  },
   card: {
     backgroundColor: colors.cardFill,
     borderWidth: 1,
@@ -221,23 +364,58 @@ const styles = StyleSheet.create({
     color: colors.white,
     marginBottom: 8,
   },
-  fieldHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
   fieldLabel: {
     fontFamily: 'Outfit_400Regular',
     fontSize: 12,
     color: 'rgba(255,255,255,0.45)',
     marginBottom: 8,
   },
-  maxText: {
+  summary: {
+    marginTop: -4,
+    marginBottom: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(167, 139, 250, 0.22)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  summaryLabel: {
+    fontFamily: 'Outfit_400Regular',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.5)',
+  },
+  summaryValue: {
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 13,
+    color: colors.white,
+  },
+  summaryFee: {
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 13,
+    color: '#f87171',
+  },
+  summaryTotalRow: {
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  summaryTotalLabel: {
     fontFamily: 'Outfit_700Bold',
     fontSize: 13,
-    color: colors.purpleBright,
-    marginBottom: 8,
+    color: colors.white,
+  },
+  summaryTotal: {
+    fontFamily: 'Outfit_800ExtraBold',
+    fontSize: 15,
+    color: '#4ade80',
   },
   field: {
     minHeight: 52,
@@ -257,74 +435,20 @@ const styles = StyleSheet.create({
     color: colors.white,
     paddingVertical: 12,
   },
-  suffix: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.5)',
-    marginLeft: 8,
-  },
-  fieldValue: {
-    flex: 1,
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 15,
-    color: colors.white,
-  },
-  networkWrap: {
-    position: 'relative',
-    zIndex: 30,
-  },
-  picker: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 74,
-    zIndex: 40,
-    elevation: 16,
-    borderRadius: 14,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: '#161325',
-  },
-  pickerItem: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-  },
-  pickerItemActive: {
-    backgroundColor: 'rgba(124, 58, 237, 0.2)',
-  },
-  pickerText: {
-    fontFamily: 'Outfit_500Medium',
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
-  },
-  pickerTextActive: {
-    color: colors.white,
-    fontFamily: 'Outfit_700Bold',
-  },
-  noteRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-  },
-  noteDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.purpleBright,
-    marginTop: 6,
-  },
-  noteText: {
-    flex: 1,
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.62)',
-    lineHeight: 20,
-  },
   footer: {
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 24,
+    gap: 10,
+  },
+  secondaryBtn: {
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryText: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 15,
+    color: colors.purpleBright,
   },
 });

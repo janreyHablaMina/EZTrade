@@ -1,34 +1,28 @@
 import { useMemo, useState } from 'react';
 import {
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import Svg, { Path, Rect } from 'react-native-svg';
-import { ChevronDown } from '../components/icons/ChevronDown';
+import Svg, { Rect } from 'react-native-svg';
+import { AmountField } from '../components/AmountField';
+import { CopyIcon } from '../components/icons/CopyIcon';
+import { NetworkPicker } from '../components/NetworkPicker';
+import { NoteRow } from '../components/NoteRow';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { copyToClipboard } from '../lib/clipboard';
+import {
+  MIN_USDT,
+  type NetworkId,
+  getNetwork,
+  parseAmount,
+} from '../lib/wallet';
 import { colors } from '../theme/colors';
-
-const NETWORKS = [
-  {
-    id: 'trc20',
-    label: 'TRC20 (USDT)',
-    address: 'TUQeWfakqG2x9XbktH7nR4pL2mC8dY6aW1',
-  },
-  {
-    id: 'erc20',
-    label: 'ERC20 (USDT)',
-    address: '0x8f3a21c9e4b7d0a1c6e5f92b4d8a7c3e1f0b9d62',
-  },
-  {
-    id: 'bep20',
-    label: 'BEP20 (USDT)',
-    address: '0x4c1d95e7a2b8f0d6c3e9a1b7f5d2c8e4a0b6d193',
-  },
-] as const;
 
 const STEPS = [
   'Send payment to the address',
@@ -40,28 +34,8 @@ type DepositScreenProps = {
   amount?: string;
   planName?: string;
   onBack?: () => void;
-  onSentPayment?: (networkLabel: string) => void;
+  onSentPayment?: (networkLabel: string, amount: string) => void;
 };
-
-function CopyIcon() {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M9 9h10v12H9z"
-        stroke={colors.purpleBright}
-        strokeWidth={1.8}
-        strokeLinejoin="round"
-      />
-      <Path
-        d="M5 15H4V3h10v1"
-        stroke={colors.purpleBright}
-        strokeWidth={1.8}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
 
 function hashSeed(value: string) {
   let hash = 2166136261;
@@ -131,84 +105,61 @@ function shortenAddress(address: string) {
 }
 
 export function DepositScreen({
-  amount = '10.00',
+  amount: initialAmount = '',
   planName = 'VIP 1',
   onBack,
   onSentPayment,
 }: DepositScreenProps) {
-  const [networkId, setNetworkId] = useState<(typeof NETWORKS)[number]['id']>(
-    'trc20',
-  );
+  const [networkId, setNetworkId] = useState<NetworkId>('trc20');
   const [pickerOpen, setPickerOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [amount, setAmount] = useState(initialAmount);
 
-  const network = NETWORKS.find((item) => item.id === networkId) ?? NETWORKS[0];
+  const network = getNetwork(networkId);
+  const parsed = parseAmount(amount);
+  const hasAmount = amount.trim().length > 0;
+  const validAmount = Number.isFinite(parsed) && parsed >= MIN_USDT;
+  const amountError = hasAmount && !validAmount;
+  const displayAmount = validAmount ? parsed.toFixed(2) : null;
 
   const copyAddress = async () => {
-    try {
-      const maybeClipboard = (
-        globalThis as { navigator?: { clipboard?: { writeText?: (v: string) => Promise<void> } } }
-      ).navigator?.clipboard;
-      await maybeClipboard?.writeText?.(network.address);
-    } catch {
-      // Frontend-only copy feedback
-    }
+    await copyToClipboard(network.address);
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
   };
 
   return (
-    <View style={styles.root}>
+    <KeyboardAvoidingView
+      style={styles.root}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <ScreenHeader title="Deposit" onBack={onBack} />
 
       <ScrollView
         contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.card}>
           <Text style={styles.intro}>Send USDT to the address below</Text>
 
-          <View style={styles.networkWrap}>
-            <Text style={styles.fieldLabel}>Network</Text>
-            <Pressable
-              style={styles.field}
-              onPress={() => setPickerOpen((open) => !open)}
-            >
-              <Text style={styles.fieldValue}>{network.label}</Text>
-              <ChevronDown open={pickerOpen} />
-            </Pressable>
+          <AmountField
+            value={amount}
+            onChangeText={setAmount}
+            error={
+              amountError ? `Minimum deposit is ${MIN_USDT} USDT.` : null
+            }
+          />
 
-            {pickerOpen ? (
-              <View style={styles.picker}>
-                {NETWORKS.map((item) => {
-                  const active = item.id === networkId;
-                  return (
-                    <Pressable
-                      key={item.id}
-                      style={[
-                        styles.pickerItem,
-                        active && styles.pickerItemActive,
-                      ]}
-                      onPress={() => {
-                        setNetworkId(item.id);
-                        setPickerOpen(false);
-                        setCopied(false);
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.pickerText,
-                          active && styles.pickerTextActive,
-                        ]}
-                      >
-                        {item.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            ) : null}
-          </View>
+          <NetworkPicker
+            value={networkId}
+            open={pickerOpen}
+            onOpenChange={setPickerOpen}
+            onChange={(id) => {
+              setNetworkId(id);
+              setCopied(false);
+            }}
+          />
 
           <Text style={styles.fieldLabel}>Receiving Address</Text>
           <View style={styles.field}>
@@ -223,13 +174,14 @@ export function DepositScreen({
 
           <AddressQr value={network.address} />
 
-          <View style={styles.noteRow}>
-            <View style={styles.noteDot} />
-            <Text style={styles.noteText}>
-              Send exactly <Text style={styles.noteStrong}>{amount} USDT</Text>{' '}
-              to activate {planName} plan
-            </Text>
-          </View>
+          <NoteRow>
+            Minimum {MIN_USDT} USDT. Send exactly{' '}
+            <Text style={styles.noteStrong}>
+              {displayAmount ?? `${MIN_USDT}.00`} USDT
+            </Text>{' '}
+            to this address
+            {planName ? ` to activate ${planName}` : ''}.
+          </NoteRow>
         </View>
 
         <View style={styles.steps}>
@@ -247,10 +199,14 @@ export function DepositScreen({
       <View style={styles.footer}>
         <PrimaryButton
           label="I Have Sent Payment"
-          onPress={() => onSentPayment?.(network.label)}
+          onPress={() => {
+            if (!validAmount) return;
+            onSentPayment?.(network.label, displayAmount ?? parsed.toFixed(2));
+          }}
+          disabled={!validAmount}
         />
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -296,11 +252,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 14,
   },
-  fieldValue: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 15,
-    color: colors.white,
-  },
   addressText: {
     flex: 1,
     marginRight: 10,
@@ -323,40 +274,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.green,
   },
-  networkWrap: {
-    position: 'relative',
-    zIndex: 30,
-  },
-  picker: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 74,
-    zIndex: 40,
-    elevation: 16,
-    borderRadius: 14,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: '#161325',
-  },
-  pickerItem: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-  },
-  pickerItemActive: {
-    backgroundColor: 'rgba(124, 58, 237, 0.2)',
-  },
-  pickerText: {
-    fontFamily: 'Outfit_500Medium',
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
-  },
-  pickerTextActive: {
-    color: colors.white,
-    fontFamily: 'Outfit_700Bold',
-  },
   qrFrame: {
     alignSelf: 'center',
     marginTop: 6,
@@ -364,25 +281,6 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 16,
     backgroundColor: colors.white,
-  },
-  noteRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-  },
-  noteDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.purpleBright,
-    marginTop: 6,
-  },
-  noteText: {
-    flex: 1,
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.62)',
-    lineHeight: 20,
   },
   noteStrong: {
     fontFamily: 'Outfit_700Bold',

@@ -32,12 +32,15 @@ type Overlay =
   | 'transactions'
   | 'team';
 
+type WithdrawRequest = {
+  amount: number;
+  network: string;
+};
+
 const OVERLAY_SCREENS = {
-  withdraw: WithdrawScreen,
   security: SecurityScreen,
   support: SupportScreen,
   about: AboutScreen,
-  transactions: TransactionsScreen,
   team: TeamScreen,
 } as const;
 
@@ -53,28 +56,49 @@ export function MainApp({
   const [tab, setTab] = useState<TabKey>('home');
   const [walletStep, setWalletStep] = useState<WalletStep | null>(null);
   const [depositNetwork, setDepositNetwork] = useState('TRC20 (USDT)');
+  const [depositAmount, setDepositAmount] = useState('');
   const [overlay, setOverlay] = useState<Overlay | null>(null);
+  const [overlayReturn, setOverlayReturn] = useState<Overlay | null>(null);
+  const [withdrawRequest, setWithdrawRequest] =
+    useState<WithdrawRequest | null>(null);
 
-  const closeOverlay = () => setOverlay(null);
+  const closeOverlay = () => {
+    if (overlayReturn) {
+      setOverlay(overlayReturn);
+      setOverlayReturn(null);
+      return;
+    }
+    setOverlay(null);
+  };
+
+  const openTransactions = (from?: Overlay) => {
+    setOverlayReturn(from ?? null);
+    setOverlay('transactions');
+  };
   const hideTabs = Boolean(walletStep) || overlay !== null;
 
   let screen = (
     <HomeScreen
       userName={userName}
       onOpenPlans={() => setTab('plans')}
-      onOpenDeposit={() => setWalletStep('deposit')}
+      onOpenDeposit={() => {
+        setDepositAmount('');
+        setWalletStep('deposit');
+      }}
       onOpenWithdraw={() => setOverlay('withdraw')}
       onOpenAssets={() => setTab('assets')}
-      onOpenTransactions={() => setOverlay('transactions')}
+      onOpenTransactions={() => openTransactions()}
     />
   );
 
   if (walletStep === 'deposit') {
     screen = (
       <DepositScreen
+        amount={depositAmount}
         onBack={() => setWalletStep(null)}
-        onSentPayment={(networkLabel) => {
+        onSentPayment={(networkLabel, amount) => {
           setDepositNetwork(networkLabel);
+          setDepositAmount(amount);
           setWalletStep('txid');
         }}
       />
@@ -82,6 +106,7 @@ export function MainApp({
   } else if (walletStep === 'txid') {
     screen = (
       <SubmitTxidScreen
+        amount={depositAmount}
         networkLabel={depositNetwork}
         onBack={() => setWalletStep(null)}
         onSubmit={() => setWalletStep('verifying')}
@@ -97,10 +122,28 @@ export function MainApp({
   } else if (walletStep === 'success') {
     screen = (
       <DepositSuccessScreen
+        amount={depositAmount}
         onGoDashboard={() => {
           setWalletStep(null);
           setTab('home');
         }}
+      />
+    );
+  } else if (overlay === 'withdraw') {
+    screen = (
+      <WithdrawScreen
+        onBack={() => setOverlay(null)}
+        request={withdrawRequest}
+        onRequested={setWithdrawRequest}
+        onViewStatus={() => openTransactions('withdraw')}
+      />
+    );
+  } else if (overlay === 'transactions') {
+    screen = (
+      <TransactionsScreen
+        onBack={closeOverlay}
+        initialFilter={overlayReturn === 'withdraw' ? 'Withdraw' : 'All'}
+        pendingWithdraw={withdrawRequest}
       />
     );
   } else if (overlay) {
@@ -117,7 +160,7 @@ export function MainApp({
         onOpenMenu={(key) => {
           if (key === 'assets') setTab('assets');
           if (key === 'plans') setTab('plans');
-          if (key === 'transactions') setOverlay('transactions');
+          if (key === 'transactions') openTransactions();
           if (key === 'security') setOverlay('security');
           if (key === 'support') setOverlay('support');
           if (key === 'about') setOverlay('about');

@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { FilterChips } from '../components/FilterChips';
+import { CopyIcon } from '../components/icons/CopyIcon';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { copyToClipboard } from '../lib/clipboard';
 import { colors } from '../theme/colors';
 
 const REFERRAL_CODE = 'EZTRADE12';
@@ -78,39 +80,6 @@ function formatUsdt(value: number) {
   return value.toFixed(2);
 }
 
-function CopyIcon() {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M9 9h10v12H9z"
-        stroke={colors.purpleBright}
-        strokeWidth={1.8}
-        strokeLinejoin="round"
-      />
-      <Path
-        d="M5 15H4V3h10v1"
-        stroke={colors.purpleBright}
-        strokeWidth={1.8}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-async function copyText(value: string) {
-  try {
-    const maybeClipboard = (
-      globalThis as {
-        navigator?: { clipboard?: { writeText?: (v: string) => Promise<void> } };
-      }
-    ).navigator?.clipboard;
-    await maybeClipboard?.writeText?.(value);
-  } catch {
-    // Frontend-only copy feedback
-  }
-}
-
 export function TeamScreen({ onBack }: TeamScreenProps) {
   const [copied, setCopied] = useState<'code' | 'link' | null>(null);
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('All');
@@ -130,7 +99,7 @@ export function TeamScreen({ onBack }: TeamScreenProps) {
   });
 
   const handleCopy = async (kind: 'code' | 'link', value: string) => {
-    await copyText(value);
+    await copyToClipboard(value);
     setCopied(kind);
     setTimeout(() => setCopied(null), 1800);
   };
@@ -209,22 +178,7 @@ export function TeamScreen({ onBack }: TeamScreenProps) {
         </View>
 
         <Text style={styles.sectionTitle}>Invited members</Text>
-        <View style={styles.filters}>
-          {FILTERS.map((item) => {
-            const active = item === filter;
-            return (
-              <Pressable
-                key={item}
-                style={[styles.chip, active && styles.chipActive]}
-                onPress={() => setFilter(item)}
-              >
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                  {item}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <FilterChips items={FILTERS} value={filter} onChange={setFilter} wrap />
 
         <View style={styles.list}>
           {visible.map((member) => {
@@ -385,33 +339,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.white,
     marginTop: 2,
-  },
-  filters: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: -4,
-  },
-  chip: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(167, 139, 250, 0.28)',
-    backgroundColor: 'rgba(255,255,255,0.04)',
-  },
-  chipActive: {
-    backgroundColor: 'rgba(124, 58, 237, 0.35)',
-    borderColor: colors.purpleBright,
-  },
-  chipText: {
-    fontFamily: 'Outfit_500Medium',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.65)',
-  },
-  chipTextActive: {
-    color: colors.white,
-    fontFamily: 'Outfit_700Bold',
   },
   list: {
     gap: 8,

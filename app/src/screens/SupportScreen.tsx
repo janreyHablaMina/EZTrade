@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,8 +9,10 @@ import {
   View,
 } from 'react-native';
 import { AccordionRow } from '../components/AccordionRow';
+import { FilterChips } from '../components/FilterChips';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { MIN_USDT, WITHDRAW_FEE_RATE } from '../lib/wallet';
 import { colors } from '../theme/colors';
 
 const FAQS = [
@@ -21,13 +22,13 @@ const FAQS = [
   },
   {
     q: 'What is the minimum withdraw?',
-    a: 'The minimum withdraw is 10 USDT. A 1 USDT network fee is deducted from the amount you send.',
+    a: `The minimum withdraw is ${MIN_USDT} USDT. A ${WITHDRAW_FEE_RATE * 100}% handling fee is deducted from the amount you withdraw.`,
   },
   {
     q: 'When can I claim Daily Quantify?',
     a: 'You can claim once per day. The next claim unlocks 24 hours after your last successful claim.',
   },
-] as const;
+];
 
 const TOPICS = ['Deposit', 'Withdraw', 'VIP Plan', 'Other'] as const;
 
@@ -76,20 +77,12 @@ export function SupportScreen({ onBack }: SupportScreenProps) {
         <View style={styles.card}>
           <Text style={styles.sectionLabel}>Topic</Text>
           <View style={styles.chips}>
-            {TOPICS.map((item) => {
-              const active = item === topic;
-              return (
-                <Pressable
-                  key={item}
-                  style={[styles.chip, active && styles.chipActive]}
-                  onPress={() => setTopic(item)}
-                >
-                  <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                    {item}
-                  </Text>
-                </Pressable>
-              );
-            })}
+            <FilterChips
+              items={TOPICS}
+              value={topic}
+              onChange={setTopic}
+              wrap
+            />
           </View>
 
           <Text style={styles.sectionLabel}>Message</Text>
@@ -197,27 +190,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
     marginBottom: 16,
-  },
-  chip: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(167, 139, 250, 0.28)',
-    backgroundColor: 'rgba(255,255,255,0.04)',
-  },
-  chipActive: {
-    backgroundColor: 'rgba(124, 58, 237, 0.35)',
-    borderColor: colors.purpleBright,
-  },
-  chipText: {
-    fontFamily: 'Outfit_500Medium',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.65)',
-  },
-  chipTextActive: {
-    color: colors.white,
-    fontFamily: 'Outfit_700Bold',
   },
   messageBox: {
     minHeight: 120,

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { FilterChips } from '../components/FilterChips';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 
@@ -77,6 +78,11 @@ const TRANSACTIONS: Transaction[] = [
 
 type TransactionsScreenProps = {
   onBack?: () => void;
+  initialFilter?: Filter;
+  pendingWithdraw?: {
+    amount: number;
+    network: string;
+  } | null;
 };
 
 function TypeIcon({ type }: { type: TxType }) {
@@ -129,34 +135,39 @@ function TypeIcon({ type }: { type: TxType }) {
   );
 }
 
-export function TransactionsScreen({ onBack }: TransactionsScreenProps) {
-  const [filter, setFilter] = useState<Filter>('All');
+export function TransactionsScreen({
+  onBack,
+  initialFilter = 'All',
+  pendingWithdraw = null,
+}: TransactionsScreenProps) {
+  const [filter, setFilter] = useState<Filter>(initialFilter);
 
   const items = useMemo(() => {
-    if (filter === 'All') return TRANSACTIONS;
+    const live: Transaction[] = pendingWithdraw
+      ? [
+          {
+            id: 'live-withdraw',
+            type: 'withdraw',
+            title: 'USDT Withdraw',
+            subtitle: `Today · ${pendingWithdraw.network.split(' ')[0]}`,
+            amount: `-${pendingWithdraw.amount.toFixed(2)} USDT`,
+            positive: false,
+            status: 'Pending',
+          },
+        ]
+      : [];
+    const all = [...live, ...TRANSACTIONS];
+    if (filter === 'All') return all;
     const type = filter.toLowerCase() as TxType;
-    return TRANSACTIONS.filter((item) => item.type === type);
-  }, [filter]);
+    return all.filter((item) => item.type === type);
+  }, [filter, pendingWithdraw]);
 
   return (
     <View style={styles.root}>
       <ScreenHeader title="Transactions" onBack={onBack} />
 
       <View style={styles.filters}>
-        {FILTERS.map((item) => {
-          const active = item === filter;
-          return (
-            <Pressable
-              key={item}
-              onPress={() => setFilter(item)}
-              style={[styles.chip, active && styles.chipActive]}
-            >
-              <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                {item}
-              </Text>
-            </Pressable>
-          );
-        })}
+        <FilterChips items={FILTERS} value={filter} onChange={setFilter} />
       </View>
 
       <ScrollView
@@ -213,27 +224,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(167, 139, 250, 0.16)',
-  },
-  chipActive: {
-    backgroundColor: 'rgba(124, 58, 237, 0.55)',
-    borderColor: 'rgba(192, 132, 252, 0.45)',
-  },
-  chipText: {
-    fontFamily: 'Outfit_500Medium',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.5)',
-  },
-  chipTextActive: {
-    fontFamily: 'Outfit_700Bold',
-    color: colors.white,
   },
   list: {
     paddingHorizontal: 20,

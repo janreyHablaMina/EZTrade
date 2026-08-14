@@ -18,6 +18,7 @@ function SuccessMark() {
         <Circle cx="44" cy="44" r="40" fill="#22c55e" />
         <Path
           d="M26 45.5l12 12 24-26"
+          fill="none"
           stroke={colors.white}
           strokeWidth={6}
           strokeLinecap="round"

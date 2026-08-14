@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { colors } from '../../theme/colors';
-import { GoogleIcon } from '../GoogleIcon';
+import { GoogleIcon } from '../icons/GoogleIcon';
 
 type GoogleButtonProps = {
   onPress?: () => void;
