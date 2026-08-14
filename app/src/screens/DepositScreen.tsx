@@ -38,7 +38,7 @@ type DepositScreenProps = {
   amount?: string;
   planName?: string;
   onBack?: () => void;
-  onSentPayment?: () => void;
+  onSentPayment?: (networkLabel: string) => void;
 };
 
 function BackIcon() {
@@ -200,42 +200,49 @@ export function DepositScreen({
         <View style={styles.card}>
           <Text style={styles.intro}>Send USDT to the address below</Text>
 
-          <Text style={styles.fieldLabel}>Network</Text>
-          <Pressable
-            style={styles.field}
-            onPress={() => setPickerOpen((open) => !open)}
-          >
-            <Text style={styles.fieldValue}>{network.label}</Text>
-            <ChevronDown />
-          </Pressable>
+          <View style={styles.networkWrap}>
+            <Text style={styles.fieldLabel}>Network</Text>
+            <Pressable
+              style={styles.field}
+              onPress={() => setPickerOpen((open) => !open)}
+            >
+              <Text style={styles.fieldValue}>{network.label}</Text>
+              <View style={pickerOpen ? styles.chevronOpen : undefined}>
+                <ChevronDown />
+              </View>
+            </Pressable>
 
-          {pickerOpen ? (
-            <View style={styles.picker}>
-              {NETWORKS.map((item) => {
-                const active = item.id === networkId;
-                return (
-                  <Pressable
-                    key={item.id}
-                    style={[styles.pickerItem, active && styles.pickerItemActive]}
-                    onPress={() => {
-                      setNetworkId(item.id);
-                      setPickerOpen(false);
-                      setCopied(false);
-                    }}
-                  >
-                    <Text
+            {pickerOpen ? (
+              <View style={styles.picker}>
+                {NETWORKS.map((item) => {
+                  const active = item.id === networkId;
+                  return (
+                    <Pressable
+                      key={item.id}
                       style={[
-                        styles.pickerText,
-                        active && styles.pickerTextActive,
+                        styles.pickerItem,
+                        active && styles.pickerItemActive,
                       ]}
+                      onPress={() => {
+                        setNetworkId(item.id);
+                        setPickerOpen(false);
+                        setCopied(false);
+                      }}
                     >
-                      {item.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          ) : null}
+                      <Text
+                        style={[
+                          styles.pickerText,
+                          active && styles.pickerTextActive,
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : null}
+          </View>
 
           <Text style={styles.fieldLabel}>Receiving Address</Text>
           <View style={styles.field}>
@@ -272,7 +279,10 @@ export function DepositScreen({
       </ScrollView>
 
       <View style={styles.footer}>
-        <PrimaryButton label="I Have Sent Payment" onPress={onSentPayment} />
+        <PrimaryButton
+          label="I Have Sent Payment"
+          onPress={() => onSentPayment?.(network.label)}
+        />
       </View>
     </View>
   );
@@ -317,6 +327,8 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     borderRadius: 24,
     padding: 18,
+    overflow: 'visible',
+    zIndex: 2,
   },
   intro: {
     fontFamily: 'Outfit_400Regular',
@@ -369,13 +381,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.green,
   },
+  networkWrap: {
+    position: 'relative',
+    zIndex: 30,
+  },
+  chevronOpen: {
+    transform: [{ rotate: '180deg' }],
+  },
   picker: {
-    marginTop: -8,
-    marginBottom: 14,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 74,
+    zIndex: 40,
+    elevation: 16,
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.cardBorder,
+    backgroundColor: '#161325',
   },
   pickerItem: {
     paddingHorizontal: 14,

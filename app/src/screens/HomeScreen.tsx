@@ -19,6 +19,7 @@ import { colors } from '../theme/colors';
 import { AssetsScreen } from './AssetsScreen';
 import { DepositScreen } from './DepositScreen';
 import { ProfileScreen } from './ProfileScreen';
+import { SubmitTxidScreen } from './SubmitTxidScreen';
 import { TradeScreen } from './TradeScreen';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -179,7 +180,10 @@ export function HomeScreen({
   onLogout,
 }: HomeScreenProps) {
   const [tab, setTab] = useState<TabKey>('home');
-  const [showDeposit, setShowDeposit] = useState(false);
+  const [walletStep, setWalletStep] = useState<'deposit' | 'txid' | null>(
+    null,
+  );
+  const [depositNetwork, setDepositNetwork] = useState('TRC20 (USDT)');
   const greeting = useMemo(() => greetingForNow(), []);
   const initials = userName
     .split(' ')
@@ -200,10 +204,18 @@ export function HomeScreen({
       <StatusBar style="light" />
       <NebulaBackground />
 
-      {showDeposit ? (
+      {walletStep === 'deposit' ? (
         <DepositScreen
-          onBack={() => setShowDeposit(false)}
-          onSentPayment={() => setShowDeposit(false)}
+          onBack={() => setWalletStep(null)}
+          onSentPayment={(networkLabel) => {
+            setDepositNetwork(networkLabel);
+            setWalletStep('txid');
+          }}
+        />
+      ) : walletStep === 'txid' ? (
+        <SubmitTxidScreen
+          networkLabel={depositNetwork}
+          onBack={() => setWalletStep(null)}
         />
       ) : tab === 'assets' ? (
         <AssetsScreen onBack={() => setTab('home')} />
@@ -311,7 +323,7 @@ export function HomeScreen({
                 style={styles.actionItem}
                 onPress={() => {
                   if (action.key === 'assets') setTab('assets');
-                  if (action.key === 'deposit') setShowDeposit(true);
+                  if (action.key === 'deposit') setWalletStep('deposit');
                 }}
               >
                 <View style={styles.actionIcon}>
@@ -359,7 +371,7 @@ export function HomeScreen({
         </ScrollView>
       )}
 
-      {showDeposit ? null : (
+      {walletStep ? null : (
         <BottomTabBar
           active={tab}
           onChange={(next) => {
