@@ -6,6 +6,7 @@ import {
   type TabKey,
 } from './components/BottomTabBar';
 import { NebulaBackground } from './components/NebulaBackground';
+import { AboutScreen } from './screens/AboutScreen';
 import { AssetsScreen } from './screens/AssetsScreen';
 import { DepositScreen } from './screens/DepositScreen';
 import { DepositSuccessScreen } from './screens/DepositSuccessScreen';
@@ -40,13 +41,15 @@ export function MainApp({
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
   const [showSupport, setShowSupport] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
 
   const hideTabs =
     Boolean(walletStep) ||
     showTransactions ||
     showWithdraw ||
     showSecurity ||
-    showSupport;
+    showSupport ||
+    showAbout;
 
   let screen = (
     <HomeScreen
@@ -99,6 +102,8 @@ export function MainApp({
     screen = <SecurityScreen onBack={() => setShowSecurity(false)} />;
   } else if (showSupport) {
     screen = <SupportScreen onBack={() => setShowSupport(false)} />;
+  } else if (showAbout) {
+    screen = <AboutScreen onBack={() => setShowAbout(false)} />;
   } else if (showTransactions) {
     screen = (
       <TransactionsScreen onBack={() => setShowTransactions(false)} />
@@ -117,6 +122,7 @@ export function MainApp({
           if (key === 'transactions') setShowTransactions(true);
           if (key === 'security') setShowSecurity(true);
           if (key === 'support') setShowSupport(true);
+          if (key === 'about') setShowAbout(true);
         }}
       />
     );
