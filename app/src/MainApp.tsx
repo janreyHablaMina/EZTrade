@@ -16,6 +16,7 @@ import { TradeScreen } from './screens/TradeScreen';
 import { TransactionsScreen } from './screens/TransactionsScreen';
 import { VerifyingDepositScreen } from './screens/VerifyingDepositScreen';
 import { SecurityScreen } from './screens/SecurityScreen';
+import { SupportScreen } from './screens/SupportScreen';
 import { WithdrawScreen } from './screens/WithdrawScreen';
 import { colors } from './theme/colors';
 
@@ -38,9 +39,14 @@ export function MainApp({
   const [showTransactions, setShowTransactions] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
+  const [showSupport, setShowSupport] = useState(false);
 
   const hideTabs =
-    Boolean(walletStep) || showTransactions || showWithdraw || showSecurity;
+    Boolean(walletStep) ||
+    showTransactions ||
+    showWithdraw ||
+    showSecurity ||
+    showSupport;
 
   let screen = (
     <HomeScreen
@@ -91,6 +97,8 @@ export function MainApp({
     screen = <WithdrawScreen onBack={() => setShowWithdraw(false)} />;
   } else if (showSecurity) {
     screen = <SecurityScreen onBack={() => setShowSecurity(false)} />;
+  } else if (showSupport) {
+    screen = <SupportScreen onBack={() => setShowSupport(false)} />;
   } else if (showTransactions) {
     screen = (
       <TransactionsScreen onBack={() => setShowTransactions(false)} />
@@ -108,6 +116,7 @@ export function MainApp({
           if (key === 'plans') onOpenPlans?.();
           if (key === 'transactions') setShowTransactions(true);
           if (key === 'security') setShowSecurity(true);
+          if (key === 'support') setShowSupport(true);
         }}
       />
     );
