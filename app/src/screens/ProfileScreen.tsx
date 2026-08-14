@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 
 type MenuKey =
@@ -30,20 +31,6 @@ const MENU_ITEMS: { key: MenuKey; label: string }[] = [
   { key: 'support', label: 'Support' },
   { key: 'about', label: 'About' },
 ];
-
-function BackIcon() {
-  return (
-    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M15 6l-6 6 6 6"
-        stroke={colors.white}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
 
 function ChevronIcon() {
   return (
@@ -239,13 +226,7 @@ export function ProfileScreen({
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.header}>
-        <Pressable onPress={onBack} hitSlop={12} style={styles.backBtn}>
-          <BackIcon />
-        </Pressable>
-        <Text style={styles.title}>Profile</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <ScreenHeader title="Profile" onBack={onBack} padded={false} />
 
       <View style={styles.identity}>
         <AvatarPortrait />
@@ -297,26 +278,6 @@ const styles = StyleSheet.create({
     paddingTop: 58,
     paddingBottom: 28,
     gap: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 20,
-    color: colors.white,
-  },
-  headerSpacer: {
-    width: 40,
   },
   identity: {
     alignItems: 'center',

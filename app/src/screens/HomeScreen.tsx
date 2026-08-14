@@ -1,6 +1,5 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
-import { useMemo, useState } from 'react';
+﻿import { LinearGradient } from 'expo-linear-gradient';
+import { useMemo } from 'react';
 import {
   Dimensions,
   Pressable,
@@ -10,20 +9,7 @@ import {
   View,
 } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
-import {
-  BottomTabBar,
-  type TabKey,
-} from '../components/BottomTabBar';
-import { NebulaBackground } from '../components/NebulaBackground';
 import { colors } from '../theme/colors';
-import { AssetsScreen } from './AssetsScreen';
-import { DepositScreen } from './DepositScreen';
-import { DepositSuccessScreen } from './DepositSuccessScreen';
-import { ProfileScreen } from './ProfileScreen';
-import { SubmitTxidScreen } from './SubmitTxidScreen';
-import { TradeScreen } from './TradeScreen';
-import { TransactionsScreen } from './TransactionsScreen';
-import { VerifyingDepositScreen } from './VerifyingDepositScreen';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const ASSETS_CARD_WIDTH = SCREEN_WIDTH - 40; // content horizontal padding
@@ -33,7 +19,7 @@ const BG_BAR_HEIGHTS = [34, 48, 40, 62, 52, 74, 58, 80, 66, 88, 70, 92];
 const MARKET_ITEMS = [
   {
     symbol: 'BTC',
-    badge: '₿',
+    badge: 'â‚¿',
     color: '#f59e0b',
     change: '+2.45%',
     price: '$68,320.50',
@@ -41,7 +27,7 @@ const MARKET_ITEMS = [
   },
   {
     symbol: 'ETH',
-    badge: '◆',
+    badge: 'â—†',
     color: '#3b82f6',
     change: '+1.82%',
     price: '$3,450.10',
@@ -49,7 +35,7 @@ const MARKET_ITEMS = [
   },
   {
     symbol: 'USDT',
-    badge: '₮',
+    badge: 'â‚®',
     color: '#14b8a6',
     change: '+0.02%',
     price: '$1.00',
@@ -84,7 +70,9 @@ const MARKET_ITEMS = [
 type HomeScreenProps = {
   userName?: string;
   onOpenPlans?: () => void;
-  onLogout?: () => void;
+  onOpenDeposit?: () => void;
+  onOpenAssets?: () => void;
+  onOpenTransactions?: () => void;
 };
 
 function greetingForNow() {
@@ -180,14 +168,10 @@ function CoinBadge({ symbol, color }: { symbol: string; color: string }) {
 export function HomeScreen({
   userName = 'John Doe',
   onOpenPlans,
-  onLogout,
+  onOpenDeposit,
+  onOpenAssets,
+  onOpenTransactions,
 }: HomeScreenProps) {
-  const [tab, setTab] = useState<TabKey>('home');
-  const [walletStep, setWalletStep] = useState<
-    'deposit' | 'txid' | 'verifying' | 'success' | null
-  >(null);
-  const [depositNetwork, setDepositNetwork] = useState('TRC20 (USDT)');
-  const [showTransactions, setShowTransactions] = useState(false);
   const greeting = useMemo(() => greetingForNow(), []);
   const initials = userName
     .split(' ')
@@ -204,215 +188,147 @@ export function HomeScreen({
   ] as const;
 
   return (
-    <View style={styles.root}>
-      <StatusBar style="light" />
-      <NebulaBackground />
-
-      {walletStep === 'deposit' ? (
-        <DepositScreen
-          onBack={() => setWalletStep(null)}
-          onSentPayment={(networkLabel) => {
-            setDepositNetwork(networkLabel);
-            setWalletStep('txid');
-          }}
-        />
-      ) : walletStep === 'txid' ? (
-        <SubmitTxidScreen
-          networkLabel={depositNetwork}
-          onBack={() => setWalletStep(null)}
-          onSubmit={() => setWalletStep('verifying')}
-        />
-      ) : walletStep === 'verifying' ? (
-        <VerifyingDepositScreen
-          onBack={() => setWalletStep(null)}
-          onComplete={() => setWalletStep('success')}
-        />
-      ) : walletStep === 'success' ? (
-        <DepositSuccessScreen
-          onGoDashboard={() => {
-            setWalletStep(null);
-            setTab('home');
-          }}
-        />
-      ) : showTransactions ? (
-        <TransactionsScreen onBack={() => setShowTransactions(false)} />
-      ) : tab === 'assets' ? (
-        <AssetsScreen onBack={() => setTab('home')} />
-      ) : tab === 'profile' ? (
-        <ProfileScreen
-          userName={userName}
-          onBack={() => setTab('home')}
-          onLogout={onLogout}
-          onOpenMenu={(key) => {
-            if (key === 'assets') setTab('assets');
-            if (key === 'plans') onOpenPlans?.();
-            if (key === 'transactions') setShowTransactions(true);
-          }}
-        />
-      ) : tab === 'trade' ? (
-        <TradeScreen onBack={() => setTab('home')} />
-      ) : (
-        <ScrollView
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.header}>
-            <View style={styles.userRow}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{initials}</Text>
-              </View>
-              <View>
-                <Text style={styles.greeting}>{greeting}</Text>
-                <Text style={styles.userName}>
-                  {userName}{' '}
-                  <Text style={styles.wave}>👋</Text>
-                </Text>
-              </View>
-            </View>
-
-            <Pressable onPress={onOpenPlans}>
-              <LinearGradient
-                colors={['#9b5cff', '#6d28d9']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.vipBadge}
-              >
-                <Text style={styles.vipText}>VIP 1</Text>
-              </LinearGradient>
-            </Pressable>
+    <ScrollView
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.header}>
+        <View style={styles.userRow}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initials}</Text>
           </View>
+          <View>
+            <Text style={styles.greeting}>{greeting}</Text>
+            <Text style={styles.userName}>
+              {userName}{' '}
+              <Text style={styles.wave}>ðŸ‘‹</Text>
+            </Text>
+          </View>
+        </View>
 
+        <Pressable onPress={onOpenPlans}>
           <LinearGradient
-            colors={['#8b5cf6', '#6d28d9', '#4c1d95']}
+            colors={['#9b5cff', '#6d28d9']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.assetsCard}
+            style={styles.vipBadge}
           >
-            <View style={styles.barChartWrap} pointerEvents="none">
-              <Svg
-                width={ASSETS_CARD_WIDTH}
-                height={BAR_CHART_HEIGHT}
-                viewBox={`0 0 ${ASSETS_CARD_WIDTH} ${BAR_CHART_HEIGHT}`}
-              >
-                {BG_BAR_HEIGHTS.map((barHeight, index) => {
-                  const gap = 6;
-                  const barWidth =
-                    (ASSETS_CARD_WIDTH - gap * (BG_BAR_HEIGHTS.length + 1)) /
-                    BG_BAR_HEIGHTS.length;
-                  const x = gap + index * (barWidth + gap);
-                  const y = BAR_CHART_HEIGHT - barHeight;
-                  const opacity = 0.08 + (index / BG_BAR_HEIGHTS.length) * 0.12;
-
-                  return (
-                    <Rect
-                      key={index}
-                      x={x}
-                      y={y}
-                      width={barWidth}
-                      height={barHeight}
-                      rx={6}
-                      fill={`rgba(255,255,255,${opacity.toFixed(2)})`}
-                    />
-                  );
-                })}
-              </Svg>
-            </View>
-
-            <Text style={styles.assetsLabel}>Total Assets</Text>
-            <Text style={styles.assetsValue}>$12.50</Text>
-            <Text style={styles.assetsChange}>+20.00% today</Text>
+            <Text style={styles.vipText}>VIP 1</Text>
           </LinearGradient>
+        </Pressable>
+      </View>
 
-          <View style={styles.statsRow}>
-            {[
-              { label: 'Daily Profit', value: '$2.50' },
-              { label: 'Total Profit', value: '$2.50' },
-              { label: 'Active Plan', value: 'VIP 1' },
-            ].map((stat) => (
-              <View key={stat.label} style={styles.statCard}>
-                <Text style={styles.statLabel}>{stat.label}</Text>
-                <Text style={styles.statValue}>{stat.value}</Text>
-              </View>
-            ))}
+      <LinearGradient
+        colors={['#8b5cf6', '#6d28d9', '#4c1d95']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.assetsCard}
+      >
+        <View style={styles.barChartWrap} pointerEvents="none">
+          <Svg
+            width={ASSETS_CARD_WIDTH}
+            height={BAR_CHART_HEIGHT}
+            viewBox={`0 0 ${ASSETS_CARD_WIDTH} ${BAR_CHART_HEIGHT}`}
+          >
+            {BG_BAR_HEIGHTS.map((barHeight, index) => {
+              const gap = 6;
+              const barWidth =
+                (ASSETS_CARD_WIDTH - gap * (BG_BAR_HEIGHTS.length + 1)) /
+                BG_BAR_HEIGHTS.length;
+              const x = gap + index * (barWidth + gap);
+              const y = BAR_CHART_HEIGHT - barHeight;
+              const opacity = 0.08 + (index / BG_BAR_HEIGHTS.length) * 0.12;
+
+              return (
+                <Rect
+                  key={index}
+                  x={x}
+                  y={y}
+                  width={barWidth}
+                  height={barHeight}
+                  rx={6}
+                  fill={`rgba(255,255,255,${opacity.toFixed(2)})`}
+                />
+              );
+            })}
+          </Svg>
+        </View>
+
+        <Text style={styles.assetsLabel}>Total Assets</Text>
+        <Text style={styles.assetsValue}>$12.50</Text>
+        <Text style={styles.assetsChange}>+20.00% today</Text>
+      </LinearGradient>
+
+      <View style={styles.statsRow}>
+        {[
+          { label: 'Daily Profit', value: '$2.50' },
+          { label: 'Total Profit', value: '$2.50' },
+          { label: 'Active Plan', value: 'VIP 1' },
+        ].map((stat) => (
+          <View key={stat.label} style={styles.statCard}>
+            <Text style={styles.statLabel}>{stat.label}</Text>
+            <Text style={styles.statValue}>{stat.value}</Text>
           </View>
+        ))}
+      </View>
 
-          <View style={styles.actionsRow}>
-            {actions.map((action) => (
-              <Pressable
-                key={action.key}
-                style={styles.actionItem}
-                onPress={() => {
-                  if (action.key === 'assets') setTab('assets');
-                  if (action.key === 'deposit') setWalletStep('deposit');
-                  if (action.key === 'transactions') setShowTransactions(true);
-                }}
-              >
-                <View style={styles.actionIcon}>
-                  <ActionIcon type={action.key} />
-                </View>
-                <Text style={styles.actionLabel}>{action.label}</Text>
-              </Pressable>
-            ))}
-          </View>
-
-          <Pressable onPress={onOpenPlans}>
-            <LinearGradient
-              colors={['#6366f1', '#7c3aed', '#9333ea']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.promo}
-            >
-              <Text style={styles.promoTitle}>Earn Daily with VIP Plan</Text>
-              <Text style={styles.promoSubtitle}>
-                Start trading now and grow your assets.
-              </Text>
-            </LinearGradient>
+      <View style={styles.actionsRow}>
+        {actions.map((action) => (
+          <Pressable
+            key={action.key}
+            style={styles.actionItem}
+            onPress={() => {
+              if (action.key === 'assets') onOpenAssets?.();
+              if (action.key === 'deposit') onOpenDeposit?.();
+              if (action.key === 'transactions') onOpenTransactions?.();
+            }}
+          >
+            <View style={styles.actionIcon}>
+              <ActionIcon type={action.key} />
+            </View>
+            <Text style={styles.actionLabel}>{action.label}</Text>
           </Pressable>
+        ))}
+      </View>
 
-          <Text style={styles.sectionTitle}>Market Overview</Text>
-          <View style={styles.marketGrid}>
-            {MARKET_ITEMS.map((item) => (
-              <View key={item.symbol} style={styles.marketCard}>
-                <View style={styles.marketTop}>
-                  <CoinBadge symbol={item.badge} color={item.color} />
-                  <Text style={styles.marketSymbol}>{item.symbol}</Text>
-                  <Text
-                    style={[
-                      styles.marketChange,
-                      !item.up && styles.marketChangeDown,
-                    ]}
-                  >
-                    {item.change}
-                  </Text>
-                </View>
-                <Text style={styles.marketPrice}>{item.price}</Text>
-              </View>
-            ))}
+      <Pressable onPress={onOpenPlans}>
+        <LinearGradient
+          colors={['#6366f1', '#7c3aed', '#9333ea']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.promo}
+        >
+          <Text style={styles.promoTitle}>Earn Daily with VIP Plan</Text>
+          <Text style={styles.promoSubtitle}>
+            Start trading now and grow your assets.
+          </Text>
+        </LinearGradient>
+      </Pressable>
+
+      <Text style={styles.sectionTitle}>Market Overview</Text>
+      <View style={styles.marketGrid}>
+        {MARKET_ITEMS.map((item) => (
+          <View key={item.symbol} style={styles.marketCard}>
+            <View style={styles.marketTop}>
+              <CoinBadge symbol={item.badge} color={item.color} />
+              <Text style={styles.marketSymbol}>{item.symbol}</Text>
+              <Text
+                style={[
+                  styles.marketChange,
+                  !item.up && styles.marketChangeDown,
+                ]}
+              >
+                {item.change}
+              </Text>
+            </View>
+            <Text style={styles.marketPrice}>{item.price}</Text>
           </View>
-        </ScrollView>
-      )}
-
-      {walletStep || showTransactions ? null : (
-        <BottomTabBar
-          active={tab}
-          onChange={(next) => {
-            if (next === 'plans') {
-              onOpenPlans?.();
-              return;
-            }
-            setTab(next);
-          }}
-        />
-      )}
-    </View>
+        ))}
+      </View>
+    </ScrollView>
   );
 }
-
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
   content: {
     paddingHorizontal: 20,
     paddingTop: 58,

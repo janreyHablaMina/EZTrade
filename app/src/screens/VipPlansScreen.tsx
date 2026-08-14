@@ -11,6 +11,7 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import { NebulaBackground } from '../components/NebulaBackground';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 
 const VIP_PLANS = [
@@ -59,20 +60,6 @@ type VipPlansScreenProps = {
   onGetPlan?: (planId: string) => void;
 };
 
-function BackIcon() {
-  return (
-    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M15 6l-6 6 6 6"
-        stroke={colors.white}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
 function CheckIcon() {
   return (
     <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
@@ -97,13 +84,7 @@ export function VipPlansScreen({ onBack, onGetPlan }: VipPlansScreenProps) {
       <StatusBar style="light" />
       <NebulaBackground />
 
-      <View style={styles.header}>
-        <Pressable onPress={onBack} hitSlop={12} style={styles.backButton}>
-          <BackIcon />
-        </Pressable>
-        <Text style={styles.title}>VIP Plans</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <ScreenHeader title="VIP Plans" onBack={onBack} />
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -200,31 +181,6 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.bg,
-  },
-  header: {
-    zIndex: 1,
-    paddingTop: 56,
-    paddingHorizontal: 20,
-    paddingBottom: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-  },
-  title: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 18,
-    color: colors.white,
-  },
-  headerSpacer: {
-    width: 40,
   },
   content: {
     zIndex: 1,

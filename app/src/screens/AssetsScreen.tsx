@@ -2,7 +2,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo } from 'react';
 import {
   Dimensions,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +14,7 @@ import Svg, {
   Path,
   Stop,
 } from 'react-native-svg';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -33,20 +33,6 @@ const STATS = [
 type AssetsScreenProps = {
   onBack?: () => void;
 };
-
-function BackIcon() {
-  return (
-    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M15 6l-6 6 6 6"
-        stroke={colors.white}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
 
 function VipBadge() {
   return (
@@ -190,13 +176,7 @@ export function AssetsScreen({ onBack }: AssetsScreenProps) {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.header}>
-        <Pressable onPress={onBack} hitSlop={12} style={styles.backBtn}>
-          <BackIcon />
-        </Pressable>
-        <Text style={styles.title}>My Assets</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <ScreenHeader title="My Assets" onBack={onBack} padded={false} />
 
       <LinearGradient
         colors={['#8b5cf6', '#6d28d9', '#3b0764']}
@@ -252,27 +232,6 @@ const styles = StyleSheet.create({
     paddingTop: 58,
     paddingBottom: 24,
     gap: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 20,
-    color: colors.white,
-  },
-  headerSpacer: {
-    width: 40,
   },
   planCard: {
     borderRadius: 28,

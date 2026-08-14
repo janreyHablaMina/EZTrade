@@ -7,7 +7,7 @@ import {
 } from '@expo-google-fonts/outfit';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { HomeScreen } from './src/screens/HomeScreen';
+import { MainApp } from './src/MainApp';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { SplashScreen } from './src/screens/SplashScreen';
@@ -71,7 +71,7 @@ export default function App() {
 
   if (screen === 'home') {
     return (
-      <HomeScreen
+      <MainApp
         onOpenPlans={() => setScreen('plans')}
         onLogout={() => setScreen('login')}
       />

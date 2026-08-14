@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 
 const FILTERS = ['All', 'Deposit', 'Profit', 'Withdraw'] as const;
@@ -78,20 +79,6 @@ type TransactionsScreenProps = {
   onBack?: () => void;
 };
 
-function BackIcon() {
-  return (
-    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M15 6l-6 6 6 6"
-        stroke={colors.white}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
 function TypeIcon({ type }: { type: TxType }) {
   if (type === 'deposit') {
     return (
@@ -153,13 +140,7 @@ export function TransactionsScreen({ onBack }: TransactionsScreenProps) {
 
   return (
     <View style={styles.root}>
-      <View style={styles.header}>
-        <Pressable onPress={onBack} hitSlop={12} style={styles.backBtn}>
-          <BackIcon />
-        </Pressable>
-        <Text style={styles.title}>Transactions</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <ScreenHeader title="Transactions" onBack={onBack} />
 
       <View style={styles.filters}>
         {FILTERS.map((item) => {
@@ -226,30 +207,6 @@ export function TransactionsScreen({ onBack }: TransactionsScreenProps) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 58,
-    paddingBottom: 8,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    flex: 1,
-    textAlign: 'center',
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 20,
-    color: colors.white,
-  },
-  headerSpacer: {
-    width: 40,
   },
   filters: {
     flexDirection: 'row',
