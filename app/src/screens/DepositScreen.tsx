@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
+import { ChevronDown } from '../components/icons/ChevronDown';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
@@ -41,20 +42,6 @@ type DepositScreenProps = {
   onBack?: () => void;
   onSentPayment?: (networkLabel: string) => void;
 };
-
-function ChevronDown() {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M6 9l6 6 6-6"
-        stroke="rgba(255,255,255,0.55)"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
 
 function CopyIcon() {
   return (
@@ -188,9 +175,7 @@ export function DepositScreen({
               onPress={() => setPickerOpen((open) => !open)}
             >
               <Text style={styles.fieldValue}>{network.label}</Text>
-              <View style={pickerOpen ? styles.chevronOpen : undefined}>
-                <ChevronDown />
-              </View>
+              <ChevronDown open={pickerOpen} />
             </Pressable>
 
             {pickerOpen ? (
@@ -341,9 +326,6 @@ const styles = StyleSheet.create({
   networkWrap: {
     position: 'relative',
     zIndex: 30,
-  },
-  chevronOpen: {
-    transform: [{ rotate: '180deg' }],
   },
   picker: {
     position: 'absolute',

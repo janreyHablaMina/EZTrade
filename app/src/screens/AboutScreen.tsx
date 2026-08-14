@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 import { BrandLogo } from '../components/BrandLogo';
+import { ChevronDown } from '../components/icons/ChevronDown';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 
@@ -19,22 +19,6 @@ const DETAILS = [
 type AboutScreenProps = {
   onBack?: () => void;
 };
-
-function Chevron({ open }: { open: boolean }) {
-  return (
-    <View style={open ? styles.chevronOpen : undefined}>
-      <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-        <Path
-          d="M6 9l6 6 6-6"
-          stroke="rgba(255,255,255,0.45)"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </Svg>
-    </View>
-  );
-}
 
 export function AboutScreen({ onBack }: AboutScreenProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
@@ -88,7 +72,7 @@ export function AboutScreen({ onBack }: AboutScreenProps) {
                   onPress={() => setOpenIndex(open ? null : index)}
                 >
                   <Text style={styles.detailTitle}>{item.title}</Text>
-                  <Chevron open={open} />
+                  <ChevronDown open={open} />
                 </Pressable>
                 {open ? <Text style={styles.detailBody}>{item.body}</Text> : null}
               </View>
@@ -184,9 +168,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-  },
-  chevronOpen: {
-    transform: [{ rotate: '180deg' }],
   },
   detailTitle: {
     flex: 1,

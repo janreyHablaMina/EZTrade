@@ -9,7 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { ChevronDown } from '../components/icons/ChevronDown';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
@@ -34,22 +34,6 @@ const TOPICS = ['Deposit', 'Withdraw', 'VIP Plan', 'Other'] as const;
 type SupportScreenProps = {
   onBack?: () => void;
 };
-
-function Chevron({ open }: { open: boolean }) {
-  return (
-    <View style={open ? styles.chevronOpen : undefined}>
-      <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-        <Path
-          d="M6 9l6 6 6-6"
-          stroke="rgba(255,255,255,0.45)"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </Svg>
-    </View>
-  );
-}
 
 export function SupportScreen({ onBack }: SupportScreenProps) {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -146,7 +130,7 @@ export function SupportScreen({ onBack }: SupportScreenProps) {
                   onPress={() => setOpenFaq(open ? null : index)}
                 >
                   <Text style={styles.faqQ}>{item.q}</Text>
-                  <Chevron open={open} />
+                  <ChevronDown open={open} />
                 </Pressable>
                 {open ? <Text style={styles.faqA}>{item.a}</Text> : null}
               </View>
@@ -275,9 +259,6 @@ const styles = StyleSheet.create({
   faqLast: {
     borderBottomWidth: 0,
     paddingBottom: 0,
-  },
-  chevronOpen: {
-    transform: [{ rotate: '180deg' }],
   },
   faqHead: {
     flexDirection: 'row',

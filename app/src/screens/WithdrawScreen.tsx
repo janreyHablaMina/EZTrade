@@ -9,7 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { ChevronDown } from '../components/icons/ChevronDown';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
@@ -22,20 +22,6 @@ const FEE = 1;
 type WithdrawScreenProps = {
   onBack?: () => void;
 };
-
-function ChevronDown() {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M6 9l6 6 6-6"
-        stroke="rgba(255,255,255,0.55)"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
 
 export function WithdrawScreen({ onBack }: WithdrawScreenProps) {
   const [amount, setAmount] = useState('');
@@ -116,9 +102,7 @@ export function WithdrawScreen({ onBack }: WithdrawScreenProps) {
                   onPress={() => setPickerOpen((open) => !open)}
                 >
                   <Text style={styles.fieldValue}>{network}</Text>
-                  <View style={pickerOpen ? styles.chevronOpen : undefined}>
-                    <ChevronDown />
-                  </View>
+                  <ChevronDown open={pickerOpen} />
                 </Pressable>
                 {pickerOpen ? (
                   <View style={styles.picker}>
@@ -289,9 +273,6 @@ const styles = StyleSheet.create({
   networkWrap: {
     position: 'relative',
     zIndex: 30,
-  },
-  chevronOpen: {
-    transform: [{ rotate: '180deg' }],
   },
   picker: {
     position: 'absolute',

@@ -12,16 +12,17 @@ import { DepositScreen } from './screens/DepositScreen';
 import { DepositSuccessScreen } from './screens/DepositSuccessScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
+import { SecurityScreen } from './screens/SecurityScreen';
 import { SubmitTxidScreen } from './screens/SubmitTxidScreen';
+import { SupportScreen } from './screens/SupportScreen';
 import { TradeScreen } from './screens/TradeScreen';
 import { TransactionsScreen } from './screens/TransactionsScreen';
 import { VerifyingDepositScreen } from './screens/VerifyingDepositScreen';
-import { SecurityScreen } from './screens/SecurityScreen';
-import { SupportScreen } from './screens/SupportScreen';
 import { WithdrawScreen } from './screens/WithdrawScreen';
 import { colors } from './theme/colors';
 
 type WalletStep = 'deposit' | 'txid' | 'verifying' | 'success';
+type Overlay = 'withdraw' | 'security' | 'support' | 'about' | 'transactions';
 
 type MainAppProps = {
   userName?: string;
@@ -37,28 +38,19 @@ export function MainApp({
   const [tab, setTab] = useState<TabKey>('home');
   const [walletStep, setWalletStep] = useState<WalletStep | null>(null);
   const [depositNetwork, setDepositNetwork] = useState('TRC20 (USDT)');
-  const [showTransactions, setShowTransactions] = useState(false);
-  const [showWithdraw, setShowWithdraw] = useState(false);
-  const [showSecurity, setShowSecurity] = useState(false);
-  const [showSupport, setShowSupport] = useState(false);
-  const [showAbout, setShowAbout] = useState(false);
+  const [overlay, setOverlay] = useState<Overlay | null>(null);
 
-  const hideTabs =
-    Boolean(walletStep) ||
-    showTransactions ||
-    showWithdraw ||
-    showSecurity ||
-    showSupport ||
-    showAbout;
+  const closeOverlay = () => setOverlay(null);
+  const hideTabs = Boolean(walletStep) || overlay !== null;
 
   let screen = (
     <HomeScreen
       userName={userName}
       onOpenPlans={onOpenPlans}
       onOpenDeposit={() => setWalletStep('deposit')}
-      onOpenWithdraw={() => setShowWithdraw(true)}
+      onOpenWithdraw={() => setOverlay('withdraw')}
       onOpenAssets={() => setTab('assets')}
-      onOpenTransactions={() => setShowTransactions(true)}
+      onOpenTransactions={() => setOverlay('transactions')}
     />
   );
 
@@ -96,18 +88,16 @@ export function MainApp({
         }}
       />
     );
-  } else if (showWithdraw) {
-    screen = <WithdrawScreen onBack={() => setShowWithdraw(false)} />;
-  } else if (showSecurity) {
-    screen = <SecurityScreen onBack={() => setShowSecurity(false)} />;
-  } else if (showSupport) {
-    screen = <SupportScreen onBack={() => setShowSupport(false)} />;
-  } else if (showAbout) {
-    screen = <AboutScreen onBack={() => setShowAbout(false)} />;
-  } else if (showTransactions) {
-    screen = (
-      <TransactionsScreen onBack={() => setShowTransactions(false)} />
-    );
+  } else if (overlay === 'withdraw') {
+    screen = <WithdrawScreen onBack={closeOverlay} />;
+  } else if (overlay === 'security') {
+    screen = <SecurityScreen onBack={closeOverlay} />;
+  } else if (overlay === 'support') {
+    screen = <SupportScreen onBack={closeOverlay} />;
+  } else if (overlay === 'about') {
+    screen = <AboutScreen onBack={closeOverlay} />;
+  } else if (overlay === 'transactions') {
+    screen = <TransactionsScreen onBack={closeOverlay} />;
   } else if (tab === 'assets') {
     screen = <AssetsScreen onBack={() => setTab('home')} />;
   } else if (tab === 'profile') {
@@ -119,10 +109,10 @@ export function MainApp({
         onOpenMenu={(key) => {
           if (key === 'assets') setTab('assets');
           if (key === 'plans') onOpenPlans?.();
-          if (key === 'transactions') setShowTransactions(true);
-          if (key === 'security') setShowSecurity(true);
-          if (key === 'support') setShowSupport(true);
-          if (key === 'about') setShowAbout(true);
+          if (key === 'transactions') setOverlay('transactions');
+          if (key === 'security') setOverlay('security');
+          if (key === 'support') setOverlay('support');
+          if (key === 'about') setOverlay('about');
         }}
       />
     );
