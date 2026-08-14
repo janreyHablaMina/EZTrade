@@ -12,45 +12,47 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 
+const CURRENT_PLAN_ID = 'vip1';
+
 const VIP_PLANS = [
   {
     id: 'vip1',
     name: 'VIP 1',
-    amount: '10',
-    profit: '20%',
-    minDeposit: '10 USDT',
-    popular: true,
+    amount: 10,
+    profit: 20,
+    daily: 2,
+    popular: false,
   },
   {
     id: 'vip2',
     name: 'VIP 2',
-    amount: '50',
-    profit: '25%',
-    minDeposit: '50 USDT',
-    popular: false,
+    amount: 50,
+    profit: 25,
+    daily: 12.5,
+    popular: true,
   },
   {
     id: 'vip3',
     name: 'VIP 3',
-    amount: '100',
-    profit: '30%',
-    minDeposit: '100 USDT',
+    amount: 100,
+    profit: 30,
+    daily: 30,
     popular: false,
   },
   {
     id: 'vip4',
     name: 'VIP 4',
-    amount: '300',
-    profit: '35%',
-    minDeposit: '300 USDT',
+    amount: 300,
+    profit: 35,
+    daily: 105,
     popular: false,
   },
 ] as const;
 
 const FEATURES = [
-  'Daily automatic profit',
-  'Withdraw anytime',
-  'Secure & transparent',
+  'Daily profit credited after Quantify',
+  'Withdraw anytime to your USDT wallet',
+  'Upgrade anytime to a higher VIP tier',
 ] as const;
 
 type VipPlansScreenProps = {
@@ -58,10 +60,15 @@ type VipPlansScreenProps = {
   onGetPlan?: (planId: string) => void;
 };
 
+function formatUsdt(value: number) {
+  return value % 1 === 0 ? value.toFixed(0) : value.toFixed(2);
+}
+
 export function VipPlansScreen({ onBack, onGetPlan }: VipPlansScreenProps) {
-  const [selectedId, setSelectedId] = useState<string>('vip1');
+  const [selectedId, setSelectedId] = useState<string>(CURRENT_PLAN_ID);
   const selected =
     VIP_PLANS.find((plan) => plan.id === selectedId) ?? VIP_PLANS[0];
+  const isCurrent = selected.id === CURRENT_PLAN_ID;
 
   return (
     <View style={styles.root}>
@@ -71,68 +78,74 @@ export function VipPlansScreen({ onBack, onGetPlan }: VipPlansScreenProps) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.intro}>
-          <Text style={styles.introTitle}>Choose your growth plan</Text>
-          <Text style={styles.introSubtitle}>
-            Higher VIP tiers unlock stronger daily returns.
-          </Text>
+        <View style={styles.currentChip}>
+          <View style={styles.liveDot} />
+          <Text style={styles.currentChipText}>Current plan · VIP 1</Text>
         </View>
 
-        <View style={styles.grid}>
+        <LinearGradient
+          colors={['#8b5cf6', '#6d28d9', '#4c1d95']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
+        >
+          <View style={styles.heroTop}>
+            <Text style={styles.heroName}>{selected.name}</Text>
+            {selected.popular ? (
+              <View style={styles.popularBadge}>
+                <Text style={styles.popularText}>Most chosen</Text>
+              </View>
+            ) : null}
+          </View>
+          <Text style={styles.heroAmount}>{formatUsdt(selected.amount)} USDT</Text>
+          <Text style={styles.heroHint}>One-time deposit to activate</Text>
+
+          <View style={styles.heroStats}>
+            <View style={styles.heroStat}>
+              <Text style={styles.heroStatLabel}>Daily rate</Text>
+              <Text style={styles.heroStatValue}>+{selected.profit}%</Text>
+            </View>
+            <View style={styles.heroDivider} />
+            <View style={styles.heroStat}>
+              <Text style={styles.heroStatLabel}>Est. daily</Text>
+              <Text style={styles.heroStatValue}>
+                +{formatUsdt(selected.daily)} USDT
+              </Text>
+            </View>
+          </View>
+        </LinearGradient>
+
+        <Text style={styles.sectionLabel}>Choose a tier</Text>
+        <View style={styles.list}>
           {VIP_PLANS.map((plan) => {
             const active = plan.id === selectedId;
-
+            const current = plan.id === CURRENT_PLAN_ID;
             return (
               <Pressable
                 key={plan.id}
                 onPress={() => setSelectedId(plan.id)}
-                style={[styles.planCard, active && styles.planCardActive]}
+                style={[styles.row, active && styles.rowActive]}
               >
-                {active ? (
-                  <LinearGradient
-                    colors={[
-                      'rgba(139, 92, 246, 0.28)',
-                      'rgba(76, 29, 149, 0.12)',
-                    ]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={StyleSheet.absoluteFill}
-                    pointerEvents="none"
-                  />
-                ) : null}
-
-                <View style={styles.planTop}>
-                  <Text style={styles.planName}>{plan.name}</Text>
-                  {plan.popular ? (
-                    <View style={styles.popularBadge}>
-                      <Text style={styles.popularText}>Popular</Text>
-                    </View>
-                  ) : null}
-                </View>
-
-                <View style={styles.amountRow}>
-                  <Text style={styles.planAmount}>{plan.amount}</Text>
-                  <Text style={styles.planCurrency}>USDT</Text>
-                </View>
-
-                <View style={styles.profitChip}>
-                  <Text style={styles.profitText}>+{plan.profit} daily</Text>
-                </View>
-
-                <Text style={styles.minDeposit}>Min {plan.minDeposit}</Text>
-
-                <View
-                  style={[styles.radio, active && styles.radioActive]}
-                >
+                <View style={[styles.radio, active && styles.radioActive]}>
                   {active ? <View style={styles.radioDot} /> : null}
                 </View>
+                <View style={styles.rowCopy}>
+                  <Text style={styles.rowName}>
+                    {plan.name}
+                    {current ? '  ·  Active' : ''}
+                  </Text>
+                  <Text style={styles.rowMeta}>
+                    {formatUsdt(plan.amount)} USDT · +{plan.profit}% daily
+                  </Text>
+                </View>
+                <Text style={styles.rowDaily}>+{formatUsdt(plan.daily)}</Text>
               </Pressable>
             );
           })}
         </View>
 
         <View style={styles.featuresCard}>
-          <Text style={styles.featuresTitle}>What you get</Text>
+          <Text style={styles.featuresTitle}>Included with {selected.name}</Text>
           {FEATURES.map((feature) => (
             <View key={feature} style={styles.featureRow}>
               <CheckIcon size={14} />
@@ -143,15 +156,17 @@ export function VipPlansScreen({ onBack, onGetPlan }: VipPlansScreenProps) {
       </ScrollView>
 
       <View style={styles.footer}>
-        <View style={styles.footerMeta}>
-          <Text style={styles.footerLabel}>Selected</Text>
-          <Text style={styles.footerValue}>
-            {selected.name} · {selected.amount} USDT · +{selected.profit}
-          </Text>
-        </View>
         <PrimaryButton
-          label={`Get ${selected.name}`}
-          onPress={() => onGetPlan?.(selected.id)}
+          label={
+            isCurrent
+              ? `${selected.name} is active`
+              : `Upgrade to ${selected.name}`
+          }
+          disabled={isCurrent}
+          onPress={() => {
+            if (isCurrent) return;
+            onGetPlan?.(selected.id);
+          }}
         />
       </View>
     </View>
@@ -163,111 +178,129 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    zIndex: 1,
     paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 24,
-    gap: 18,
+    paddingTop: 8,
+    paddingBottom: 20,
+    gap: 14,
   },
-  intro: {
-    gap: 6,
-    marginBottom: 2,
-  },
-  introTitle: {
-    fontFamily: 'Outfit_800ExtraBold',
-    fontSize: 26,
-    color: colors.white,
-    letterSpacing: -0.4,
-  },
-  introSubtitle: {
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 14,
-    lineHeight: 20,
-    color: 'rgba(226, 214, 255, 0.68)',
-  },
-  grid: {
+  currentChip: {
+    alignSelf: 'flex-start',
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  planCard: {
-    width: '48%',
-    flexGrow: 1,
-    minWidth: '46%',
-    borderRadius: 22,
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.cardFill,
     borderWidth: 1,
-    borderColor: 'rgba(167, 139, 250, 0.18)',
-    backgroundColor: 'rgba(14, 10, 28, 0.92)',
-    padding: 16,
+    borderColor: colors.cardBorder,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  liveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: colors.green,
+  },
+  currentChipText: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 12,
+    color: colors.white,
+  },
+  hero: {
+    borderRadius: 24,
+    padding: 20,
     overflow: 'hidden',
-    minHeight: 168,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
   },
-  planCardActive: {
-    borderColor: 'rgba(168, 85, 247, 0.85)',
-  },
-  planTop: {
+  heroTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
-    minHeight: 22,
+    marginBottom: 8,
   },
-  planName: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.78)',
+  heroName: {
+    fontFamily: 'Outfit_800ExtraBold',
+    fontSize: 22,
+    color: colors.white,
   },
   popularBadge: {
-    backgroundColor: 'rgba(168, 85, 247, 0.22)',
+    backgroundColor: 'rgba(255,255,255,0.16)',
     borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   popularText: {
     fontFamily: 'Outfit_700Bold',
-    fontSize: 10,
-    color: '#e9d5ff',
-  },
-  amountRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 5,
-    marginBottom: 10,
-  },
-  planAmount: {
-    fontFamily: 'Outfit_800ExtraBold',
-    fontSize: 32,
+    fontSize: 11,
     color: colors.white,
-    lineHeight: 34,
   },
-  planCurrency: {
-    fontFamily: 'Outfit_500Medium',
+  heroAmount: {
+    fontFamily: 'Outfit_800ExtraBold',
+    fontSize: 36,
+    color: colors.white,
+    letterSpacing: -0.6,
+  },
+  heroHint: {
+    marginTop: 4,
+    fontFamily: 'Outfit_400Regular',
     fontSize: 13,
-    color: 'rgba(255,255,255,0.55)',
-    marginBottom: 4,
+    color: 'rgba(255,255,255,0.7)',
   },
-  profitChip: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(34, 197, 94, 0.14)',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    marginBottom: 10,
+  heroStats: {
+    marginTop: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.22)',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
   },
-  profitText: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 12,
-    color: '#86efac',
+  heroStat: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
   },
-  minDeposit: {
+  heroDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+  },
+  heroStatLabel: {
     fontFamily: 'Outfit_400Regular',
     fontSize: 12,
-    color: 'rgba(255,255,255,0.45)',
+    color: 'rgba(255,255,255,0.65)',
+  },
+  heroStatValue: {
+    fontFamily: 'Outfit_800ExtraBold',
+    fontSize: 16,
+    color: '#bbf7d0',
+  },
+  sectionLabel: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 15,
+    color: colors.white,
+    marginTop: 2,
+  },
+  list: {
+    gap: 8,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.cardFill,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  rowActive: {
+    borderColor: colors.purpleBright,
+    backgroundColor: 'rgba(124, 58, 237, 0.16)',
   },
   radio: {
-    position: 'absolute',
-    right: 14,
-    bottom: 14,
     width: 20,
     height: 20,
     borderRadius: 10,
@@ -278,7 +311,6 @@ const styles = StyleSheet.create({
   },
   radioActive: {
     borderColor: colors.purpleBright,
-    backgroundColor: 'rgba(168, 85, 247, 0.2)',
   },
   radioDot: {
     width: 8,
@@ -286,19 +318,37 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: colors.purpleBright,
   },
+  rowCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  rowName: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 15,
+    color: colors.white,
+  },
+  rowMeta: {
+    fontFamily: 'Outfit_400Regular',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.5)',
+  },
+  rowDaily: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 13,
+    color: '#86efac',
+  },
   featuresCard: {
-    borderRadius: 22,
+    backgroundColor: colors.cardFill,
     borderWidth: 1,
-    borderColor: 'rgba(167, 139, 250, 0.16)',
-    backgroundColor: 'rgba(14, 10, 28, 0.8)',
-    padding: 18,
+    borderColor: colors.cardBorder,
+    borderRadius: 20,
+    padding: 16,
     gap: 12,
   },
   featuresTitle: {
     fontFamily: 'Outfit_700Bold',
     fontSize: 15,
     color: colors.white,
-    marginBottom: 2,
   },
   featureRow: {
     flexDirection: 'row',
@@ -306,31 +356,17 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   featureText: {
-    fontFamily: 'Outfit_500Medium',
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.82)',
+    flex: 1,
+    fontFamily: 'Outfit_400Regular',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.72)',
+    lineHeight: 19,
   },
   footer: {
-    zIndex: 1,
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: 10,
     paddingBottom: 12,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.06)',
-    backgroundColor: 'rgba(5, 1, 15, 0.88)',
-    gap: 12,
-  },
-  footerMeta: {
-    gap: 2,
-  },
-  footerLabel: {
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.45)',
-  },
-  footerValue: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 14,
-    color: colors.white,
   },
 });
