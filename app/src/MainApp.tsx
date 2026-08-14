@@ -15,6 +15,7 @@ import { SubmitTxidScreen } from './screens/SubmitTxidScreen';
 import { TradeScreen } from './screens/TradeScreen';
 import { TransactionsScreen } from './screens/TransactionsScreen';
 import { VerifyingDepositScreen } from './screens/VerifyingDepositScreen';
+import { WithdrawScreen } from './screens/WithdrawScreen';
 import { colors } from './theme/colors';
 
 type WalletStep = 'deposit' | 'txid' | 'verifying' | 'success';
@@ -34,14 +35,16 @@ export function MainApp({
   const [walletStep, setWalletStep] = useState<WalletStep | null>(null);
   const [depositNetwork, setDepositNetwork] = useState('TRC20 (USDT)');
   const [showTransactions, setShowTransactions] = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
 
-  const hideTabs = Boolean(walletStep) || showTransactions;
+  const hideTabs = Boolean(walletStep) || showTransactions || showWithdraw;
 
   let screen = (
     <HomeScreen
       userName={userName}
       onOpenPlans={onOpenPlans}
       onOpenDeposit={() => setWalletStep('deposit')}
+      onOpenWithdraw={() => setShowWithdraw(true)}
       onOpenAssets={() => setTab('assets')}
       onOpenTransactions={() => setShowTransactions(true)}
     />
@@ -81,6 +84,8 @@ export function MainApp({
         }}
       />
     );
+  } else if (showWithdraw) {
+    screen = <WithdrawScreen onBack={() => setShowWithdraw(false)} />;
   } else if (showTransactions) {
     screen = (
       <TransactionsScreen onBack={() => setShowTransactions(false)} />

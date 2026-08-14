@@ -71,6 +71,7 @@ type HomeScreenProps = {
   userName?: string;
   onOpenPlans?: () => void;
   onOpenDeposit?: () => void;
+  onOpenWithdraw?: () => void;
   onOpenAssets?: () => void;
   onOpenTransactions?: () => void;
 };
@@ -169,6 +170,7 @@ export function HomeScreen({
   userName = 'John Doe',
   onOpenPlans,
   onOpenDeposit,
+  onOpenWithdraw,
   onOpenAssets,
   onOpenTransactions,
 }: HomeScreenProps) {
@@ -280,6 +282,7 @@ export function HomeScreen({
             onPress={() => {
               if (action.key === 'assets') onOpenAssets?.();
               if (action.key === 'deposit') onOpenDeposit?.();
+              if (action.key === 'withdraw') onOpenWithdraw?.();
               if (action.key === 'transactions') onOpenTransactions?.();
             }}
           >
