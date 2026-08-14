@@ -15,6 +15,7 @@ import { ProfileScreen } from './screens/ProfileScreen';
 import { SecurityScreen } from './screens/SecurityScreen';
 import { SubmitTxidScreen } from './screens/SubmitTxidScreen';
 import { SupportScreen } from './screens/SupportScreen';
+import { TeamScreen } from './screens/TeamScreen';
 import { TradeScreen } from './screens/TradeScreen';
 import { TransactionsScreen } from './screens/TransactionsScreen';
 import { VerifyingDepositScreen } from './screens/VerifyingDepositScreen';
@@ -23,7 +24,13 @@ import { WithdrawScreen } from './screens/WithdrawScreen';
 import { colors } from './theme/colors';
 
 type WalletStep = 'deposit' | 'txid' | 'verifying' | 'success';
-type Overlay = 'withdraw' | 'security' | 'support' | 'about' | 'transactions';
+type Overlay =
+  | 'withdraw'
+  | 'security'
+  | 'support'
+  | 'about'
+  | 'transactions'
+  | 'team';
 
 const OVERLAY_SCREENS = {
   withdraw: WithdrawScreen,
@@ -31,6 +38,7 @@ const OVERLAY_SCREENS = {
   support: SupportScreen,
   about: AboutScreen,
   transactions: TransactionsScreen,
+  team: TeamScreen,
 } as const;
 
 type MainAppProps = {
@@ -113,6 +121,7 @@ export function MainApp({
           if (key === 'security') setOverlay('security');
           if (key === 'support') setOverlay('support');
           if (key === 'about') setOverlay('about');
+          if (key === 'referral') setOverlay('team');
         }}
       />
     );

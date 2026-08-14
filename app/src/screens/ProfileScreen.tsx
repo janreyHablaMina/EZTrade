@@ -1,6 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import { ConfirmModal } from '../components/ConfirmModal';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 
@@ -221,7 +223,10 @@ export function ProfileScreen({
   onLogout,
   onOpenMenu,
 }: ProfileScreenProps) {
+  const [confirmLogout, setConfirmLogout] = useState(false);
+
   return (
+    <View style={styles.root}>
     <ScrollView
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
@@ -264,15 +269,33 @@ export function ProfileScreen({
         ))}
       </View>
 
-      <Pressable style={styles.logoutBtn} onPress={onLogout}>
+      <Pressable style={styles.logoutBtn} onPress={() => setConfirmLogout(true)}>
         <LogoutIcon />
         <Text style={styles.logoutText}>Logout</Text>
       </Pressable>
     </ScrollView>
+
+      <ConfirmModal
+        visible={confirmLogout}
+        title="Log out?"
+        message="You’ll need to sign in again to see your plans, balance, and trades."
+        cancelLabel="Stay"
+        confirmLabel="Log out"
+        danger
+        onCancel={() => setConfirmLogout(false)}
+        onConfirm={() => {
+          setConfirmLogout(false);
+          onLogout?.();
+        }}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   content: {
     paddingHorizontal: 20,
     paddingTop: 58,

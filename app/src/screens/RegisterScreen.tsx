@@ -21,6 +21,7 @@ export function RegisterScreen({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [agreed, setAgreed] = useState(false);
 
   const passwordsMatch =
@@ -70,6 +71,14 @@ export function RegisterScreen({
         isPassword
         value={confirmPassword}
         onChangeText={setConfirmPassword}
+      />
+      <TextField
+        label="Referral code (optional)"
+        placeholder="EZTRADE12"
+        autoCapitalize="characters"
+        autoCorrect={false}
+        value={referralCode}
+        onChangeText={(value) => setReferralCode(value.toUpperCase())}
       />
       <CheckBox checked={agreed} onToggle={() => setAgreed((value) => !value)}>
         <Text style={styles.agreeText}>
