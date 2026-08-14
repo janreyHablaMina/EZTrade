@@ -190,7 +190,6 @@ export function SubmitTxidScreen({
           label={submitted ? 'Back to Home' : 'Submit TXID'}
           onPress={submitted ? onBack : handleSubmit}
           disabled={!submitted && !canSubmit}
-          style={!submitted && !canSubmit ? styles.disabledBtn : undefined}
         />
       </View>
     </KeyboardAvoidingView>
@@ -206,7 +205,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   card: {
-    backgroundColor: 'rgba(18, 16, 31, 0.92)',
+    backgroundColor: colors.cardFill,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: 24,
@@ -356,8 +355,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 24,
-  },
-  disabledBtn: {
-    opacity: 0.45,
   },
 });

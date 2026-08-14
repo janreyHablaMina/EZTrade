@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: 'rgba(18, 16, 31, 0.92)',
+    backgroundColor: colors.cardFill,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: 18,
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 18,
-    backgroundColor: 'rgba(18, 16, 31, 0.92)',
+    backgroundColor: colors.cardFill,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     alignItems: 'center',

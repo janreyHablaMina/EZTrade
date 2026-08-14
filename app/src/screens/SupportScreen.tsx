@@ -9,7 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { ChevronDown } from '../components/icons/ChevronDown';
+import { AccordionRow } from '../components/AccordionRow';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
@@ -115,27 +115,18 @@ export function SupportScreen({ onBack }: SupportScreenProps) {
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>FAQs</Text>
-          {FAQS.map((item, index) => {
-            const open = openFaq === index;
-            return (
-              <View
-                key={item.q}
-                style={[
-                  styles.faqItem,
-                  index === FAQS.length - 1 && styles.faqLast,
-                ]}
-              >
-                <Pressable
-                  style={styles.faqHead}
-                  onPress={() => setOpenFaq(open ? null : index)}
-                >
-                  <Text style={styles.faqQ}>{item.q}</Text>
-                  <ChevronDown open={open} />
-                </Pressable>
-                {open ? <Text style={styles.faqA}>{item.a}</Text> : null}
-              </View>
-            );
-          })}
+          {FAQS.map((item, index) => (
+            <AccordionRow
+              key={item.q}
+              title={item.q}
+              body={item.a}
+              open={openFaq === index}
+              onToggle={() =>
+                setOpenFaq(openFaq === index ? null : index)
+              }
+              last={index === FAQS.length - 1}
+            />
+          ))}
         </View>
       </ScrollView>
 
@@ -144,7 +135,6 @@ export function SupportScreen({ onBack }: SupportScreenProps) {
           label="Send message"
           onPress={handleSend}
           disabled={!canSend}
-          style={!canSend ? styles.disabledBtn : undefined}
         />
       </View>
     </KeyboardAvoidingView>
@@ -161,7 +151,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   card: {
-    backgroundColor: 'rgba(18, 16, 31, 0.92)',
+    backgroundColor: colors.cardFill,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: 24,
@@ -251,39 +241,9 @@ const styles = StyleSheet.create({
     color: colors.green,
     lineHeight: 19,
   },
-  faqItem: {
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
-    paddingVertical: 12,
-  },
-  faqLast: {
-    borderBottomWidth: 0,
-    paddingBottom: 0,
-  },
-  faqHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  faqQ: {
-    flex: 1,
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 14,
-    color: colors.white,
-  },
-  faqA: {
-    marginTop: 8,
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.58)',
-    lineHeight: 20,
-  },
   footer: {
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 24,
-  },
-  disabledBtn: {
-    opacity: 0.45,
   },
 });

@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { CheckIcon } from '../components/icons/CheckIcon';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
@@ -57,20 +57,6 @@ type VipPlansScreenProps = {
   onBack?: () => void;
   onGetPlan?: (planId: string) => void;
 };
-
-function CheckIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M5 13l4 4L19 7"
-        stroke={colors.green}
-        strokeWidth={2.4}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
 
 export function VipPlansScreen({ onBack, onGetPlan }: VipPlansScreenProps) {
   const [selectedId, setSelectedId] = useState<string>('vip1');
@@ -149,7 +135,7 @@ export function VipPlansScreen({ onBack, onGetPlan }: VipPlansScreenProps) {
           <Text style={styles.featuresTitle}>What you get</Text>
           {FEATURES.map((feature) => (
             <View key={feature} style={styles.featureRow}>
-              <CheckIcon />
+              <CheckIcon size={14} />
               <Text style={styles.featureText}>{feature}</Text>
             </View>
           ))}

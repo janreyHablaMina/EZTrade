@@ -9,7 +9,8 @@ import {
   Text,
   View,
 } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle } from 'react-native-svg';
+import { CheckIcon } from '../components/icons/CheckIcon';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 
@@ -23,20 +24,6 @@ const REWARD = 2;
 type TradeScreenProps = {
   onBack?: () => void;
 };
-
-function CheckIcon() {
-  return (
-    <Svg width={28} height={28} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M5 13l4 4L19 7"
-        stroke={colors.white}
-        strokeWidth={2.4}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
 
 function formatClock(ms: number) {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -154,7 +141,7 @@ export function TradeScreen({ onBack }: TradeScreenProps) {
             <ProgressRing progress={progress} />
             {claimed ? (
               <View style={styles.orbDone}>
-                <CheckIcon />
+                <CheckIcon size={28} color={colors.white} />
                 <Text style={styles.orbDoneTitle}>Claimed</Text>
                 <Text style={styles.orbDoneSub}>{formatClock(remaining)}</Text>
               </View>
@@ -325,7 +312,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: 'rgba(18, 16, 31, 0.92)',
+    backgroundColor: colors.cardFill,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: 16,
@@ -348,7 +335,7 @@ const styles = StyleSheet.create({
     color: '#4ade80',
   },
   planCard: {
-    backgroundColor: 'rgba(18, 16, 31, 0.92)',
+    backgroundColor: colors.cardFill,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: 20,
@@ -382,7 +369,7 @@ const styles = StyleSheet.create({
     color: '#4ade80',
   },
   infoCard: {
-    backgroundColor: 'rgba(18, 16, 31, 0.92)',
+    backgroundColor: colors.cardFill,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: 20,

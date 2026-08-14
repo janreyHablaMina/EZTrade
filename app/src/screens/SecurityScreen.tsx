@@ -141,7 +141,6 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
           label="Update password"
           onPress={handleSave}
           disabled={!canSave}
-          style={!canSave ? styles.disabledBtn : undefined}
         />
       </View>
     </KeyboardAvoidingView>
@@ -158,7 +157,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   card: {
-    backgroundColor: 'rgba(18, 16, 31, 0.92)',
+    backgroundColor: colors.cardFill,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: 24,
@@ -243,8 +242,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 24,
-  },
-  disabledBtn: {
-    opacity: 0.45,
   },
 });

@@ -15,16 +15,19 @@ export function PrimaryButton({
   label,
   style,
   onPress,
+  disabled,
   ...props
 }: PrimaryButtonProps) {
   return (
     <Pressable
       {...props}
+      disabled={disabled}
       onPress={onPress}
       accessibilityRole="button"
       style={({ pressed }) => [
         styles.pressable,
-        pressed && styles.pressed,
+        pressed && !disabled && styles.pressed,
+        disabled && styles.disabled,
         typeof style === 'function' ? undefined : style,
       ]}
     >
@@ -49,6 +52,9 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.9,
     transform: [{ scale: 0.985 }],
+  },
+  disabled: {
+    opacity: 0.45,
   },
   gradient: {
     minHeight: 54,

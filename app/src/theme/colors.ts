@@ -2,6 +2,7 @@ export const colors = {
   bg: '#05010f',
   bgDeep: '#0a0420',
   card: '#12101f',
+  cardFill: 'rgba(18, 16, 31, 0.92)',
   cardBorder: 'rgba(167, 139, 250, 0.22)',
   purple: '#7b2cff',
   purpleBright: '#a855f7',

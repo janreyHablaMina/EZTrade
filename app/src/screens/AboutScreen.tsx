@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AccordionRow } from '../components/AccordionRow';
 import { BrandLogo } from '../components/BrandLogo';
-import { ChevronDown } from '../components/icons/ChevronDown';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 
@@ -57,27 +57,18 @@ export function AboutScreen({ onBack }: AboutScreenProps) {
         </View>
 
         <View style={styles.card}>
-          {DETAILS.map((item, index) => {
-            const open = openIndex === index;
-            return (
-              <View
-                key={item.title}
-                style={[
-                  styles.detailItem,
-                  index === DETAILS.length - 1 && styles.detailLast,
-                ]}
-              >
-                <Pressable
-                  style={styles.detailHead}
-                  onPress={() => setOpenIndex(open ? null : index)}
-                >
-                  <Text style={styles.detailTitle}>{item.title}</Text>
-                  <ChevronDown open={open} />
-                </Pressable>
-                {open ? <Text style={styles.detailBody}>{item.body}</Text> : null}
-              </View>
-            );
-          })}
+          {DETAILS.map((item, index) => (
+            <AccordionRow
+              key={item.title}
+              title={item.title}
+              body={item.body}
+              open={openIndex === index}
+              onToggle={() =>
+                setOpenIndex(openIndex === index ? null : index)
+              }
+              last={index === DETAILS.length - 1}
+            />
+          ))}
         </View>
 
         <Text style={styles.copyright}>© 2026 EZTRADE. All rights reserved.</Text>
@@ -125,7 +116,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   card: {
-    backgroundColor: 'rgba(18, 16, 31, 0.92)',
+    backgroundColor: colors.cardFill,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: 24,
@@ -155,32 +146,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Outfit_700Bold',
     fontSize: 14,
     color: colors.white,
-  },
-  detailItem: {
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
-    paddingVertical: 14,
-  },
-  detailLast: {
-    borderBottomWidth: 0,
-  },
-  detailHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  detailTitle: {
-    flex: 1,
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 15,
-    color: colors.white,
-  },
-  detailBody: {
-    marginTop: 8,
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.58)',
-    lineHeight: 20,
   },
   copyright: {
     textAlign: 'center',

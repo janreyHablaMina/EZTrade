@@ -89,7 +89,6 @@ export function RegisterScreen({
           onCreateAccount?.();
         }}
         disabled={!canCreate}
-        style={!canCreate ? styles.disabledBtn : undefined}
       />
     </AuthScreen>
   );
@@ -112,8 +111,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#f87171',
     marginTop: -6,
-  },
-  disabledBtn: {
-    opacity: 0.45,
   },
 });

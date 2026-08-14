@@ -164,7 +164,6 @@ export function WithdrawScreen({ onBack }: WithdrawScreenProps) {
             label="Withdraw"
             onPress={handleWithdraw}
             disabled={!canSubmit}
-            style={!canSubmit ? styles.disabledBtn : undefined}
           />
         )}
       </View>
@@ -201,7 +200,7 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   card: {
-    backgroundColor: 'rgba(18, 16, 31, 0.92)',
+    backgroundColor: colors.cardFill,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: 24,
@@ -327,8 +326,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 24,
-  },
-  disabledBtn: {
-    opacity: 0.45,
   },
 });

@@ -25,6 +25,14 @@ import { colors } from './theme/colors';
 type WalletStep = 'deposit' | 'txid' | 'verifying' | 'success';
 type Overlay = 'withdraw' | 'security' | 'support' | 'about' | 'transactions';
 
+const OVERLAY_SCREENS = {
+  withdraw: WithdrawScreen,
+  security: SecurityScreen,
+  support: SupportScreen,
+  about: AboutScreen,
+  transactions: TransactionsScreen,
+} as const;
+
 type MainAppProps = {
   userName?: string;
   onLogout?: () => void;
@@ -87,16 +95,9 @@ export function MainApp({
         }}
       />
     );
-  } else if (overlay === 'withdraw') {
-    screen = <WithdrawScreen onBack={closeOverlay} />;
-  } else if (overlay === 'security') {
-    screen = <SecurityScreen onBack={closeOverlay} />;
-  } else if (overlay === 'support') {
-    screen = <SupportScreen onBack={closeOverlay} />;
-  } else if (overlay === 'about') {
-    screen = <AboutScreen onBack={closeOverlay} />;
-  } else if (overlay === 'transactions') {
-    screen = <TransactionsScreen onBack={closeOverlay} />;
+  } else if (overlay) {
+    const OverlayScreen = OVERLAY_SCREENS[overlay];
+    screen = <OverlayScreen onBack={closeOverlay} />;
   } else if (tab === 'assets') {
     screen = <AssetsScreen onBack={() => setTab('home')} />;
   } else if (tab === 'profile') {
