@@ -18,9 +18,11 @@ import { NebulaBackground } from '../components/NebulaBackground';
 import { colors } from '../theme/colors';
 import { AssetsScreen } from './AssetsScreen';
 import { DepositScreen } from './DepositScreen';
+import { DepositSuccessScreen } from './DepositSuccessScreen';
 import { ProfileScreen } from './ProfileScreen';
 import { SubmitTxidScreen } from './SubmitTxidScreen';
 import { TradeScreen } from './TradeScreen';
+import { VerifyingDepositScreen } from './VerifyingDepositScreen';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const ASSETS_CARD_WIDTH = SCREEN_WIDTH - 40; // content horizontal padding
@@ -180,9 +182,9 @@ export function HomeScreen({
   onLogout,
 }: HomeScreenProps) {
   const [tab, setTab] = useState<TabKey>('home');
-  const [walletStep, setWalletStep] = useState<'deposit' | 'txid' | null>(
-    null,
-  );
+  const [walletStep, setWalletStep] = useState<
+    'deposit' | 'txid' | 'verifying' | 'success' | null
+  >(null);
   const [depositNetwork, setDepositNetwork] = useState('TRC20 (USDT)');
   const greeting = useMemo(() => greetingForNow(), []);
   const initials = userName
@@ -216,6 +218,19 @@ export function HomeScreen({
         <SubmitTxidScreen
           networkLabel={depositNetwork}
           onBack={() => setWalletStep(null)}
+          onSubmit={() => setWalletStep('verifying')}
+        />
+      ) : walletStep === 'verifying' ? (
+        <VerifyingDepositScreen
+          onBack={() => setWalletStep(null)}
+          onComplete={() => setWalletStep('success')}
+        />
+      ) : walletStep === 'success' ? (
+        <DepositSuccessScreen
+          onGoDashboard={() => {
+            setWalletStep(null);
+            setTab('home');
+          }}
         />
       ) : tab === 'assets' ? (
         <AssetsScreen onBack={() => setTab('home')} />

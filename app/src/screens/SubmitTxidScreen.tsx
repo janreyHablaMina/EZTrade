@@ -88,7 +88,6 @@ export function SubmitTxidScreen({
 
   const handleSubmit = () => {
     if (!canSubmit) return;
-    setSubmitted(true);
     onSubmit?.(trimmed);
   };
 
