@@ -22,6 +22,7 @@ import { DepositSuccessScreen } from './DepositSuccessScreen';
 import { ProfileScreen } from './ProfileScreen';
 import { SubmitTxidScreen } from './SubmitTxidScreen';
 import { TradeScreen } from './TradeScreen';
+import { TransactionsScreen } from './TransactionsScreen';
 import { VerifyingDepositScreen } from './VerifyingDepositScreen';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -186,6 +187,7 @@ export function HomeScreen({
     'deposit' | 'txid' | 'verifying' | 'success' | null
   >(null);
   const [depositNetwork, setDepositNetwork] = useState('TRC20 (USDT)');
+  const [showTransactions, setShowTransactions] = useState(false);
   const greeting = useMemo(() => greetingForNow(), []);
   const initials = userName
     .split(' ')
@@ -232,6 +234,8 @@ export function HomeScreen({
             setTab('home');
           }}
         />
+      ) : showTransactions ? (
+        <TransactionsScreen onBack={() => setShowTransactions(false)} />
       ) : tab === 'assets' ? (
         <AssetsScreen onBack={() => setTab('home')} />
       ) : tab === 'profile' ? (
@@ -242,6 +246,7 @@ export function HomeScreen({
           onOpenMenu={(key) => {
             if (key === 'assets') setTab('assets');
             if (key === 'plans') onOpenPlans?.();
+            if (key === 'transactions') setShowTransactions(true);
           }}
         />
       ) : tab === 'trade' ? (
@@ -339,6 +344,7 @@ export function HomeScreen({
                 onPress={() => {
                   if (action.key === 'assets') setTab('assets');
                   if (action.key === 'deposit') setWalletStep('deposit');
+                  if (action.key === 'transactions') setShowTransactions(true);
                 }}
               >
                 <View style={styles.actionIcon}>
@@ -386,7 +392,7 @@ export function HomeScreen({
         </ScrollView>
       )}
 
-      {walletStep ? null : (
+      {walletStep || showTransactions ? null : (
         <BottomTabBar
           active={tab}
           onChange={(next) => {
