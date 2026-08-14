@@ -12,10 +12,9 @@ import { LoginScreen } from './src/screens/LoginScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { RegisterScreen } from './src/screens/RegisterScreen';
 import { SplashScreen } from './src/screens/SplashScreen';
-import { VipPlansScreen } from './src/screens/VipPlansScreen';
 import { colors } from './src/theme/colors';
 
-type Screen = 'splash' | 'onboarding' | 'login' | 'register' | 'home' | 'plans';
+type Screen = 'splash' | 'onboarding' | 'login' | 'register' | 'home';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -67,24 +66,8 @@ export default function App() {
     );
   }
 
-  if (screen === 'plans') {
-    return (
-      <VipPlansScreen
-        onBack={() => setScreen('home')}
-        onGetPlan={() => {
-          // Frontend only for now
-        }}
-      />
-    );
-  }
-
   if (screen === 'home') {
-    return (
-      <MainApp
-        onOpenPlans={() => setScreen('plans')}
-        onLogout={() => setScreen('login')}
-      />
-    );
+    return <MainApp onLogout={() => setScreen('login')} />;
   }
 
   return (

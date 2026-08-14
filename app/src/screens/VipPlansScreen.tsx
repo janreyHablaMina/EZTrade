@@ -1,5 +1,4 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import {
   Pressable,
@@ -9,7 +8,6 @@ import {
   View,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { NebulaBackground } from '../components/NebulaBackground';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
@@ -81,9 +79,6 @@ export function VipPlansScreen({ onBack, onGetPlan }: VipPlansScreenProps) {
 
   return (
     <View style={styles.root}>
-      <StatusBar style="light" />
-      <NebulaBackground />
-
       <ScreenHeader title="VIP Plans" onBack={onBack} />
 
       <ScrollView
@@ -180,7 +175,6 @@ export function VipPlansScreen({ onBack, onGetPlan }: VipPlansScreenProps) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.bg,
   },
   content: {
     zIndex: 1,
@@ -334,7 +328,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: 28,
+    paddingBottom: 12,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.06)',
     backgroundColor: 'rgba(5, 1, 15, 0.88)',

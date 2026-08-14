@@ -9,63 +9,13 @@ import {
   View,
 } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import { MarketOverview } from '../components/home/MarketOverview';
 import { colors } from '../theme/colors';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const ASSETS_CARD_WIDTH = SCREEN_WIDTH - 40; // content horizontal padding
 const BAR_CHART_HEIGHT = 96;
 const BG_BAR_HEIGHTS = [34, 48, 40, 62, 52, 74, 58, 80, 66, 88, 70, 92];
-
-const MARKET_ITEMS = [
-  {
-    symbol: 'BTC',
-    badge: 'â‚¿',
-    color: '#f59e0b',
-    change: '+2.45%',
-    price: '$68,320.50',
-    up: true,
-  },
-  {
-    symbol: 'ETH',
-    badge: 'â—†',
-    color: '#3b82f6',
-    change: '+1.82%',
-    price: '$3,450.10',
-    up: true,
-  },
-  {
-    symbol: 'USDT',
-    badge: 'â‚®',
-    color: '#14b8a6',
-    change: '+0.02%',
-    price: '$1.00',
-    up: true,
-  },
-  {
-    symbol: 'BNB',
-    badge: 'B',
-    color: '#f59e0b',
-    change: '-0.64%',
-    price: '$582.40',
-    up: false,
-  },
-  {
-    symbol: 'SOL',
-    badge: 'S',
-    color: '#a855f7',
-    change: '+3.18%',
-    price: '$148.75',
-    up: true,
-  },
-  {
-    symbol: 'XRP',
-    badge: 'X',
-    color: '#64748b',
-    change: '+0.91%',
-    price: '$0.62',
-    up: true,
-  },
-] as const;
 
 type HomeScreenProps = {
   userName?: string;
@@ -155,14 +105,6 @@ function ActionIcon({
       <Circle cx="4.5" cy="12" r="1.2" fill={stroke} />
       <Circle cx="4.5" cy="17" r="1.2" fill={stroke} />
     </Svg>
-  );
-}
-
-function CoinBadge({ symbol, color }: { symbol: string; color: string }) {
-  return (
-    <View style={[styles.coinBadge, { backgroundColor: color }]}>
-      <Text style={styles.coinBadgeText}>{symbol}</Text>
-    </View>
   );
 }
 
@@ -308,26 +250,7 @@ export function HomeScreen({
         </LinearGradient>
       </Pressable>
 
-      <Text style={styles.sectionTitle}>Market Overview</Text>
-      <View style={styles.marketGrid}>
-        {MARKET_ITEMS.map((item) => (
-          <View key={item.symbol} style={styles.marketCard}>
-            <View style={styles.marketTop}>
-              <CoinBadge symbol={item.badge} color={item.color} />
-              <Text style={styles.marketSymbol}>{item.symbol}</Text>
-              <Text
-                style={[
-                  styles.marketChange,
-                  !item.up && styles.marketChangeDown,
-                ]}
-              >
-                {item.change}
-              </Text>
-            </View>
-            <Text style={styles.marketPrice}>{item.price}</Text>
-          </View>
-        ))}
-      </View>
+      <MarketOverview />
     </ScrollView>
   );
 }
@@ -488,61 +411,5 @@ const styles = StyleSheet.create({
     fontFamily: 'Outfit_400Regular',
     fontSize: 13,
     color: 'rgba(255,255,255,0.82)',
-  },
-  sectionTitle: {
-    marginTop: 4,
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 18,
-    color: colors.white,
-  },
-  marketGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  marketCard: {
-    width: (SCREEN_WIDTH - 40 - 10) / 2,
-    backgroundColor: 'rgba(18, 16, 31, 0.92)',
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 18,
-    padding: 14,
-    gap: 10,
-  },
-  marketTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  coinBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  coinBadgeText: {
-    color: colors.white,
-    fontFamily: 'Outfit_800ExtraBold',
-    fontSize: 12,
-  },
-  marketSymbol: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 14,
-    color: colors.white,
-    flex: 1,
-  },
-  marketChange: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 12,
-    color: colors.green,
-  },
-  marketChangeDown: {
-    color: '#f87171',
-  },
-  marketPrice: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 16,
-    color: colors.white,
   },
 });

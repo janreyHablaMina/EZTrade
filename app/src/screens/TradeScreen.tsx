@@ -9,12 +9,16 @@ import {
   Text,
   View,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-import { PrimaryButton } from '../components/PrimaryButton';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 
 const useNativeDriver = Platform.OS !== 'web';
+const RING_SIZE = 188;
+const RING_R = 82;
+const RING_C = 2 * Math.PI * RING_R;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const REWARD = 2;
 
 type TradeScreenProps = {
   onBack?: () => void;
@@ -34,92 +38,94 @@ function CheckIcon() {
   );
 }
 
-function PulseRings({ active }: { active: boolean }) {
-  const a = useRef(new Animated.Value(0)).current;
-  const b = useRef(new Animated.Value(0)).current;
+function formatClock(ms: number) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const h = String(Math.floor(total / 3600)).padStart(2, '0');
+  const m = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
+  const s = String(total % 60).padStart(2, '0');
+  return `${h}:${m}:${s}`;
+}
 
-  useEffect(() => {
-    if (!active) {
-      a.setValue(0);
-      b.setValue(0);
-      return;
-    }
-
-    const loop = (value: Animated.Value, delay: number) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(delay),
-          Animated.timing(value, {
-            toValue: 1,
-            duration: 1800,
-            useNativeDriver,
-          }),
-          Animated.timing(value, {
-            toValue: 0,
-            duration: 0,
-            useNativeDriver,
-          }),
-        ]),
-      );
-
-    const one = loop(a, 0);
-    const two = loop(b, 700);
-    one.start();
-    two.start();
-    return () => {
-      one.stop();
-      two.stop();
-    };
-  }, [a, b, active]);
-
-  if (!active) return null;
+function ProgressRing({ progress }: { progress: number }) {
+  const offset = RING_C * (1 - progress);
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {[a, b].map((anim, index) => (
-        <Animated.View
-          key={index}
-          style={[
-            styles.pulseRing,
-            {
-              opacity: anim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0.35, 0],
-              }),
-              transform: [
-                {
-                  scale: anim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0.85, 1.35],
-                  }),
-                },
-              ],
-            },
-          ]}
-        />
-      ))}
-    </View>
+    <Svg width={RING_SIZE} height={RING_SIZE} style={StyleSheet.absoluteFill}>
+      <Circle
+        cx={RING_SIZE / 2}
+        cy={RING_SIZE / 2}
+        r={RING_R}
+        stroke="rgba(167, 139, 250, 0.18)"
+        strokeWidth={8}
+        fill="none"
+      />
+      <Circle
+        cx={RING_SIZE / 2}
+        cy={RING_SIZE / 2}
+        r={RING_R}
+        stroke={colors.purpleBright}
+        strokeWidth={8}
+        fill="none"
+        strokeDasharray={`${RING_C} ${RING_C}`}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
+      />
+    </Svg>
   );
 }
 
 export function TradeScreen({ onBack }: TradeScreenProps) {
   const [claimed, setClaimed] = useState(false);
   const [claiming, setClaiming] = useState(false);
+  const [remaining, setRemaining] = useState(DAY_MS);
   const claimScale = useRef(new Animated.Value(1)).current;
+  const floatY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatY, {
+          toValue: -6,
+          duration: 1400,
+          useNativeDriver,
+        }),
+        Animated.timing(floatY, {
+          toValue: 0,
+          duration: 1400,
+          useNativeDriver,
+        }),
+      ]),
+    );
+    if (!claimed) loop.start();
+    else {
+      loop.stop();
+      floatY.setValue(0);
+    }
+    return () => loop.stop();
+  }, [claimed, floatY]);
+
+  useEffect(() => {
+    if (!claimed) return;
+    const endsAt = Date.now() + DAY_MS;
+    const tick = () => setRemaining(Math.max(0, endsAt - Date.now()));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [claimed]);
 
   const handleQuantify = () => {
     if (claimed || claiming) return;
-
     setClaiming(true);
     Animated.sequence([
       Animated.timing(claimScale, {
-        toValue: 0.94,
-        duration: 120,
+        toValue: 0.92,
+        duration: 110,
         useNativeDriver,
       }),
-      Animated.timing(claimScale, {
+      Animated.spring(claimScale, {
         toValue: 1,
-        duration: 180,
+        friction: 5,
         useNativeDriver,
       }),
     ]).start(() => {
@@ -128,51 +134,81 @@ export function TradeScreen({ onBack }: TradeScreenProps) {
     });
   };
 
+  const progress = claimed ? remaining / DAY_MS : 1;
+
   return (
     <ScrollView
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      <ScreenHeader title="Daily Quantify" onBack={onBack} padded={false} />
+      <ScreenHeader title="Trade" onBack={onBack} padded={false} />
+      <Text style={styles.subtitle}>Daily Quantify</Text>
 
-      <LinearGradient
-        colors={['#7c3aed', '#5b21b6', '#312e81']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.heroCard}
-      >
-        <View style={styles.heroGlow} />
-        <View style={styles.heroTop}>
-          <Text style={styles.heroLabel}>Today's reward</Text>
-          <View style={[styles.statusChip, claimed && styles.statusChipDone]}>
-            <View
-              style={[styles.statusDot, claimed && styles.statusDotDone]}
-            />
-            <Text
-              style={[styles.statusText, claimed && styles.statusTextDone]}
-            >
-              {claimed ? 'Claimed' : 'Ready'}
-            </Text>
+      <View style={styles.hero}>
+        <Animated.View
+          style={{
+            transform: [{ translateY: claimed ? 0 : floatY }, { scale: claimScale }],
+          }}
+        >
+          <View style={styles.orbWrap}>
+            <ProgressRing progress={progress} />
+            {claimed ? (
+              <View style={styles.orbDone}>
+                <CheckIcon />
+                <Text style={styles.orbDoneTitle}>Claimed</Text>
+                <Text style={styles.orbDoneSub}>{formatClock(remaining)}</Text>
+              </View>
+            ) : (
+              <Pressable
+                onPress={handleQuantify}
+                disabled={claiming}
+                style={styles.orbPress}
+              >
+                <LinearGradient
+                  colors={['#c084fc', '#7c3aed', '#4c1d95']}
+                  start={{ x: 0.15, y: 0 }}
+                  end={{ x: 0.9, y: 1 }}
+                  style={styles.orb}
+                >
+                  <Text style={styles.orbKicker}>Tap to</Text>
+                  <Text style={styles.orbTitle}>
+                    {claiming ? '...' : 'Quantify'}
+                  </Text>
+                  <Text style={styles.orbReward}>+{REWARD.toFixed(2)} USDT</Text>
+                </LinearGradient>
+              </Pressable>
+            )}
           </View>
-        </View>
+        </Animated.View>
 
-        <Text style={styles.rewardAmount}>+2.00</Text>
-        <Text style={styles.rewardUnit}>USDT</Text>
         <Text style={styles.heroHint}>
           {claimed
-            ? 'Come back tomorrow for the next reward.'
-            : 'Tap Quantify to claim your VIP daily profit.'}
+            ? 'Next reward unlocks when the timer hits zero.'
+            : 'Claim today’s VIP profit. One tap per day.'}
         </Text>
-      </LinearGradient>
+      </View>
+
+      <View style={styles.statsRow}>
+        <View style={styles.statCard}>
+          <Text style={styles.statLabel}>Streak</Text>
+          <Text style={styles.statValue}>{claimed ? '4 days' : '3 days'}</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statLabel}>Today</Text>
+          <Text style={[styles.statValue, claimed && styles.statGreen]}>
+            {claimed ? `+${REWARD.toFixed(2)}` : 'Ready'}
+          </Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statLabel}>Plan</Text>
+          <Text style={styles.statValue}>VIP 1</Text>
+        </View>
+      </View>
 
       <View style={styles.planCard}>
         <View style={styles.planRow}>
-          <Text style={styles.planLabel}>Active plan</Text>
-          <Text style={styles.planValue}>VIP 1</Text>
-        </View>
-        <View style={styles.planRow}>
           <Text style={styles.planLabel}>Daily rate</Text>
-          <Text style={styles.planValueGreen}>+20%</Text>
+          <Text style={styles.planGreen}>+20%</Text>
         </View>
         <View style={[styles.planRow, styles.planRowLast]}>
           <Text style={styles.planLabel}>Deposit</Text>
@@ -180,65 +216,12 @@ export function TradeScreen({ onBack }: TradeScreenProps) {
         </View>
       </View>
 
-      <View style={styles.actionCard}>
-        <Animated.View
-          style={[
-            styles.quantifyWrap,
-            { transform: [{ scale: claimScale }] },
-          ]}
-        >
-          <PulseRings active={!claimed} />
-          {claimed ? (
-            <View style={styles.claimedCircle}>
-              <CheckIcon />
-              <Text style={styles.claimedCircleText}>Done</Text>
-            </View>
-          ) : (
-            <Pressable
-              onPress={handleQuantify}
-              disabled={claiming}
-              style={styles.quantifyPressable}
-            >
-              <LinearGradient
-                colors={['#a855f7', '#7c3aed', '#5b21b6']}
-                start={{ x: 0.2, y: 0 }}
-                end={{ x: 0.8, y: 1 }}
-                style={styles.quantifyCircle}
-              >
-                <Text style={styles.quantifyTitle}>Quantify</Text>
-                <Text style={styles.quantifySub}>Claim now</Text>
-              </LinearGradient>
-            </Pressable>
-          )}
-        </Animated.View>
-
-        <Text style={styles.actionHint}>
-          {claimed
-            ? 'Reward added to your available balance.'
-            : 'One claim per day · resets at midnight UTC'}
-        </Text>
-
-        {!claimed ? (
-          <PrimaryButton
-            label={claiming ? 'Quantifying...' : 'Quantify & Claim'}
-            onPress={handleQuantify}
-            disabled={claiming}
-          />
-        ) : (
-          <View style={styles.claimedBanner}>
-            <Text style={styles.claimedBannerText}>
-              +2.00 USDT claimed successfully
-            </Text>
-          </View>
-        )}
-      </View>
-
       <View style={styles.infoCard}>
         <Text style={styles.infoTitle}>How it works</Text>
         {[
-          'Your VIP plan generates daily profit automatically.',
-          'Open Quantify once a day to claim the reward.',
-          'Claimed USDT is added to your available balance.',
+          'Your VIP plan earns a daily reward automatically.',
+          'Quantify once a day to add it to your balance.',
+          'Come back after the countdown for the next claim.',
         ].map((step, index) => (
           <View key={step} style={styles.infoRow}>
             <View style={styles.stepBadge}>
@@ -259,94 +242,116 @@ const styles = StyleSheet.create({
     paddingBottom: 28,
     gap: 14,
   },
-  heroCard: {
-    borderRadius: 28,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 24,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-  },
-  heroGlow: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: 'rgba(192, 132, 252, 0.28)',
-    top: -80,
-    right: -50,
-  },
-  heroTop: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 18,
-  },
-  heroLabel: {
-    fontFamily: 'Outfit_500Medium',
+  subtitle: {
+    marginTop: -8,
+    fontFamily: 'Outfit_400Regular',
     fontSize: 14,
-    color: 'rgba(255,255,255,0.78)',
+    color: 'rgba(255,255,255,0.5)',
   },
-  statusChip: {
-    flexDirection: 'row',
+  hero: {
     alignItems: 'center',
-    gap: 6,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: 'rgba(250, 204, 21, 0.16)',
+    paddingVertical: 8,
+    gap: 16,
+  },
+  orbWrap: {
+    width: RING_SIZE,
+    height: RING_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  orbPress: {
+    width: 148,
+    height: 148,
+    borderRadius: 74,
+  },
+  orb: {
+    width: 148,
+    height: 148,
+    borderRadius: 74,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(250, 204, 21, 0.35)',
+    borderColor: 'rgba(255,255,255,0.2)',
   },
-  statusChipDone: {
-    backgroundColor: 'rgba(34, 197, 94, 0.16)',
-    borderColor: 'rgba(134, 239, 172, 0.35)',
+  orbKicker: {
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.7)',
   },
-  statusDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: '#facc15',
+  orbTitle: {
+    fontFamily: 'Outfit_800ExtraBold',
+    fontSize: 24,
+    color: colors.white,
+    marginTop: 2,
   },
-  statusDotDone: {
-    backgroundColor: '#4ade80',
-  },
-  statusText: {
+  orbReward: {
+    marginTop: 4,
     fontFamily: 'Outfit_700Bold',
-    fontSize: 11,
-    color: '#fde68a',
-  },
-  statusTextDone: {
+    fontSize: 13,
     color: '#bbf7d0',
   },
-  rewardAmount: {
-    fontFamily: 'Outfit_800ExtraBold',
-    fontSize: 52,
-    color: colors.white,
-    letterSpacing: -1,
+  orbDone: {
+    width: 148,
+    height: 148,
+    borderRadius: 74,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(34, 197, 94, 0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(134, 239, 172, 0.4)',
   },
-  rewardUnit: {
-    marginTop: -4,
+  orbDoneTitle: {
     fontFamily: 'Outfit_700Bold',
-    fontSize: 18,
-    color: 'rgba(255,255,255,0.85)',
+    fontSize: 16,
+    color: '#bbf7d0',
+  },
+  orbDoneSub: {
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.7)',
   },
   heroHint: {
-    marginTop: 12,
     fontFamily: 'Outfit_400Regular',
     fontSize: 13,
-    color: 'rgba(255,255,255,0.72)',
+    color: 'rgba(255,255,255,0.55)',
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 19,
+    paddingHorizontal: 12,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: 'rgba(18, 16, 31, 0.92)',
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    gap: 4,
+  },
+  statLabel: {
+    fontFamily: 'Outfit_400Regular',
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.45)',
+  },
+  statValue: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 14,
+    color: colors.white,
+  },
+  statGreen: {
+    color: '#4ade80',
   },
   planCard: {
     backgroundColor: 'rgba(18, 16, 31, 0.92)',
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    borderRadius: 22,
+    borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 4,
   },
@@ -371,100 +376,18 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.white,
   },
-  planValueGreen: {
+  planGreen: {
     fontFamily: 'Outfit_700Bold',
     fontSize: 15,
     color: '#4ade80',
-  },
-  actionCard: {
-    backgroundColor: 'rgba(18, 16, 31, 0.92)',
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 24,
-    padding: 20,
-    alignItems: 'center',
-    gap: 16,
-  },
-  quantifyWrap: {
-    width: 168,
-    height: 168,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pulseRing: {
-    position: 'absolute',
-    width: 168,
-    height: 168,
-    borderRadius: 84,
-    borderWidth: 2,
-    borderColor: 'rgba(168, 85, 247, 0.7)',
-  },
-  quantifyPressable: {
-    borderRadius: 84,
-  },
-  quantifyCircle: {
-    width: 148,
-    height: 148,
-    borderRadius: 74,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.22)',
-  },
-  quantifyTitle: {
-    fontFamily: 'Outfit_800ExtraBold',
-    fontSize: 22,
-    color: colors.white,
-  },
-  quantifySub: {
-    marginTop: 4,
-    fontFamily: 'Outfit_500Medium',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.78)',
-  },
-  claimedCircle: {
-    width: 148,
-    height: 148,
-    borderRadius: 74,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(34, 197, 94, 0.2)',
-    borderWidth: 2,
-    borderColor: 'rgba(134, 239, 172, 0.45)',
-  },
-  claimedCircleText: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 16,
-    color: '#bbf7d0',
-  },
-  actionHint: {
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.5)',
-    textAlign: 'center',
-  },
-  claimedBanner: {
-    width: '100%',
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: 'center',
-    backgroundColor: 'rgba(34, 197, 94, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(134, 239, 172, 0.28)',
-  },
-  claimedBannerText: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 14,
-    color: '#86efac',
   },
   infoCard: {
     backgroundColor: 'rgba(18, 16, 31, 0.92)',
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    borderRadius: 22,
+    borderRadius: 20,
     padding: 16,
-    gap: 14,
+    gap: 12,
   },
   infoTitle: {
     fontFamily: 'Outfit_700Bold',

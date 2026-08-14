@@ -18,6 +18,7 @@ import { SupportScreen } from './screens/SupportScreen';
 import { TradeScreen } from './screens/TradeScreen';
 import { TransactionsScreen } from './screens/TransactionsScreen';
 import { VerifyingDepositScreen } from './screens/VerifyingDepositScreen';
+import { VipPlansScreen } from './screens/VipPlansScreen';
 import { WithdrawScreen } from './screens/WithdrawScreen';
 import { colors } from './theme/colors';
 
@@ -26,13 +27,11 @@ type Overlay = 'withdraw' | 'security' | 'support' | 'about' | 'transactions';
 
 type MainAppProps = {
   userName?: string;
-  onOpenPlans?: () => void;
   onLogout?: () => void;
 };
 
 export function MainApp({
   userName = 'John Doe',
-  onOpenPlans,
   onLogout,
 }: MainAppProps) {
   const [tab, setTab] = useState<TabKey>('home');
@@ -46,7 +45,7 @@ export function MainApp({
   let screen = (
     <HomeScreen
       userName={userName}
-      onOpenPlans={onOpenPlans}
+      onOpenPlans={() => setTab('plans')}
       onOpenDeposit={() => setWalletStep('deposit')}
       onOpenWithdraw={() => setOverlay('withdraw')}
       onOpenAssets={() => setTab('assets')}
@@ -108,11 +107,20 @@ export function MainApp({
         onLogout={onLogout}
         onOpenMenu={(key) => {
           if (key === 'assets') setTab('assets');
-          if (key === 'plans') onOpenPlans?.();
+          if (key === 'plans') setTab('plans');
           if (key === 'transactions') setOverlay('transactions');
           if (key === 'security') setOverlay('security');
           if (key === 'support') setOverlay('support');
           if (key === 'about') setOverlay('about');
+        }}
+      />
+    );
+  } else if (tab === 'plans') {
+    screen = (
+      <VipPlansScreen
+        onBack={() => setTab('home')}
+        onGetPlan={() => {
+          // Frontend only for now
         }}
       />
     );
@@ -128,13 +136,7 @@ export function MainApp({
       {hideTabs ? null : (
         <BottomTabBar
           active={tab}
-          onChange={(next) => {
-            if (next === 'plans') {
-              onOpenPlans?.();
-              return;
-            }
-            setTab(next);
-          }}
+          onChange={setTab}
         />
       )}
     </View>
