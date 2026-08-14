@@ -17,6 +17,7 @@ import {
 import { NebulaBackground } from '../components/NebulaBackground';
 import { colors } from '../theme/colors';
 import { AssetsScreen } from './AssetsScreen';
+import { DepositScreen } from './DepositScreen';
 import { ProfileScreen } from './ProfileScreen';
 import { TradeScreen } from './TradeScreen';
 
@@ -178,6 +179,7 @@ export function HomeScreen({
   onLogout,
 }: HomeScreenProps) {
   const [tab, setTab] = useState<TabKey>('home');
+  const [showDeposit, setShowDeposit] = useState(false);
   const greeting = useMemo(() => greetingForNow(), []);
   const initials = userName
     .split(' ')
@@ -198,7 +200,12 @@ export function HomeScreen({
       <StatusBar style="light" />
       <NebulaBackground />
 
-      {tab === 'assets' ? (
+      {showDeposit ? (
+        <DepositScreen
+          onBack={() => setShowDeposit(false)}
+          onSentPayment={() => setShowDeposit(false)}
+        />
+      ) : tab === 'assets' ? (
         <AssetsScreen onBack={() => setTab('home')} />
       ) : tab === 'profile' ? (
         <ProfileScreen
@@ -304,6 +311,7 @@ export function HomeScreen({
                 style={styles.actionItem}
                 onPress={() => {
                   if (action.key === 'assets') setTab('assets');
+                  if (action.key === 'deposit') setShowDeposit(true);
                 }}
               >
                 <View style={styles.actionIcon}>
@@ -351,16 +359,18 @@ export function HomeScreen({
         </ScrollView>
       )}
 
-      <BottomTabBar
-        active={tab}
-        onChange={(next) => {
-          if (next === 'plans') {
-            onOpenPlans?.();
-            return;
-          }
-          setTab(next);
-        }}
-      />
+      {showDeposit ? null : (
+        <BottomTabBar
+          active={tab}
+          onChange={(next) => {
+            if (next === 'plans') {
+              onOpenPlans?.();
+              return;
+            }
+            setTab(next);
+          }}
+        />
+      )}
     </View>
   );
 }
