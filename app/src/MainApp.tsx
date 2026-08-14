@@ -15,6 +15,7 @@ import { SubmitTxidScreen } from './screens/SubmitTxidScreen';
 import { TradeScreen } from './screens/TradeScreen';
 import { TransactionsScreen } from './screens/TransactionsScreen';
 import { VerifyingDepositScreen } from './screens/VerifyingDepositScreen';
+import { SecurityScreen } from './screens/SecurityScreen';
 import { WithdrawScreen } from './screens/WithdrawScreen';
 import { colors } from './theme/colors';
 
@@ -36,8 +37,10 @@ export function MainApp({
   const [depositNetwork, setDepositNetwork] = useState('TRC20 (USDT)');
   const [showTransactions, setShowTransactions] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
+  const [showSecurity, setShowSecurity] = useState(false);
 
-  const hideTabs = Boolean(walletStep) || showTransactions || showWithdraw;
+  const hideTabs =
+    Boolean(walletStep) || showTransactions || showWithdraw || showSecurity;
 
   let screen = (
     <HomeScreen
@@ -86,6 +89,8 @@ export function MainApp({
     );
   } else if (showWithdraw) {
     screen = <WithdrawScreen onBack={() => setShowWithdraw(false)} />;
+  } else if (showSecurity) {
+    screen = <SecurityScreen onBack={() => setShowSecurity(false)} />;
   } else if (showTransactions) {
     screen = (
       <TransactionsScreen onBack={() => setShowTransactions(false)} />
@@ -102,6 +107,7 @@ export function MainApp({
           if (key === 'assets') setTab('assets');
           if (key === 'plans') onOpenPlans?.();
           if (key === 'transactions') setShowTransactions(true);
+          if (key === 'security') setShowSecurity(true);
         }}
       />
     );
