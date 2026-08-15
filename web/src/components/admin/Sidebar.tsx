@@ -43,7 +43,7 @@ const management: NavItem[] = [
 
 const support: NavItem[] = [
   { label: "Support Tickets", href: "/support-tickets", icon: LifeBuoy },
-  { label: "Notifications", href: "#notifications", icon: Bell, badge: true },
+  { label: "Notifications", href: "/notifications", icon: Bell, badge: true },
 ];
 
 const settings: NavItem[] = [
