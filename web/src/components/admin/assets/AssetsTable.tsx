@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PaginationFooter } from "@/components/admin/PaginationFooter";
 import { Search, RotateCcw, ChevronDown, ChevronLeft, ChevronRight, Eye, MoreHorizontal, TrendingUp, TrendingDown } from "lucide-react";
 import type { AssetRecord } from "./assetsData";
 
@@ -156,29 +157,15 @@ export function AssetsTable({ assets, search, setSearch }: AssetsTableProps) {
         </table>
       </div>
 
-      {/* Pagination Footer */}
-      <div className="flex items-center justify-between px-5 py-3 border-t border-border/50 text-[11px] text-muted-2 bg-card">
-        <div>
-          Showing {filteredAssets.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to {Math.min(currentPage * pageSize, filteredAssets.length)} of {filteredAssets.length} assets
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <button onClick={() => goTo(currentPage - 1)} disabled={currentPage === 1} className="flex h-6 w-6 items-center justify-center rounded border border-border hover:bg-white/[0.04] disabled:opacity-40 transition"><ChevronLeft className="h-3 w-3" /></button>
-            <button className="flex h-6 w-6 items-center justify-center rounded border border-purple-bright bg-purple/20 text-purple-bright font-medium transition">1</button>
-            <button onClick={() => goTo(currentPage + 1)} disabled={currentPage === totalPages} className="flex h-6 w-6 items-center justify-center rounded border border-border hover:bg-white/[0.04] disabled:opacity-40 transition"><ChevronRight className="h-3 w-3" /></button>
-          </div>
-          <div className="relative">
-            <select
-              value={pageSize}
-              onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-              className="appearance-none rounded border border-border bg-card-elevated py-1 pl-2 pr-6 text-[10px] text-white outline-none cursor-pointer"
-            >
-              {PAGE_SIZES.map(s => <option key={s} value={s}>{s} / page</option>)}
-            </select>
-            <ChevronDown className="absolute right-1.5 top-1.5 h-3 w-3 text-muted-2 pointer-events-none" />
-          </div>
-        </div>
-      </div>
+      <PaginationFooter
+        currentPage={currentPage}
+        pageSize={pageSize}
+        totalItems={filteredAssets.length}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        itemName="assets"
+        pageSizes={PAGE_SIZES}
+      />
     </div>
   );
 }

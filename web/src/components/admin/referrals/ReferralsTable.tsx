@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, ChevronLeft, ChevronRight, ChevronDown, MoreHorizontal } from "lucide-react";
+import { PaginationFooter } from "@/components/admin/PaginationFooter";
+import { Eye, MoreHorizontal } from "lucide-react";
 import type { ReferralRecord } from "./referralsData";
 import { vipLevelBadgeStyles, statusBadgeStyles, commissionStatusBadgeStyles } from "./referralsData";
 
@@ -38,23 +39,7 @@ export function ReferralsTable({ referrals }: ReferralsTableProps) {
   const [pageSize, setPageSize] = useState(10);
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
 
-  const totalPages = Math.max(1, Math.ceil(referrals.length / pageSize));
   const paginated = referrals.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  const goTo = (p: number) => setCurrentPage(Math.min(Math.max(1, p), totalPages));
-
-  const pageNumbers: (number | "...")[] = [];
-  if (totalPages <= 7) {
-    for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
-  } else {
-    pageNumbers.push(1);
-    if (currentPage > 3) pageNumbers.push("...");
-    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
-      pageNumbers.push(i);
-    }
-    if (currentPage < totalPages - 2) pageNumbers.push("...");
-    pageNumbers.push(totalPages);
-  }
 
   return (
     <div className="rounded-2xl border border-border bg-card shadow-[0_10px_30px_rgba(0,0,0,0.25)] overflow-hidden">
@@ -224,70 +209,15 @@ export function ReferralsTable({ referrals }: ReferralsTableProps) {
         </table>
       </div>
 
-      {/* Pagination Footer */}
-      <div className="mt-0 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-2 border-t border-border/45 px-5 py-4">
-        <div>
-          Showing {referrals.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to{" "}
-          {Math.min(currentPage * pageSize, referrals.length)} of {referrals.length} referrals
-        </div>
-        <div className="flex items-center gap-3">
-          {/* Page Numbers */}
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => goTo(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-border hover:bg-white/[0.04] disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-            </button>
-            {pageNumbers.map((p, i) =>
-              p === "..." ? (
-                <span key={`ellipsis-${i}`} className="px-1 text-muted-2">
-                  ...
-                </span>
-              ) : (
-                <button
-                  key={p}
-                  onClick={() => goTo(Number(p))}
-                  className={`flex h-7 w-7 items-center justify-center rounded-lg border text-[11px] font-medium transition cursor-pointer ${
-                    currentPage === p
-                      ? "border-purple-bright bg-purple/20 text-purple-bright"
-                      : "border-border hover:bg-white/[0.04] text-muted-2"
-                  }`}
-                >
-                  {p}
-                </button>
-              )
-            )}
-            <button
-              onClick={() => goTo(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-border hover:bg-white/[0.04] disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
-            >
-              <ChevronRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
-
-          {/* Page Size */}
-          <div className="relative">
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="appearance-none rounded-xl border border-border bg-card-elevated py-1.5 pl-3 pr-8 text-[11px] text-white outline-none transition cursor-pointer"
-            >
-              {PAGE_SIZES.map((s) => (
-                <option key={s} value={s}>
-                  {s} / page
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-2 h-3.5 w-3.5 text-muted-2" />
-          </div>
-        </div>
-      </div>
+      <PaginationFooter
+        currentPage={currentPage}
+        pageSize={pageSize}
+        totalItems={referrals.length}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        itemName="referrals"
+        pageSizes={PAGE_SIZES}
+      />
     </div>
   );
 }

@@ -2,10 +2,8 @@ import {
   Edit2,
   Copy,
   Trash2,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
 } from "lucide-react";
+import { PaginationFooter } from "@/components/admin/PaginationFooter";
 import type { VipPlan } from "./vipPlansData";
 import { vipPlanBadgeStyles } from "./vipPlansData";
 
@@ -34,8 +32,6 @@ export function VipPlansTable({
   onDuplicate,
   onDelete,
 }: VipPlansTableProps) {
-  const totalPages = Math.max(1, Math.ceil(plans.length / pageSize));
-
   return (
     <div className="mt-5 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex flex-col">
       <div className="overflow-x-auto">
@@ -149,77 +145,15 @@ export function VipPlansTable({
         </table>
       </div>
 
-      {/* Table Footer / Pagination */}
-      <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-2 border-t border-border/45 pt-4">
-        <div>
-          Showing {plans.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to{" "}
-          {Math.min(currentPage * pageSize, plans.length)} of{" "}
-          <span className="text-white font-medium">
-            {plans.length}
-          </span>{" "}
-          plans
-        </div>
-
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(currentPage - 1)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card-elevated text-muted hover:text-white transition disabled:opacity-40 disabled:hover:text-muted cursor-pointer disabled:cursor-not-allowed"
-              aria-label="Previous Page"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            
-            {Array.from({ length: totalPages }).map((_, i) => {
-              const pageNum = i + 1;
-              return (
-                <button
-                  key={pageNum}
-                  type="button"
-                  onClick={() => setCurrentPage(pageNum)}
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg border text-xs font-semibold transition cursor-pointer ${
-                    currentPage === pageNum
-                      ? "bg-purple border-purple-bright/35 text-white shadow-[0_4px_12px_rgba(123,44,255,0.3)]"
-                      : "border-border bg-card-elevated text-muted hover:text-white"
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
-
-            <button
-              type="button"
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(currentPage + 1)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card-elevated text-muted hover:text-white transition disabled:opacity-40 disabled:hover:text-muted cursor-pointer disabled:cursor-not-allowed"
-              aria-label="Next Page"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="h-8 rounded-lg border border-border bg-card-elevated pl-2.5 pr-8 text-xs text-white outline-none focus:border-border-strong transition appearance-none cursor-pointer"
-              >
-                <option value={5}>5 / page</option>
-                <option value={10}>10 / page</option>
-                <option value={20}>20 / page</option>
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-2.5 top-2 h-4 w-4 text-muted-2" />
-            </div>
-          </div>
-        </div>
-      </div>
+      <PaginationFooter
+        currentPage={currentPage}
+        pageSize={pageSize}
+        totalItems={plans.length}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        itemName="plans"
+        pageSizes={[5, 10, 20]}
+      />
     </div>
   );
 }
