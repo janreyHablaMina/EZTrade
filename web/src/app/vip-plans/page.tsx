@@ -13,6 +13,7 @@ import {
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { initialVipPlans } from "@/components/admin/vip-plans/vipPlansData";
+import type { VipPlan } from "@/components/admin/vip-plans/vipPlansData";
 import { VipPlansFilters } from "@/components/admin/vip-plans/VipPlansFilters";
 import { VipPlansTable } from "@/components/admin/vip-plans/VipPlansTable";
 
@@ -143,6 +144,9 @@ export default function VipPlansPage() {
         setCurrentPage={setCurrentPage}
         pageSize={pageSize}
         setPageSize={setPageSize}
+        onEdit={(plan) => console.log("Edit plan:", plan.id, plan.planName)}
+        onDuplicate={(plan) => console.log("Duplicate plan:", plan.id, plan.planName)}
+        onDelete={(plan) => console.log("Delete plan:", plan.id, plan.planName)}
       />
     </AdminShell>
   );

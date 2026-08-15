@@ -17,6 +17,9 @@ type VipPlansTableProps = {
   setCurrentPage: (p: number) => void;
   pageSize: number;
   setPageSize: (s: number) => void;
+  onEdit?: (plan: VipPlan) => void;
+  onDuplicate?: (plan: VipPlan) => void;
+  onDelete?: (plan: VipPlan) => void;
 };
 
 export function VipPlansTable({
@@ -27,6 +30,9 @@ export function VipPlansTable({
   setCurrentPage,
   pageSize,
   setPageSize,
+  onEdit,
+  onDuplicate,
+  onDelete,
 }: VipPlansTableProps) {
   const totalPages = Math.max(1, Math.ceil(plans.length / pageSize));
 
@@ -105,6 +111,7 @@ export function VipPlansTable({
                       <div className="inline-flex items-center gap-1.5 justify-end">
                         <button
                           type="button"
+                          onClick={() => onEdit?.(plan)}
                           className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-card-elevated text-purple-bright hover:bg-purple/10 hover:border-purple-bright/35 transition cursor-pointer"
                           aria-label="Edit Plan"
                         >
@@ -112,6 +119,7 @@ export function VipPlansTable({
                         </button>
                         <button
                           type="button"
+                          onClick={() => onDuplicate?.(plan)}
                           className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-card-elevated text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer"
                           aria-label="Duplicate Plan"
                         >
@@ -119,6 +127,7 @@ export function VipPlansTable({
                         </button>
                         <button
                           type="button"
+                          onClick={() => onDelete?.(plan)}
                           className="flex h-7 w-7 items-center justify-center rounded-lg border border-danger/25 bg-card-elevated text-danger hover:bg-danger/10 hover:border-danger/45 transition cursor-pointer"
                           aria-label="Delete Plan"
                         >
