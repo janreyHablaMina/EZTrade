@@ -13,6 +13,7 @@ import {
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { initialDepositRequests } from "@/components/admin/deposits/depositsData";
+import type { DepositRequest } from "@/components/admin/deposits/depositsData";
 import { DepositsFilters } from "@/components/admin/deposits/DepositsFilters";
 import { DepositsTable } from "@/components/admin/deposits/DepositsTable";
 
@@ -171,6 +172,11 @@ export default function DepositsPage() {
         setCurrentPage={setCurrentPage}
         pageSize={pageSize}
         setPageSize={setPageSize}
+        onViewDetails={(dep) => console.log("View details for:", dep.id)}
+        onVerify={(dep) => console.log("Verify deposit:", dep.id)}
+        onReject={(dep) => console.log("Reject deposit:", dep.id)}
+        onAddManual={(dep) => console.log("Add manual deposit:", dep.id)}
+        onNotesHistory={(dep) => console.log("Notes / History for:", dep.id)}
       />
     </AdminShell>
   );

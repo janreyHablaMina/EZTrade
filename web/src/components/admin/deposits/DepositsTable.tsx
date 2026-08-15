@@ -22,6 +22,11 @@ type DepositsTableProps = {
   setCurrentPage: (p: number) => void;
   pageSize: number;
   setPageSize: (s: number) => void;
+  onViewDetails?: (deposit: DepositRequest) => void;
+  onVerify?: (deposit: DepositRequest) => void;
+  onReject?: (deposit: DepositRequest) => void;
+  onAddManual?: (deposit: DepositRequest) => void;
+  onNotesHistory?: (deposit: DepositRequest) => void;
 };
 
 export function DepositsTable({
@@ -32,6 +37,11 @@ export function DepositsTable({
   setCurrentPage,
   pageSize,
   setPageSize,
+  onViewDetails,
+  onVerify,
+  onReject,
+  onAddManual,
+  onNotesHistory,
 }: DepositsTableProps) {
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -165,6 +175,7 @@ export function DepositsTable({
                       <div className="inline-flex items-center gap-1.5 justify-end">
                         <button
                           type="button"
+                          onClick={() => onViewDetails?.(deposit)}
                           className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-card-elevated text-purple-bright hover:bg-purple/10 hover:border-purple-bright/35 transition cursor-pointer"
                           aria-label="View Details"
                         >
@@ -203,7 +214,10 @@ export function DepositsTable({
                           }`}>
                             <button
                               type="button"
-                              onClick={() => setActiveDropdownId(null)}
+                              onClick={() => {
+                                setActiveDropdownId(null);
+                                onViewDetails?.(deposit);
+                              }}
                               className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
                             >
                               <Eye className="h-3.5 w-3.5 text-muted-2 mr-2 inline" />
@@ -211,7 +225,10 @@ export function DepositsTable({
                             </button>
                             <button
                               type="button"
-                              onClick={() => setActiveDropdownId(null)}
+                              onClick={() => {
+                                setActiveDropdownId(null);
+                                onVerify?.(deposit);
+                              }}
                               className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
                             >
                               <CheckCircle2 className="h-3.5 w-3.5 text-success mr-2 inline" />
@@ -219,7 +236,10 @@ export function DepositsTable({
                             </button>
                             <button
                               type="button"
-                              onClick={() => setActiveDropdownId(null)}
+                              onClick={() => {
+                                setActiveDropdownId(null);
+                                onReject?.(deposit);
+                              }}
                               className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
                             >
                               <XCircle className="h-3.5 w-3.5 text-danger mr-2 inline" />
@@ -227,7 +247,10 @@ export function DepositsTable({
                             </button>
                             <button
                               type="button"
-                              onClick={() => setActiveDropdownId(null)}
+                              onClick={() => {
+                                setActiveDropdownId(null);
+                                onAddManual?.(deposit);
+                              }}
                               className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
                             >
                               <Plus className="h-3.5 w-3.5 text-purple-bright mr-2 inline" />
@@ -236,7 +259,10 @@ export function DepositsTable({
                             <div className="my-1 border-t border-border/45" />
                             <button
                               type="button"
-                              onClick={() => setActiveDropdownId(null)}
+                              onClick={() => {
+                                setActiveDropdownId(null);
+                                onNotesHistory?.(deposit);
+                              }}
                               className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
                             >
                               <FileText className="h-3.5 w-3.5 text-muted-2 mr-2 inline" />
