@@ -37,7 +37,7 @@ const management: NavItem[] = [
   { label: "Withdrawals", href: "/withdrawals", icon: ArrowUpFromLine },
   { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
   { label: "Earnings", href: "/earnings", icon: Coins },
-  { label: "Referrals", href: "#referrals", icon: Share2 },
+  { label: "Referrals", href: "/referrals", icon: Share2 },
   { label: "Assets", href: "#assets", icon: Wallet },
 ];
 
