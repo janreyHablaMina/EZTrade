@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Download,
   Coins,
@@ -16,6 +16,7 @@ import { initialDepositRequests } from "@/components/admin/deposits/depositsData
 import type { DepositRequest } from "@/components/admin/deposits/depositsData";
 import { DepositsFilters } from "@/components/admin/deposits/DepositsFilters";
 import { DepositsTable } from "@/components/admin/deposits/DepositsTable";
+import { FloatingDepositActions } from "@/components/admin/deposits/FloatingDepositActions";
 
 export default function DepositsPage() {
   const [search, setSearch] = useState("");
@@ -34,6 +35,29 @@ export default function DepositsPage() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // Selection handlers
+  const toggleSelectAll = () => {
+    if (selectedIds.length === paginatedDeposits.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(paginatedDeposits.map((d) => d.id));
+    }
+  };
+
+  const toggleSelectRow = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((item) => item !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  // Reset selection when parameters change
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [currentPage, pageSize, filters]);
 
   // Apply filters logic
   const filteredDeposits = useMemo(() => {
@@ -172,12 +196,30 @@ export default function DepositsPage() {
         setCurrentPage={setCurrentPage}
         pageSize={pageSize}
         setPageSize={setPageSize}
+        selectedIds={selectedIds}
+        toggleSelectAll={toggleSelectAll}
+        toggleSelectRow={toggleSelectRow}
         onViewDetails={(dep) => console.log("View details for:", dep.id)}
         onVerify={(dep) => console.log("Verify deposit:", dep.id)}
         onReject={(dep) => console.log("Reject deposit:", dep.id)}
         onAddManual={(dep) => console.log("Add manual deposit:", dep.id)}
         onNotesHistory={(dep) => console.log("Notes / History for:", dep.id)}
       />
+
+      {selectedIds.length > 0 && (
+        <FloatingDepositActions
+          selectedCount={selectedIds.length}
+          onClear={() => setSelectedIds([])}
+          onVerify={() => {
+            console.log("Bulk verify deposits:", selectedIds);
+            setSelectedIds([]);
+          }}
+          onReject={() => {
+            console.log("Bulk reject deposits:", selectedIds);
+            setSelectedIds([]);
+          }}
+        />
+      )}
     </AdminShell>
   );
 }

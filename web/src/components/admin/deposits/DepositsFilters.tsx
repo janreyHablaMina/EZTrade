@@ -28,32 +28,28 @@ export function DepositsFilters({
   onFilter,
 }: DepositsFiltersProps) {
   return (
-    <div className="mt-5 rounded-2xl border border-border bg-card p-4 shadow-[0_10px_30px_rgba(0,0,0,0.2)]">
-      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-12 items-end">
+    <div className="mt-5 rounded-2xl border border-border bg-card p-4 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 w-full">
         {/* Search bar */}
-        <div className="sm:col-span-2 md:col-span-3 lg:col-span-4 xl:col-span-2 2xl:col-span-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search by user, email or TXID..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-10 rounded-xl border border-border bg-card-elevated pl-3.5 pr-10 text-xs text-white placeholder:text-muted-2 outline-none focus:border-border-strong transition"
-            />
-            <Search className="absolute right-3.5 top-3 h-4 w-4 text-muted-2" />
-          </div>
+        <div className="relative flex-1 min-w-[200px]">
+          <input
+            type="text"
+            placeholder="Search by user, email or TXID..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full h-10 rounded-xl border border-border bg-card-elevated pl-10 pr-3.5 text-xs text-white placeholder:text-muted-2 outline-none focus:border-purple-bright/50 focus:bg-purple/5 transition"
+          />
+          <Search className="absolute left-3.5 top-3 h-4 w-4 text-muted-2" />
         </div>
 
-        {/* Status filter */}
-        <div className="xl:col-span-1 2xl:col-span-2">
-          <p className="mb-1 text-[11px] font-semibold text-muted-2 uppercase tracking-wider">
-            Status
-          </p>
-          <div className="relative">
+        {/* Filters Group */}
+        <div className="flex flex-col sm:flex-row flex-wrap lg:flex-nowrap items-stretch sm:items-center gap-3">
+          {/* Status filter */}
+          <div className="relative w-full sm:w-36">
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full h-10 rounded-xl border border-border bg-card-elevated pl-3 pr-8 text-xs text-white outline-none focus:border-border-strong transition appearance-none cursor-pointer"
+              className="w-full h-10 rounded-xl border border-border bg-card-elevated pl-3.5 pr-9 text-xs text-white outline-none focus:border-purple-bright/50 focus:bg-purple/5 transition appearance-none cursor-pointer"
             >
               <option value="all">All Status</option>
               <option value="Completed">Completed</option>
@@ -62,18 +58,13 @@ export function DepositsFilters({
             </select>
             <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-muted-2" />
           </div>
-        </div>
 
-        {/* Network filter */}
-        <div className="xl:col-span-1 2xl:col-span-2">
-          <p className="mb-1 text-[11px] font-semibold text-muted-2 uppercase tracking-wider">
-            Network
-          </p>
-          <div className="relative">
+          {/* Network filter */}
+          <div className="relative w-full sm:w-36">
             <select
               value={network}
               onChange={(e) => setNetwork(e.target.value)}
-              className="w-full h-10 rounded-xl border border-border bg-card-elevated pl-3 pr-8 text-xs text-white outline-none focus:border-border-strong transition appearance-none cursor-pointer"
+              className="w-full h-10 rounded-xl border border-border bg-card-elevated pl-3.5 pr-9 text-xs text-white outline-none focus:border-purple-bright/50 focus:bg-purple/5 transition appearance-none cursor-pointer"
             >
               <option value="all">All Networks</option>
               <option value="TRC20">TRC20</option>
@@ -82,18 +73,13 @@ export function DepositsFilters({
             </select>
             <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-muted-2" />
           </div>
-        </div>
 
-        {/* Currency filter */}
-        <div className="xl:col-span-1 2xl:col-span-2">
-          <p className="mb-1 text-[11px] font-semibold text-muted-2 uppercase tracking-wider">
-            Currency
-          </p>
-          <div className="relative">
+          {/* Currency filter */}
+          <div className="relative w-full sm:w-36">
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-              className="w-full h-10 rounded-xl border border-border bg-card-elevated pl-3 pr-8 text-xs text-white outline-none focus:border-border-strong transition appearance-none cursor-pointer"
+              className="w-full h-10 rounded-xl border border-border bg-card-elevated pl-3.5 pr-9 text-xs text-white outline-none focus:border-purple-bright/50 focus:bg-purple/5 transition appearance-none cursor-pointer"
             >
               <option value="all">All Currencies</option>
               <option value="USDT">USDT</option>
@@ -103,31 +89,24 @@ export function DepositsFilters({
             </select>
             <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-muted-2" />
           </div>
-        </div>
 
-        {/* Date Range filter */}
-        <div className="xl:col-span-2 2xl:col-span-3">
-          <p className="mb-1 text-[11px] font-semibold text-muted-2 uppercase tracking-wider">
-            Date Range
-          </p>
-          <div className="relative">
+          {/* Date Picker Input */}
+          <div className="relative w-full sm:w-48">
             <input
               type="text"
               placeholder="Select date range"
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="w-full h-10 rounded-xl border border-border bg-card-elevated pl-9 pr-3 text-xs text-white placeholder:text-muted-2 outline-none focus:border-border-strong transition"
+              className="w-full h-10 rounded-xl border border-border bg-card-elevated pl-10 pr-3.5 text-xs text-white placeholder:text-muted-2 outline-none focus:border-purple-bright/50 focus:bg-purple/5 transition"
             />
-            <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-2" />
+            <Calendar className="absolute left-3.5 top-3 h-4 w-4 text-muted-2" />
           </div>
-        </div>
 
-        {/* Action Button */}
-        <div className="xl:col-span-1 2xl:col-span-2 w-full">
+          {/* Filter Button */}
           <button
             type="button"
             onClick={onFilter}
-            className="w-full flex h-10 items-center justify-center gap-1.5 rounded-xl bg-purple hover:bg-purple-bright text-xs font-semibold text-white transition shadow-[0_4px_12px_rgba(123,44,255,0.25)] cursor-pointer"
+            className="w-full sm:w-auto flex h-10 items-center justify-center gap-1.5 rounded-xl bg-purple hover:bg-purple-bright px-5 text-xs font-semibold text-white transition shadow-[0_4px_12px_rgba(123,44,255,0.25)] cursor-pointer whitespace-nowrap"
           >
             <Filter className="h-3.5 w-3.5" />
             Filter

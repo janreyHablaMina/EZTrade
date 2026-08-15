@@ -22,6 +22,9 @@ type DepositsTableProps = {
   setCurrentPage: (p: number) => void;
   pageSize: number;
   setPageSize: (s: number) => void;
+  selectedIds: string[];
+  toggleSelectAll: () => void;
+  toggleSelectRow: (id: string) => void;
   onViewDetails?: (deposit: DepositRequest) => void;
   onVerify?: (deposit: DepositRequest) => void;
   onReject?: (deposit: DepositRequest) => void;
@@ -37,6 +40,9 @@ export function DepositsTable({
   setCurrentPage,
   pageSize,
   setPageSize,
+  selectedIds,
+  toggleSelectAll,
+  toggleSelectRow,
   onViewDetails,
   onVerify,
   onReject,
@@ -60,14 +66,36 @@ export function DepositsTable({
         <table className="w-full min-w-[1100px] text-left text-xs">
           <thead>
             <tr className="border-b border-border text-muted-2">
-              <th className="pb-3.5 pl-1 font-medium w-24">ID</th>
+              <th className="pb-3.5 pl-1 pr-6 font-medium w-14">
+                <label className="relative flex items-center justify-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={
+                      paginatedDeposits.length > 0 &&
+                      selectedIds.length === paginatedDeposits.length
+                    }
+                    onChange={toggleSelectAll}
+                    className="sr-only"
+                  />
+                  <div className={`h-4.5 w-4.5 rounded-md border flex items-center justify-center transition-all duration-200 ${
+                    paginatedDeposits.length > 0 && selectedIds.length === paginatedDeposits.length
+                      ? "bg-purple border-purple-bright shadow-[0_0_8px_rgba(123,44,255,0.4)]"
+                      : "border-border bg-card-elevated hover:border-purple-bright/50"
+                  }`}>
+                    {paginatedDeposits.length > 0 && selectedIds.length === paginatedDeposits.length && (
+                      <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </label>
+              </th>
               <th className="pb-3.5 font-medium">User</th>
               <th className="pb-3.5 font-medium">Amount</th>
               <th className="pb-3.5 font-medium">Currency</th>
               <th className="pb-3.5 font-medium">Network</th>
               <th className="pb-3.5 font-medium">TXID</th>
               <th className="pb-3.5 font-medium">Status</th>
-              <th className="pb-3.5 font-medium">Confirmations</th>
               <th className="pb-3.5 font-medium">Submitted At</th>
               <th className="pb-3.5 font-medium text-right pr-1">Actions</th>
             </tr>
@@ -75,13 +103,34 @@ export function DepositsTable({
           <tbody>
             {paginatedDeposits.length > 0 ? (
               paginatedDeposits.map((deposit, index) => {
+                const isChecked = selectedIds.includes(deposit.id);
                 return (
                   <tr
                     key={deposit.id}
-                    className="border-b border-border/45 last:border-0 hover:bg-white/[0.01] transition"
+                    className={`border-b border-border/45 last:border-0 hover:bg-white/[0.01] transition ${
+                      isChecked ? "bg-purple/5" : ""
+                    }`}
                   >
-                    <td className="py-3.5 pl-1 font-semibold text-muted-2">
-                      {deposit.id}
+                    <td className="py-3.5 pl-1 pr-6">
+                      <label className="relative flex items-center justify-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleSelectRow(deposit.id)}
+                          className="sr-only"
+                        />
+                        <div className={`h-4.5 w-4.5 rounded-md border flex items-center justify-center transition-all duration-200 ${
+                          isChecked
+                            ? "bg-purple border-purple-bright shadow-[0_0_8px_rgba(123,44,255,0.4)]"
+                            : "border-border bg-card-elevated hover:border-purple-bright/50"
+                        }`}>
+                          {isChecked && (
+                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                      </label>
                     </td>
                     <td className="py-3.5">
                       <div className="flex items-center gap-2.5">
@@ -154,33 +203,9 @@ export function DepositsTable({
                         <p className="text-[9px] text-muted-2 mt-1">{deposit.statusTime}</p>
                       </div>
                     </td>
-                    <td className="py-3.5">
-                      {deposit.confirmationsCurrent !== undefined &&
-                      deposit.confirmationsRequired !== undefined ? (
-                        <span
-                          className={`font-semibold ${
-                            deposit.status === "Completed"
-                              ? "text-success"
-                              : "text-warning"
-                          }`}
-                        >
-                          {deposit.confirmationsCurrent} / {deposit.confirmationsRequired}
-                        </span>
-                      ) : (
-                        <span className="text-muted-2">--</span>
-                      )}
-                    </td>
                     <td className="py-3.5 text-muted-2">{deposit.submittedAt}</td>
                     <td className="py-3.5 text-right pr-1 relative">
                       <div className="inline-flex items-center gap-1.5 justify-end">
-                        <button
-                          type="button"
-                          onClick={() => onViewDetails?.(deposit)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-card-elevated text-purple-bright hover:bg-purple/10 hover:border-purple-bright/35 transition cursor-pointer"
-                          aria-label="View Details"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                        </button>
                         <button
                           type="button"
                           onClick={(e) => {
@@ -277,7 +302,7 @@ export function DepositsTable({
               })
             ) : (
               <tr>
-                <td colSpan={10} className="py-8 text-center text-muted-2">
+                <td colSpan={9} className="py-8 text-center text-muted-2">
                   No deposits found matching your filters.
                 </td>
               </tr>
