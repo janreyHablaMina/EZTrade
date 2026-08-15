@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Crown,
   Percent,
@@ -9,6 +9,8 @@ import {
   Coins,
   Plus,
   Download,
+  CheckCircle2,
+  X,
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
@@ -16,10 +18,28 @@ import { initialVipPlans } from "@/components/admin/vip-plans/vipPlansData";
 import type { VipPlan } from "@/components/admin/vip-plans/vipPlansData";
 import { VipPlansFilters } from "@/components/admin/vip-plans/VipPlansFilters";
 import { VipPlansTable } from "@/components/admin/vip-plans/VipPlansTable";
+import { AddPlanModal } from "@/components/admin/vip-plans/AddPlanModal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 export default function VipPlansPage() {
+  const [plansList, setPlansList] = useState<VipPlan[]>(initialVipPlans);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
+  const [isAddPlanOpen, setIsAddPlanOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [editingPlan, setEditingPlan] = useState<VipPlan | null>(null);
+  
+  // Deletion states
+  const [planToDelete, setPlanToDelete] = useState<VipPlan | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Auto-hide toast after 3 seconds
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
 
   // Applied filters state
   const [filters, setFilters] = useState({
@@ -32,17 +52,16 @@ export default function VipPlansPage() {
 
   // Apply filters logic
   const filteredPlans = useMemo(() => {
-    return initialVipPlans.filter((plan) => {
+    return plansList.filter((plan) => {
       const matchSearch =
         !filters.search ||
-        plan.planName.toLowerCase().includes(filters.search.toLowerCase()) ||
         plan.level.toLowerCase().includes(filters.search.toLowerCase());
 
       const matchStatus = filters.status === "all" || plan.status === filters.status;
 
       return matchSearch && matchStatus;
     });
-  }, [filters]);
+  }, [plansList, filters]);
 
   // Paginated plans
   const paginatedPlans = useMemo(() => {
@@ -56,6 +75,67 @@ export default function VipPlansPage() {
       status,
     });
     setCurrentPage(1);
+  };
+
+  const handleSavePlan = (data: any) => {
+    if (editingPlan) {
+      const updatedPlans = plansList.map(plan => {
+        if (plan.id === editingPlan.id) {
+          return {
+            ...plan,
+            level: data.level || plan.level,
+            minDeposit: Number(data.minDeposit),
+            maxDeposit: Number(data.maxDeposit),
+            dailyProfitPercent: Number(data.dailyProfitPercent),
+            dailyProfitUsdtMin: Number(data.minDeposit) * (Number(data.dailyProfitPercent) / 100),
+            dailyProfitUsdtMax: Number(data.maxDeposit) * (Number(data.dailyProfitPercent) / 100),
+            durationDays: Number(data.durationDays),
+          };
+        }
+        return plan;
+      });
+      setPlansList(updatedPlans);
+      setToastMessage("Edited successfully");
+    } else {
+      const newPlan: VipPlan = {
+        id: `VP${plansList.length + 1}`,
+        level: data.level || `VIP ${plansList.length + 1}`,
+        minDeposit: Number(data.minDeposit),
+        maxDeposit: Number(data.maxDeposit),
+        dailyProfitPercent: Number(data.dailyProfitPercent),
+        dailyProfitUsdtMin: Number(data.minDeposit) * (Number(data.dailyProfitPercent) / 100),
+        dailyProfitUsdtMax: Number(data.maxDeposit) * (Number(data.dailyProfitPercent) / 100),
+        durationDays: Number(data.durationDays),
+        totalUsers: 0,
+        status: "Active",
+      } as VipPlan; // forcefully cast to ignore missing planName if we completely stripped it in VipPlan type
+      setPlansList([newPlan, ...plansList]);
+      setToastMessage("VIP Plan successfully created");
+    }
+    setEditingPlan(null);
+  };
+
+  const handleOpenAdd = () => {
+    setEditingPlan(null);
+    setIsAddPlanOpen(true);
+  };
+
+  const handleOpenEdit = (plan: VipPlan) => {
+    setEditingPlan(plan);
+    setIsAddPlanOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!planToDelete) return;
+    setIsDeleting(true);
+    
+    // Simulate network delay
+    setTimeout(() => {
+      setPlansList(plansList.filter(p => p.id !== planToDelete.id));
+      setToastMessage("Deleted successfully");
+      setIsDeleting(false);
+      setPlanToDelete(null);
+    }, 600);
   };
 
   return (
@@ -83,6 +163,7 @@ export default function VipPlansPage() {
           </button>
           <button
             type="button"
+            onClick={handleOpenAdd}
             className="flex items-center gap-1.5 rounded-xl bg-purple hover:bg-purple-bright px-3.5 py-2 text-xs font-semibold text-white transition shadow-[0_8px_20px_rgba(123,44,255,0.3)] hover:shadow-[0_8px_20px_rgba(123,44,255,0.45)] cursor-pointer"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -95,13 +176,13 @@ export default function VipPlansPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         <KpiCard
           label="Total Plans"
-          value="10"
+          value={plansList.length.toString()}
           subtext="Active VIP Plans"
           icon={Crown}
         />
         <KpiCard
           label="Active Plans"
-          value="10"
+          value={plansList.filter(p => p.status === 'Active').length.toString()}
           subtext="100% of total plans"
           icon={Percent}
           iconClassName="text-success"
@@ -139,15 +220,57 @@ export default function VipPlansPage() {
       <VipPlansTable
         plans={filteredPlans}
         paginatedPlans={paginatedPlans}
-        totalCount={initialVipPlans.length}
+        totalCount={filteredPlans.length}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
         pageSize={pageSize}
         setPageSize={setPageSize}
-        onEdit={(plan) => console.log("Edit plan:", plan.id, plan.planName)}
-        onDuplicate={(plan) => console.log("Duplicate plan:", plan.id, plan.planName)}
-        onDelete={(plan) => console.log("Delete plan:", plan.id, plan.planName)}
+        onEdit={handleOpenEdit}
+        onDuplicate={(plan) => console.log("Duplicate plan:", plan.id)}
+        onDelete={(plan) => setPlanToDelete(plan)}
       />
+
+      <AddPlanModal 
+        isOpen={isAddPlanOpen} 
+        onClose={() => {
+          setIsAddPlanOpen(false);
+          setEditingPlan(null);
+        }} 
+        onSave={handleSavePlan}
+        initialData={editingPlan}
+      />
+      
+      <ConfirmModal 
+        isOpen={!!planToDelete}
+        onClose={() => setPlanToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete VIP Plan"
+        description={`Are you sure you want to delete ${planToDelete?.level}? This action cannot be undone.`}
+        confirmText="Delete Plan"
+        isDestructive={true}
+        isLoading={isDeleting}
+      />
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="flex items-center gap-3 rounded-xl border border-success/20 bg-card p-4 shadow-[0_10px_40px_rgba(34,197,94,0.15)]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success/10 text-success">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Success</p>
+              <p className="text-xs text-muted-2">{toastMessage}</p>
+            </div>
+            <button 
+              onClick={() => setToastMessage("")}
+              className="ml-4 text-muted hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </AdminShell>
   );
 }

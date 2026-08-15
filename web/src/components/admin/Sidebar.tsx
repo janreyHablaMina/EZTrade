@@ -111,7 +111,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto pb-4">
+      <nav className="flex-1 overflow-y-auto pb-4 pr-4">
         <Link
           href="/"
           className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${

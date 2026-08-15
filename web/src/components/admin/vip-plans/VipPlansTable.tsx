@@ -1,7 +1,9 @@
+import { useState, useRef, useEffect } from "react";
 import {
   Edit2,
   Copy,
   Trash2,
+  MoreVertical,
 } from "lucide-react";
 import { PaginationFooter } from "@/components/admin/PaginationFooter";
 import type { VipPlan } from "./vipPlansData";
@@ -19,6 +21,82 @@ type VipPlansTableProps = {
   onDuplicate?: (plan: VipPlan) => void;
   onDelete?: (plan: VipPlan) => void;
 };
+
+function RowActions({ 
+  plan, 
+  onEdit, 
+  onDuplicate, 
+  onDelete 
+}: { 
+  plan: VipPlan; 
+  onEdit?: (plan: VipPlan) => void; 
+  onDuplicate?: (plan: VipPlan) => void; 
+  onDelete?: (plan: VipPlan) => void; 
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative inline-block text-left" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-2 hover:bg-white/[0.06] hover:text-white transition cursor-pointer"
+        aria-label="More options"
+      >
+        <MoreVertical className="h-4 w-4" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full z-50 mt-1 w-40 origin-top-right rounded-xl border border-border bg-card-elevated shadow-[0_10px_30px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in-95 duration-150">
+          <div className="p-1.5 flex flex-col gap-0.5">
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                onEdit?.(plan);
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium text-white transition hover:bg-white/[0.06] cursor-pointer"
+            >
+              <Edit2 className="h-3.5 w-3.5 text-purple-bright" />
+              Edit Plan
+            </button>
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                onDuplicate?.(plan);
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium text-white transition hover:bg-white/[0.06] cursor-pointer"
+            >
+              <Copy className="h-3.5 w-3.5 text-muted-2" />
+              Duplicate Plan
+            </button>
+            <div className="my-0.5 h-px bg-border/50" />
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                onDelete?.(plan);
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium text-danger transition hover:bg-danger/10 hover:text-danger cursor-pointer"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete Plan
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function VipPlansTable({
   plans,
@@ -39,7 +117,6 @@ export function VipPlansTable({
           <thead>
             <tr className="border-b border-border text-muted-2">
               <th className="pb-3.5 pl-1 font-medium">Level</th>
-              <th className="pb-3.5 font-medium">Plan Name</th>
               <th className="pb-3.5 font-medium">Min Deposit (USDT)</th>
               <th className="pb-3.5 font-medium">Max Deposit (USDT)</th>
               <th className="pb-3.5 font-medium">Daily Profit (%)</th>
@@ -61,14 +138,11 @@ export function VipPlansTable({
                     <td className="py-3.5 pl-1">
                       <span
                         className={`inline-flex rounded-md px-2 py-0.5 text-[9px] font-semibold tracking-wider ${
-                          vipPlanBadgeStyles[plan.level] || ""
+                          vipPlanBadgeStyles[plan.level] || "bg-white/10 text-muted border border-white/10"
                         }`}
                       >
                         {plan.level}
                       </span>
-                    </td>
-                    <td className="py-3.5 font-semibold text-white">
-                      {plan.planName}
                     </td>
                     <td className="py-3.5 text-muted-2">
                       {plan.minDeposit.toLocaleString("en-US")}
@@ -104,39 +178,19 @@ export function VipPlansTable({
                       </span>
                     </td>
                     <td className="py-3.5 text-right pr-1">
-                      <div className="inline-flex items-center gap-1.5 justify-end">
-                        <button
-                          type="button"
-                          onClick={() => onEdit?.(plan)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-card-elevated text-purple-bright hover:bg-purple/10 hover:border-purple-bright/35 transition cursor-pointer"
-                          aria-label="Edit Plan"
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => onDuplicate?.(plan)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-card-elevated text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer"
-                          aria-label="Duplicate Plan"
-                        >
-                          <Copy className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => onDelete?.(plan)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-danger/25 bg-card-elevated text-danger hover:bg-danger/10 hover:border-danger/45 transition cursor-pointer"
-                          aria-label="Delete Plan"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
+                      <RowActions
+                        plan={plan}
+                        onEdit={onEdit}
+                        onDuplicate={onDuplicate}
+                        onDelete={onDelete}
+                      />
                     </td>
                   </tr>
                 );
               })
             ) : (
               <tr>
-                <td colSpan={10} className="py-8 text-center text-muted-2">
+                <td colSpan={9} className="py-8 text-center text-muted-2">
                   No plans found matching your filters.
                 </td>
               </tr>
