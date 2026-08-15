@@ -481,18 +481,31 @@ export default function UsersPage() {
       <div className="mt-5 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex flex-col">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1100px] text-left text-xs">
-            <thead>
+             <thead>
               <tr className="border-b border-border text-muted-2">
-                <th className="pb-3.5 pl-1 font-medium w-8">
-                  <input
-                    type="checkbox"
-                    checked={
-                      paginatedUsers.length > 0 &&
-                      selectedIds.length === paginatedUsers.length
-                    }
-                    onChange={toggleSelectAll}
-                    className="h-4 w-4 rounded border border-border bg-card-elevated text-purple focus:ring-purple cursor-pointer"
-                  />
+                <th className="pb-3.5 pl-1 pr-6 font-medium w-14">
+                  <label className="relative flex items-center justify-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={
+                        paginatedUsers.length > 0 &&
+                        selectedIds.length === paginatedUsers.length
+                      }
+                      onChange={toggleSelectAll}
+                      className="sr-only"
+                    />
+                    <div className={`h-4.5 w-4.5 rounded-md border flex items-center justify-center transition-all duration-200 ${
+                      paginatedUsers.length > 0 && selectedIds.length === paginatedUsers.length
+                        ? "bg-purple border-purple-bright shadow-[0_0_8px_rgba(123,44,255,0.4)]"
+                        : "border-border bg-card-elevated hover:border-purple-bright/50"
+                    }`}>
+                      {paginatedUsers.length > 0 && selectedIds.length === paginatedUsers.length && (
+                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                  </label>
                 </th>
                 <th className="pb-3.5 font-medium">User</th>
                 <th className="pb-3.5 font-medium">VIP Level</th>
@@ -506,7 +519,7 @@ export default function UsersPage() {
             </thead>
             <tbody>
               {paginatedUsers.length > 0 ? (
-                paginatedUsers.map((user) => {
+                paginatedUsers.map((user, index) => {
                   const isChecked = selectedIds.includes(user.id);
                   return (
                     <tr
@@ -515,13 +528,26 @@ export default function UsersPage() {
                         isChecked ? "bg-purple/5" : ""
                       }`}
                     >
-                      <td className="py-3.5 pl-1">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => toggleSelectRow(user.id)}
-                          className="h-4 w-4 rounded border border-border bg-card-elevated text-purple focus:ring-purple cursor-pointer"
-                        />
+                      <td className="py-3.5 pl-1 pr-6">
+                        <label className="relative flex items-center justify-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleSelectRow(user.id)}
+                            className="sr-only"
+                          />
+                          <div className={`h-4.5 w-4.5 rounded-md border flex items-center justify-center transition-all duration-200 ${
+                            isChecked
+                              ? "bg-purple border-purple-bright shadow-[0_0_8px_rgba(123,44,255,0.4)]"
+                              : "border-border bg-card-elevated hover:border-purple-bright/50"
+                          }`}>
+                            {isChecked && (
+                              <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                        </label>
                       </td>
                       <td className="py-3.5">
                         <div className="flex items-center gap-2.5">
@@ -600,7 +626,11 @@ export default function UsersPage() {
                               className="fixed inset-0 z-20 cursor-default" 
                               onClick={() => setActiveDropdownUserId(null)}
                             />
-                            <div className="absolute right-1.5 mt-1 w-48 rounded-xl bg-card-elevated border border-border py-1.5 shadow-[0_10px_35px_rgba(0,0,0,0.55)] z-30 text-left">
+                            <div className={`absolute right-1.5 w-48 rounded-xl bg-card-elevated border border-border py-1.5 shadow-[0_10px_35px_rgba(0,0,0,0.55)] z-30 text-left ${
+                              index >= paginatedUsers.length - 4 && paginatedUsers.length > 4
+                                ? "bottom-full mb-1"
+                                : "mt-1"
+                            }`}>
                               <button
                                 type="button"
                                 onClick={() => setActiveDropdownUserId(null)}
@@ -750,6 +780,49 @@ export default function UsersPage() {
           </div>
         </div>
       </div>
+
+      {/* Floating Bulk Actions Bar */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 rounded-2xl border border-border bg-card-elevated/95 px-5 py-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.65)] backdrop-blur-xl transition-all duration-300">
+          <div className="flex items-center gap-2 border-r border-border/50 pr-4">
+            <span className="h-2 w-2 rounded-full bg-purple animate-pulse" />
+            <p className="text-xs font-semibold text-white">
+              {selectedIds.length} {selectedIds.length === 1 ? "user" : "users"} selected
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-1.5 text-xs font-medium">
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="px-2.5 py-1.5 rounded-lg text-muted-2 hover:text-white transition cursor-pointer"
+            >
+              Clear Selection
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-purple/10 text-purple-bright hover:bg-purple/20 transition cursor-pointer"
+            >
+              <span>⏸</span> Suspend
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-danger/10 text-danger hover:bg-danger/20 transition cursor-pointer"
+            >
+              <span>🚫</span> Deactivate
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-purple-bright/10 text-purple-bright hover:bg-purple-bright/20 transition cursor-pointer"
+            >
+              <span>🗃️</span> Archive
+            </button>
+          </div>
+        </div>
+      )}
     </AdminShell>
   );
 }
