@@ -1,6 +1,6 @@
 type RowStatus = "Completed" | "Pending" | "Failed" | "Rejected";
 
-type TableRow = {
+type TableProps = {
   title: string;
   rows: {
     name: string;
