@@ -63,7 +63,7 @@ export function DepositsTable({
   return (
     <div className="mt-5 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex flex-col">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1100px] text-left text-xs">
+        <table className="w-full min-w-[900px] text-left text-xs">
           <thead>
             <tr className="border-b border-border text-muted-2">
               <th className="pb-3.5 pl-1 pr-6 font-medium w-14">
@@ -90,7 +90,7 @@ export function DepositsTable({
                   </div>
                 </label>
               </th>
-              <th className="pb-3.5 font-medium">User</th>
+              <th className="pb-3.5 font-medium w-64">User</th>
               <th className="pb-3.5 font-medium">Amount</th>
               <th className="pb-3.5 font-medium">Currency</th>
               <th className="pb-3.5 font-medium">Network</th>

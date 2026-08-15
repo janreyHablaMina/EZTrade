@@ -60,7 +60,7 @@ export function WithdrawalsTable({
   return (
     <div className="mt-5 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex flex-col">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1200px] text-left text-xs">
+        <table className="w-full min-w-[950px] text-left text-xs">
           <thead>
             <tr className="border-b border-border text-muted-2">
               <th className="pb-3.5 pl-1 pr-6 font-medium w-14">
@@ -87,16 +87,13 @@ export function WithdrawalsTable({
                   </div>
                 </label>
               </th>
-              <th className="pb-3.5 font-medium">User</th>
+              <th className="pb-3.5 font-medium w-64">User</th>
               <th className="pb-3.5 font-medium">Amount</th>
-              <th className="pb-3.5 font-medium">Fee</th>
               <th className="pb-3.5 font-medium">Receive Amount</th>
-              <th className="pb-3.5 font-medium">Currency</th>
               <th className="pb-3.5 font-medium">Network</th>
               <th className="pb-3.5 font-medium">Wallet Address</th>
               <th className="pb-3.5 font-medium">Status</th>
               <th className="pb-3.5 font-medium">Requested At</th>
-              <th className="pb-3.5 font-medium">Processed At</th>
               <th className="pb-3.5 font-medium text-right pr-1">Actions</th>
             </tr>
           </thead>
@@ -153,19 +150,11 @@ export function WithdrawalsTable({
                       </p>
                       <p className="text-[10px] text-muted-2 leading-none mt-0.5">{withdrawal.currency}</p>
                     </td>
-                    <td className="py-3.5 text-muted-2">
-                      {withdrawal.fee.toLocaleString("en-US", { minimumFractionDigits: 2 })} {withdrawal.currency}
-                    </td>
-                    <td className="py-3.5 text-white font-semibold">
-                      {withdrawal.receiveAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })} {withdrawal.currency}
-                    </td>
                     <td className="py-3.5">
-                      <div className="flex items-center gap-1.5">
-                        <div className="h-4.5 w-4.5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-bold ring-1 ring-emerald-500/30">
-                          T
-                        </div>
-                        <span className="font-medium text-white">{withdrawal.currency}</span>
-                      </div>
+                      <p className="font-semibold text-white">
+                        {withdrawal.receiveAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      </p>
+                      <p className="text-[10px] text-muted-2 leading-none mt-0.5">{withdrawal.currency}</p>
                     </td>
                     <td className="py-3.5">
                       <span
@@ -206,7 +195,6 @@ export function WithdrawalsTable({
                       </span>
                     </td>
                     <td className="py-3.5 text-muted-2">{withdrawal.requestedAt}</td>
-                    <td className="py-3.5 text-muted-2">{withdrawal.processedAt}</td>
                     <td className="py-3.5 text-right pr-1 relative">
                       <button
                         type="button"
@@ -295,7 +283,7 @@ export function WithdrawalsTable({
               })
             ) : (
               <tr>
-                <td colSpan={12} className="py-8 text-center text-muted-2">
+                <td colSpan={9} className="py-8 text-center text-muted-2">
                   No withdrawals found matching your filters.
                 </td>
               </tr>
