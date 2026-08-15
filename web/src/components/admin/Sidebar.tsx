@@ -47,7 +47,7 @@ const support: NavItem[] = [
 ];
 
 const settings: NavItem[] = [
-  { label: "System Settings", href: "#system-settings", icon: Settings },
+  { label: "System Settings", href: "/settings", icon: Settings },
   { label: "General Settings", href: "#general-settings", icon: SlidersHorizontal },
 ];
 
