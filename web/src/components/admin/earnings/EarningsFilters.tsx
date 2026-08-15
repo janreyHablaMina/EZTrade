@@ -1,4 +1,7 @@
-import { Search, Filter, RotateCcw, ChevronDown, Calendar } from "lucide-react";
+import { Search, Filter, RotateCcw, Calendar } from "lucide-react";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { Button } from "@/components/ui/Button";
 
 type EarningsFiltersProps = {
   search: string;
@@ -32,97 +35,68 @@ export function EarningsFilters({
   return (
     <div className="mt-5 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
       <div className="flex flex-col gap-3.5 xl:flex-row xl:items-center">
-        {/* Search Input */}
-        <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-3 h-4.5 w-4.5 text-muted-2" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by user, email or user ID..."
-            className="w-full rounded-xl border border-border bg-card-elevated py-2.5 pl-10 pr-4 text-xs text-white placeholder-muted-2 outline-none focus:border-border-strong focus:ring-1 focus:ring-purple-bright/20 transition shadow-inner"
-          />
-        </div>
+        <Input
+          icon={<Search className="h-4 w-4" />}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by user, email or user ID..."
+        />
 
-        {/* Filters Group */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Type Select */}
-          <div className="relative min-w-[130px]">
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              className="w-full rounded-xl border border-border bg-card-elevated py-2.5 pl-3.5 pr-9 text-xs text-white outline-none focus:border-border-strong transition appearance-none cursor-pointer"
-            >
-              <option value="all">All Types</option>
-              <option value="Trading Profit">Trading Profit</option>
-              <option value="Referral Bonus">Referral Bonus</option>
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-muted-2" />
-          </div>
+          <Select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            containerClassName="min-w-[130px]"
+          >
+            <option value="all">All Types</option>
+            <option value="Trading Profit">Trading Profit</option>
+            <option value="Referral Bonus">Referral Bonus</option>
+          </Select>
 
-          {/* VIP Level Select */}
-          <div className="relative min-w-[120px]">
-            <select
-              value={vipLevel}
-              onChange={(e) => setVipLevel(e.target.value)}
-              className="w-full rounded-xl border border-border bg-card-elevated py-2.5 pl-3.5 pr-9 text-xs text-white outline-none focus:border-border-strong transition appearance-none cursor-pointer"
-            >
-              <option value="all">All Levels</option>
-              <option value="1">VIP 1</option>
-              <option value="2">VIP 2</option>
-              <option value="3">VIP 3</option>
-              <option value="4">VIP 4</option>
-              <option value="5">VIP 5</option>
-              <option value="6">VIP 6</option>
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-muted-2" />
-          </div>
+          <Select
+            value={vipLevel}
+            onChange={(e) => setVipLevel(e.target.value)}
+            containerClassName="min-w-[120px]"
+          >
+            <option value="all">All Levels</option>
+            <option value="1">VIP 1</option>
+            <option value="2">VIP 2</option>
+            <option value="3">VIP 3</option>
+            <option value="4">VIP 4</option>
+            <option value="5">VIP 5</option>
+            <option value="6">VIP 6</option>
+          </Select>
 
-          {/* Status Select */}
-          <div className="relative min-w-[120px]">
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="w-full rounded-xl border border-border bg-card-elevated py-2.5 pl-3.5 pr-9 text-xs text-white outline-none focus:border-border-strong transition appearance-none cursor-pointer"
-            >
-              <option value="all">All Status</option>
-              <option value="Completed">Completed</option>
-              <option value="Pending">Pending</option>
-              <option value="Rejected">Rejected</option>
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-muted-2" />
-          </div>
+          <Select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            containerClassName="min-w-[120px]"
+          >
+            <option value="all">All Status</option>
+            <option value="Completed">Completed</option>
+            <option value="Pending">Pending</option>
+            <option value="Rejected">Rejected</option>
+          </Select>
 
-          {/* Date Range */}
-          <div className="relative min-w-[200px]">
-            <Calendar className="absolute left-3.5 top-3 h-4.5 w-4.5 text-muted-2 pointer-events-none" />
-            <input
-              type="text"
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-              placeholder="May 11, 2024 - May 18, 2024"
-              className="w-full rounded-xl border border-border bg-card-elevated py-2.5 pl-10 pr-4 text-xs text-white placeholder-muted-2 outline-none focus:border-border-strong transition cursor-pointer"
-            />
-          </div>
+          <Input
+            icon={<Calendar className="h-4 w-4" />}
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+            placeholder="May 11, 2024 - May 18, 2024"
+            className="cursor-pointer"
+          />
 
-          {/* Action Buttons */}
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onFilter}
-              className="flex items-center gap-1.5 rounded-xl bg-purple hover:bg-purple-bright px-4 py-2.5 text-xs font-semibold text-white transition shadow-[0_8px_20px_rgba(123,44,255,0.25)] hover:shadow-[0_8px_20px_rgba(123,44,255,0.4)] cursor-pointer"
-            >
-              <Filter className="h-3.5 w-3.5" />
+            <Button onClick={onFilter} icon={<Filter className="h-3.5 w-3.5" />}>
               Filter
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="outline"
               onClick={onReset}
-              className="flex items-center gap-1.5 rounded-xl border border-border bg-card-elevated hover:bg-white/[0.04] px-4 py-2.5 text-xs font-semibold text-white transition cursor-pointer"
+              icon={<RotateCcw className="h-3.5 w-3.5" />}
             >
-              <RotateCcw className="h-3.5 w-3.5" />
               Reset
-            </button>
+            </Button>
           </div>
         </div>
       </div>

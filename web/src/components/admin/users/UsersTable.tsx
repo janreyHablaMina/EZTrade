@@ -257,66 +257,15 @@ export function UsersTable({
         </table>
       </div>
 
-      <div className="mt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-muted-2">
-        <div>
-          Showing {Math.min(1 + (currentPage - 1) * pageSize, totalCount)} to{" "}
-          {Math.min(currentPage * pageSize, totalCount)} of {totalCount} users
-        </div>
-        <div className="mt-4 sm:mt-0 flex items-center gap-1.5">
-          <button
-            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-white/[0.04] disabled:opacity-50 disabled:cursor-not-allowed transition"
-          >
-            <span className="text-base leading-none">&laquo;</span>
-          </button>
-          
-          <button className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple text-white font-medium shadow-[0_4px_12px_rgba(123,44,255,0.25)]">
-            {currentPage}
-          </button>
-
-          {totalPages > 1 && currentPage < totalPages && (
-            <button
-              onClick={() => setCurrentPage(currentPage + 1)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-white/[0.04] text-muted-2 hover:text-white transition"
-            >
-              {currentPage + 1}
-            </button>
-          )}
-
-          {totalPages > 3 && currentPage < totalPages - 1 && (
-            <>
-              <span className="px-1 text-muted-2">...</span>
-              <button
-                onClick={() => setCurrentPage(totalPages)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-white/[0.04] text-muted-2 hover:text-white transition"
-              >
-                {totalPages}
-              </button>
-            </>
-          )}
-
-          <button
-            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-            disabled={currentPage === totalPages}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-white/[0.04] disabled:opacity-50 disabled:cursor-not-allowed transition"
-          >
-            <span className="text-base leading-none">&raquo;</span>
-          </button>
-          
-          <select
-            value={pageSize}
-            onChange={(e) => setPageSize(Number(e.target.value))}
-            className="ml-2 h-8 rounded-lg border border-border bg-card-elevated pl-2 pr-6 text-xs text-white outline-none appearance-none focus:border-border-strong"
-          >
-            <option value={5}>5 / page</option>
-            <option value={10}>10 / page</option>
-            <option value={20}>20 / page</option>
-            <option value={50}>50 / page</option>
-            <option value={250}>250 / page</option>
-          </select>
-        </div>
-      </div>
+      <PaginationFooter
+        currentPage={currentPage}
+        pageSize={pageSize}
+        totalItems={totalCount}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        itemName="users"
+        pageSizes={[5, 10, 20, 50, 250]}
+      />
     </div>
   );
 }
