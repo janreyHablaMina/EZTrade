@@ -22,7 +22,7 @@ const statusStyles: Record<RowStatus, string> = {
 
 export function RecentTable({ title, rows }: TableProps) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+    <section className="flex h-full flex-col rounded-2xl border border-border bg-card p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-white">{title}</h3>
         <button type="button" className="text-xs font-medium text-purple-bright hover:underline">
@@ -30,7 +30,7 @@ export function RecentTable({ title, rows }: TableProps) {
         </button>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="min-h-0 flex-1 overflow-x-auto">
         <table className="w-full min-w-[640px] text-left text-xs">
           <thead>
             <tr className="border-b border-border text-muted-2">

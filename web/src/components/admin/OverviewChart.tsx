@@ -34,8 +34,8 @@ export function OverviewChart() {
   }, [path]);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <section className="flex h-full min-h-[420px] flex-col rounded-2xl border border-border bg-card p-4 sm:p-5">
+      <div className="mb-5 flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-base font-semibold text-white">Overview</h2>
           <p className="text-xs text-muted-2">Platform cashflow performance</p>
@@ -69,7 +69,7 @@ export function OverviewChart() {
         </div>
       </div>
 
-      <div className="relative h-[250px] w-full overflow-hidden rounded-xl bg-gradient-to-b from-purple/10 to-transparent">
+      <div className="relative min-h-[250px] w-full flex-1 overflow-hidden rounded-xl bg-gradient-to-b from-purple/10 to-transparent">
         <svg viewBox="0 0 560 100" className="h-full w-full" preserveAspectRatio="none">
           {[20, 40, 60, 80].map((y) => (
             <line

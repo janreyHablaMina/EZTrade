@@ -33,9 +33,9 @@ export function StatusDonut({ title, total, slices }: StatusDonutProps) {
   });
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
-      <h3 className="mb-4 text-sm font-semibold text-white">{title}</h3>
-      <div className="flex items-center gap-4">
+    <section className="flex h-full flex-col justify-center rounded-2xl border border-border bg-card p-4 sm:p-5">
+      <h3 className="mb-4 shrink-0 text-sm font-semibold text-white">{title}</h3>
+      <div className="flex flex-1 items-center gap-4">
         <div className="relative h-28 w-28 shrink-0">
           <svg viewBox="0 0 100 100" className="h-full w-full -rotate-0">
             <circle

@@ -145,11 +145,11 @@ export default function Home() {
         />
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-12">
-        <div className="xl:col-span-7">
+      <div className="mt-4 grid items-stretch gap-4 xl:grid-cols-12">
+        <div className="h-full xl:col-span-7">
           <OverviewChart />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 xl:col-span-5 xl:grid-cols-1">
+        <div className="grid h-full gap-4 sm:grid-cols-2 xl:col-span-5 xl:grid-cols-1 xl:grid-rows-2">
           <StatusDonut
             title="Deposits by Status"
             total="1,234"
@@ -171,17 +171,11 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-12">
-        <div className="xl:col-span-4">
-          <RecentTable title="Recent Deposits" rows={depositRows} />
-        </div>
-        <div className="xl:col-span-4">
-          <RecentTable title="Recent Withdrawals" rows={withdrawalRows} />
-        </div>
-        <div className="grid gap-4 xl:col-span-4">
-          <VipLevels />
-          <SystemStats />
-        </div>
+      <div className="mt-4 grid items-stretch gap-4 md:grid-cols-2">
+        <RecentTable title="Recent Deposits" rows={depositRows} />
+        <RecentTable title="Recent Withdrawals" rows={withdrawalRows} />
+        <VipLevels />
+        <SystemStats />
       </div>
     </AdminShell>
   );

@@ -8,9 +8,9 @@ const LEVELS = [
 
 export function VipLevels() {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+    <section className="flex h-full flex-col rounded-2xl border border-border bg-card p-4 sm:p-5">
       <h3 className="mb-4 text-sm font-semibold text-white">Users by VIP Level</h3>
-      <div className="space-y-3.5">
+      <div className="flex flex-1 flex-col justify-center space-y-3.5">
         {LEVELS.map((level) => (
           <div key={level.label}>
             <div className="mb-1.5 flex items-center justify-between text-xs">
