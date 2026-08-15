@@ -38,11 +38,11 @@ const management: NavItem[] = [
   { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
   { label: "Earnings", href: "/earnings", icon: Coins },
   { label: "Referrals", href: "/referrals", icon: Share2 },
-  { label: "Assets", href: "#assets", icon: Wallet },
+  { label: "Assets", href: "/assets", icon: Wallet },
 ];
 
 const support: NavItem[] = [
-  { label: "Support Tickets", href: "#support", icon: LifeBuoy },
+  { label: "Support Tickets", href: "/support-tickets", icon: LifeBuoy },
   { label: "Notifications", href: "#notifications", icon: Bell, badge: true },
 ];
 
