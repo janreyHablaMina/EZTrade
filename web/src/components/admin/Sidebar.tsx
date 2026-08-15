@@ -35,7 +35,7 @@ const management: NavItem[] = [
   { label: "VIP Plans", href: "/vip-plans", icon: Crown },
   { label: "Deposits", href: "/deposits", icon: ArrowDownToLine },
   { label: "Withdrawals", href: "/withdrawals", icon: ArrowUpFromLine },
-  { label: "Transactions", href: "#transactions", icon: ArrowLeftRight },
+  { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
   { label: "Earnings", href: "#earnings", icon: Coins },
   { label: "Referrals", href: "#referrals", icon: Share2 },
   { label: "Assets", href: "#assets", icon: Wallet },
