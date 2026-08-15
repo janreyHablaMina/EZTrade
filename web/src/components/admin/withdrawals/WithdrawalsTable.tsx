@@ -87,7 +87,6 @@ export function WithdrawalsTable({
                   </div>
                 </label>
               </th>
-              <th className="pb-3.5 pl-1 font-medium w-24">ID</th>
               <th className="pb-3.5 font-medium">User</th>
               <th className="pb-3.5 font-medium">Amount</th>
               <th className="pb-3.5 font-medium">Fee</th>
@@ -132,9 +131,6 @@ export function WithdrawalsTable({
                           )}
                         </div>
                       </label>
-                    </td>
-                    <td className="py-3.5 pl-1 font-semibold text-muted-2">
-                      {withdrawal.id}
                     </td>
                     <td className="py-3.5">
                       <div className="flex items-center gap-2.5">
@@ -299,7 +295,7 @@ export function WithdrawalsTable({
               })
             ) : (
               <tr>
-                <td colSpan={13} className="py-8 text-center text-muted-2">
+                <td colSpan={12} className="py-8 text-center text-muted-2">
                   No withdrawals found matching your filters.
                 </td>
               </tr>
