@@ -1,0 +1,172 @@
+export interface EarningRecord {
+  id: string;
+  userName: string;
+  userEmail: string;
+  vipLevel: 1 | 2 | 3 | 4 | 5 | 6;
+  type: "Trading Profit" | "Referral Bonus";
+  source: "Daily Trading" | "Referral Commission";
+  amount: number;
+  currency: string;
+  network: string;
+  status: "Completed" | "Pending" | "Rejected";
+  dateTime: string;
+  description: string;
+}
+
+export const vipLevelBadgeStyles: Record<number, string> = {
+  1: "bg-sky-500/15 text-sky-400 border border-sky-500/25",
+  2: "bg-teal-500/15 text-teal-400 border border-teal-500/25",
+  3: "bg-purple/20 text-purple-bright border border-purple-bright/30",
+  4: "bg-amber-500/15 text-amber-400 border border-amber-500/25",
+  5: "bg-rose-500/15 text-rose-400 border border-rose-500/25",
+  6: "bg-gradient-to-r from-amber-400/20 to-yellow-300/20 text-yellow-300 border border-yellow-400/30",
+};
+
+export const statusBadgeStyles: Record<EarningRecord["status"], string> = {
+  Completed: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+  Pending: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
+  Rejected: "bg-red-500/10 text-red-400 border border-red-500/20",
+};
+
+export const initialEarnings: EarningRecord[] = [
+  {
+    id: "#ER56820",
+    userName: "John Smith",
+    userEmail: "johnsmith@gmail.com",
+    vipLevel: 3,
+    type: "Trading Profit",
+    source: "Daily Trading",
+    amount: 100.00,
+    currency: "USDT",
+    network: "TRC20",
+    status: "Completed",
+    dateTime: "May 18, 2024 10:45 AM",
+    description: "Daily profit - VIP 3",
+  },
+  {
+    id: "#ER56819",
+    userName: "Maria Garcia",
+    userEmail: "mariagarcia@gmail.com",
+    vipLevel: 2,
+    type: "Trading Profit",
+    source: "Daily Trading",
+    amount: 68.00,
+    currency: "USDT",
+    network: "TRC20",
+    status: "Completed",
+    dateTime: "May 18, 2024 10:32 AM",
+    description: "Daily profit - VIP 2",
+  },
+  {
+    id: "#ER56818",
+    userName: "David Brown",
+    userEmail: "davidbrown@gmail.com",
+    vipLevel: 4,
+    type: "Referral Bonus",
+    source: "Referral Commission",
+    amount: 20.00,
+    currency: "USDT",
+    network: "TRC20",
+    status: "Completed",
+    dateTime: "May 18, 2024 09:55 AM",
+    description: "Referral bonus from Maria Garcia",
+  },
+  {
+    id: "#ER56817",
+    userName: "Sarah Johnson",
+    userEmail: "sarahjohnson@gmail.com",
+    vipLevel: 2,
+    type: "Trading Profit",
+    source: "Daily Trading",
+    amount: 30.00,
+    currency: "USDT",
+    network: "TRC20",
+    status: "Completed",
+    dateTime: "May 18, 2024 09:32 AM",
+    description: "Daily profit - VIP 2",
+  },
+  {
+    id: "#ER56816",
+    userName: "Michael Lee",
+    userEmail: "michaellee@gmail.com",
+    vipLevel: 3,
+    type: "Trading Profit",
+    source: "Daily Trading",
+    amount: 2.80,
+    currency: "USDT",
+    network: "TRC20",
+    status: "Completed",
+    dateTime: "May 18, 2024 08:48 AM",
+    description: "Daily profit - VIP 3",
+  },
+  {
+    id: "#ER56815",
+    userName: "Emily Davis",
+    userEmail: "emilydavis@gmail.com",
+    vipLevel: 5,
+    type: "Referral Bonus",
+    source: "Referral Commission",
+    amount: 120.00,
+    currency: "USDT",
+    network: "BEP20",
+    status: "Completed",
+    dateTime: "May 18, 2024 08:15 AM",
+    description: "Referral bonus from David Brown",
+  },
+  {
+    id: "#ER56814",
+    userName: "James Wilson",
+    userEmail: "jameswilson@gmail.com",
+    vipLevel: 3,
+    type: "Trading Profit",
+    source: "Daily Trading",
+    amount: 75.00,
+    currency: "USDT",
+    network: "BEP20",
+    status: "Completed",
+    dateTime: "May 17, 2024 07:52 PM",
+    description: "Daily profit - VIP 3",
+  },
+  {
+    id: "#ER56813",
+    userName: "Olivia Martinez",
+    userEmail: "oliviamartinez@gmail.com",
+    vipLevel: 4,
+    type: "Referral Bonus",
+    source: "Referral Commission",
+    amount: 50.00,
+    currency: "USDT",
+    network: "TRC20",
+    status: "Completed",
+    dateTime: "May 17, 2024 06:33 PM",
+    description: "Referral bonus from James Wilson",
+  },
+  {
+    id: "#ER56812",
+    userName: "Daniel Martinez",
+    userEmail: "danielmartinez@gmail.com",
+    vipLevel: 2,
+    type: "Trading Profit",
+    source: "Daily Trading",
+    amount: 1.50,
+    currency: "USDT",
+    network: "TRC20",
+    status: "Completed",
+    dateTime: "May 17, 2024 06:01 PM",
+    description: "Daily profit - VIP 2",
+  },
+  {
+    id: "#ER56811",
+    userName: "Sophia Anderson",
+    userEmail: "sophiaanderson@gmail.com",
+    vipLevel: 6,
+    type: "Referral Bonus",
+    source: "Referral Commission",
+    amount: 200.00,
+    currency: "USDT",
+    network: "TRC20",
+    status: "Completed",
+    dateTime: "May 17, 2024 05:22 PM",
+    description: "Referral bonus from Maria Garcia",
+  },
+];
