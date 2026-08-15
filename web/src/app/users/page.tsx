@@ -6,10 +6,10 @@ import {
   UserCheck,
   Wallet,
   ArrowUpRight,
-  Crown,
-  Clock,
   Plus,
   Download,
+  CreditCard,
+  Coins,
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
@@ -99,106 +99,111 @@ export default function UsersPage() {
   return (
     <AdminShell>
       {/* Top Header section */}
-      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-white sm:text-2xl">
-            Users
-          </h1>
-          <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-2">
-            <span>Dashboard</span>
-            <span className="text-[10px] text-muted-2/65">&gt;</span>
-            <span className="text-muted">Users</span>
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.04] cursor-pointer"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Export
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-1.5 rounded-xl bg-purple hover:bg-purple-bright px-3.5 py-2 text-xs font-semibold text-white transition shadow-[0_8px_20px_rgba(123,44,255,0.3)] hover:shadow-[0_8px_20px_rgba(123,44,255,0.45)] cursor-pointer"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add New User
-          </button>
-        </div>
+      <div className="mb-6">
+        <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-white sm:text-2xl">
+          <Users className="h-6 w-6 text-purple-bright" />
+          Admin Users
+        </h1>
+        <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-2">
+          <span>Dashboard</span>
+          <span className="text-[10px] text-muted-2/65">&gt;</span>
+          <span>Admin</span>
+          <span className="text-[10px] text-muted-2/65">&gt;</span>
+          <span className="text-purple-bright">Users</span>
+        </p>
       </div>
 
       {/* KPI Cards Row */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="Total Users"
-          value="100,254"
+          value="1,248"
           change="+12.5%"
           icon={Users}
         />
         <KpiCard
           label="Active Users"
-          value="78,952"
-          change="+10.3%"
-          icon={UserCheck}
-        />
-        <KpiCard
-          label="Total Deposited"
-          value="$1,234,567.89"
-          change="+18.7%"
+          value="892"
+          change="+14.2%"
           icon={Wallet}
         />
         <KpiCard
-          label="Total Withdrawn"
-          value="$657,890.20"
-          change="+8.3%"
-          icon={ArrowUpRight}
+          label="Total Deposits"
+          value="$12,450"
+          change="+18.4%"
+          icon={CreditCard}
         />
         <KpiCard
-          label="Active VIP Users"
-          value="12,364"
-          change="+11.4%"
-          icon={Crown}
-        />
-        <KpiCard
-          label="Pending Verification"
-          value="37,803"
-          change="-6.8%"
-          positive={false}
-          icon={Clock}
-          iconClassName="text-danger"
+          label="Total Withdrawals"
+          value="$8,760"
+          change="+16.7%"
+          icon={Coins}
         />
       </div>
 
-      {/* Filters Card */}
-      <UsersFilters
-        search={search}
-        setSearch={setSearch}
-        vipLevel={vipLevel}
-        setVipLevel={setVipLevel}
-        status={status}
-        setStatus={setStatus}
-        dateRange={dateRange}
-        setDateRange={setDateRange}
-        onFilter={handleFilter}
-        onReset={handleReset}
-      />
+      {/* Main Users Management Container */}
+      <div className="rounded-2xl border border-border bg-card shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
+        {/* Section Header */}
+        <div className="flex flex-col gap-4 border-b border-border/50 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple/10 text-purple-bright">
+              <Users className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-white">Users Management</h2>
+              <p className="mt-0.5 text-xs text-muted-2">View and manage all platform users</p>
+            </div>
+          </div>
 
-      {/* Users Table Card */}
-      <UsersTable
-        users={filteredUsers}
-        paginatedUsers={paginatedUsers}
-        totalCount={initialUsers.length}
-        currentPage={currentPage}
-        setCurrentPage={setCurrentPage}
-        pageSize={pageSize}
-        setPageSize={setPageSize}
-        selectedIds={selectedIds}
-        setSelectedIds={setSelectedIds}
-        toggleSelectAll={toggleSelectAll}
-        toggleSelectRow={toggleSelectRow}
-      />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="flex items-center gap-1.5 rounded-xl bg-purple hover:bg-purple-bright px-4 py-2 text-xs font-semibold text-white transition shadow-[0_8px_20px_rgba(123,44,255,0.3)] hover:shadow-[0_8px_20px_rgba(123,44,255,0.45)] cursor-pointer"
+            >
+              <Plus className="h-4 w-4" />
+              Add User
+            </button>
+            <button
+              type="button"
+              className="flex items-center gap-1.5 rounded-xl border border-border bg-card-elevated px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.04] cursor-pointer"
+            >
+              <Download className="h-4 w-4" />
+              Export
+            </button>
+          </div>
+        </div>
+
+        <div className="p-5 flex flex-col gap-5">
+          {/* Filters */}
+          <UsersFilters
+            search={search}
+            setSearch={setSearch}
+            vipLevel={vipLevel}
+            setVipLevel={setVipLevel}
+            status={status}
+            setStatus={setStatus}
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+            onFilter={handleFilter}
+            onReset={handleReset}
+          />
+
+          {/* Table */}
+          <UsersTable
+            users={filteredUsers}
+            paginatedUsers={paginatedUsers}
+            totalCount={initialUsers.length}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            pageSize={pageSize}
+            setPageSize={setPageSize}
+            selectedIds={selectedIds}
+            setSelectedIds={setSelectedIds}
+            toggleSelectAll={toggleSelectAll}
+            toggleSelectRow={toggleSelectRow}
+          />
+        </div>
+      </div>
 
       {/* Floating Bulk Actions Bar */}
       {selectedIds.length > 0 && (

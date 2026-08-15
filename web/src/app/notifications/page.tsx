@@ -131,7 +131,7 @@ export default function NotificationsPage() {
 
   return (
     <AdminShell>
-      <div className="mx-auto max-w-7xl">
+      <div className="w-full">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Notifications</h1>

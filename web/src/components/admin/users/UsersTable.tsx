@@ -4,7 +4,8 @@ import {
   MoreVertical,
   ChevronLeft,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  Edit
 } from "lucide-react";
 import type { UserRecord } from "./usersData";
 import { vipBadgeStyles } from "./usersData";
@@ -41,7 +42,7 @@ export function UsersTable({
   const totalPages = Math.max(1, Math.ceil(users.length / pageSize));
 
   return (
-    <div className="mt-5 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex flex-col">
+    <div className="flex flex-col">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1100px] text-left text-xs">
           <thead>
@@ -71,12 +72,11 @@ export function UsersTable({
                 </label>
               </th>
               <th className="pb-3.5 font-medium">User</th>
-              <th className="pb-3.5 font-medium">VIP Level</th>
-              <th className="pb-3.5 font-medium">Email / Phone</th>
-              <th className="pb-3.5 font-medium">Total Assets</th>
-              <th className="pb-3.5 font-medium">Deposit Request</th>
+              <th className="pb-3.5 font-medium">Email</th>
+              <th className="pb-3.5 font-medium">Level</th>
               <th className="pb-3.5 font-medium">Status</th>
-              <th className="pb-3.5 font-medium">Registered At</th>
+              <th className="pb-3.5 font-medium">Balance</th>
+              <th className="pb-3.5 font-medium">Joined</th>
               <th className="pb-3.5 font-medium text-right pr-1">Actions</th>
             </tr>
           </thead>
@@ -115,66 +115,52 @@ export function UsersTable({
                     <td className="py-3.5">
                       <div className="flex items-center gap-2.5">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple/15 text-[10px] font-semibold text-purple-bright ring-1 ring-purple-bright/20">
-                          {user.name
-                            .split(" ")
-                            .map((p) => p[0])
-                            .join("")
-                            .slice(0, 2)}
+                          {user.name.split(" ").map((p) => p[0]).join("").slice(0, 2)}
                         </div>
                         <div>
                           <p className="font-semibold text-white leading-normal">{user.name}</p>
-                          <p className="text-[10px] text-muted-2 leading-none mt-0.5">{user.phone}</p>
+                          <p className="text-[10px] text-muted-2 leading-none mt-0.5">UID: {user.id.toUpperCase().substring(0, 7)}</p>
                         </div>
                       </div>
                     </td>
+                    <td className="py-3.5 text-muted-2">{user.email}</td>
                     <td className="py-3.5">
-                      <span
-                        className={`inline-flex rounded-md px-2 py-0.5 text-[9px] font-semibold tracking-wider ${
-                          vipBadgeStyles[user.vipLevel] || ""
-                        }`}
-                      >
+                      <span className={`inline-flex rounded-md px-2 py-0.5 text-[9px] font-semibold tracking-wider ${vipBadgeStyles[user.vipLevel] || ""}`}>
                         {user.vipLevel}
                       </span>
-                    </td>
-                    <td className="py-3.5 text-muted-2">{user.email}</td>
-                    <td className="py-3.5 font-semibold text-success">
-                      ${(user.deposited - user.withdrawn + user.earnings).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="py-3.5">
-                      {user.pendingDeposit ? (
-                        <span className="inline-flex rounded-md bg-warning/15 text-warning px-2.5 py-0.5 text-[10px] font-semibold">
-                          Pending (${user.pendingDeposit.toLocaleString("en-US", { minimumFractionDigits: 2 })})
-                        </span>
-                      ) : (
-                        <span className="text-muted-2">-</span>
-                      )}
                     </td>
                     <td className="py-3.5">
                       <span
                         className={`inline-flex rounded-md px-2.5 py-0.5 text-[10px] font-semibold ${
                           user.status === "Active"
                             ? "bg-success/15 text-success"
-                            : "bg-white/[0.06] text-muted-2"
+                            : user.status === "Pending"
+                            ? "bg-warning/15 text-warning"
+                            : "bg-danger/15 text-danger"
                         }`}
                       >
                         {user.status}
                       </span>
                     </td>
+                    <td className="py-3.5 text-muted-2">
+                      ${(user.deposited - user.withdrawn + user.earnings).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    </td>
                     <td className="py-3.5 text-muted-2">{user.registeredAt}</td>
                     <td className="py-3.5 text-right pr-1 relative">
-                      <div className="inline-flex items-center gap-1">
+                      <div className="inline-flex items-center gap-2 justify-end">
+                        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-white text-[11px] font-medium hover:bg-white/[0.04] transition">
+                          <Edit className="h-3.5 w-3.5" /> Edit
+                        </button>
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setActiveDropdownUserId(
-                              activeDropdownUserId === user.id ? null : user.id
-                            );
+                            setActiveDropdownUserId(activeDropdownUserId === user.id ? null : user.id);
                           }}
-                          className={`flex h-7 w-7 items-center justify-center rounded-lg border bg-card-elevated transition cursor-pointer ${
+                          className={`flex h-8 w-8 items-center justify-center rounded-lg border transition cursor-pointer ${
                             activeDropdownUserId === user.id
                               ? "border-purple-bright/50 text-white bg-purple/10"
-                              : "border-border text-muted hover:text-white"
+                              : "border-border text-muted hover:text-white bg-card-elevated"
                           }`}
                           aria-label="Actions"
                         >
@@ -271,15 +257,66 @@ export function UsersTable({
         </table>
       </div>
 
-      <PaginationFooter
-        currentPage={currentPage}
-        pageSize={pageSize}
-        totalItems={users.length}
-        onPageChange={setCurrentPage}
-        onPageSizeChange={setPageSize}
-        itemName="users"
-        pageSizes={[5, 10, 20]}
-      />
+      <div className="mt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-muted-2">
+        <div>
+          Showing {Math.min(1 + (currentPage - 1) * pageSize, totalCount)} to{" "}
+          {Math.min(currentPage * pageSize, totalCount)} of {totalCount} users
+        </div>
+        <div className="mt-4 sm:mt-0 flex items-center gap-1.5">
+          <button
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-white/[0.04] disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            <span className="text-base leading-none">&laquo;</span>
+          </button>
+          
+          <button className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple text-white font-medium shadow-[0_4px_12px_rgba(123,44,255,0.25)]">
+            {currentPage}
+          </button>
+
+          {totalPages > 1 && currentPage < totalPages && (
+            <button
+              onClick={() => setCurrentPage(currentPage + 1)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-white/[0.04] text-muted-2 hover:text-white transition"
+            >
+              {currentPage + 1}
+            </button>
+          )}
+
+          {totalPages > 3 && currentPage < totalPages - 1 && (
+            <>
+              <span className="px-1 text-muted-2">...</span>
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-white/[0.04] text-muted-2 hover:text-white transition"
+              >
+                {totalPages}
+              </button>
+            </>
+          )}
+
+          <button
+            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage === totalPages}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-white/[0.04] disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            <span className="text-base leading-none">&raquo;</span>
+          </button>
+          
+          <select
+            value={pageSize}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+            className="ml-2 h-8 rounded-lg border border-border bg-card-elevated pl-2 pr-6 text-xs text-white outline-none appearance-none focus:border-border-strong"
+          >
+            <option value={5}>5 / page</option>
+            <option value={10}>10 / page</option>
+            <option value={20}>20 / page</option>
+            <option value={50}>50 / page</option>
+            <option value={250}>250 / page</option>
+          </select>
+        </div>
+      </div>
     </div>
   );
 }

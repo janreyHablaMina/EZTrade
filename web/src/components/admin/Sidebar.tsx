@@ -31,7 +31,6 @@ type NavItem = {
 };
 
 const management: NavItem[] = [
-  { label: "Users", href: "/users", icon: Users },
   { label: "VIP Plans", href: "/vip-plans", icon: Crown },
   { label: "Deposits", href: "/deposits", icon: ArrowDownToLine },
   { label: "Withdrawals", href: "/withdrawals", icon: ArrowUpFromLine },
@@ -52,8 +51,8 @@ const settings: NavItem[] = [
 ];
 
 const admin: NavItem[] = [
-  { label: "Admin Users", href: "#admin-users", icon: Shield },
-  { label: "Audit Logs", href: "#audit-logs", icon: ScrollText },
+  { label: "Admin Users", href: "/users", icon: Shield },
+  { label: "Audit Logs", href: "/audit-logs", icon: ScrollText },
 ];
 
 function NavSection({ title, items }: { title: string; items: NavItem[] }) {

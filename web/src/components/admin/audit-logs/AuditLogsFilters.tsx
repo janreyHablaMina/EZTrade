@@ -1,10 +1,10 @@
-import { Search, Calendar, Filter, RotateCcw, ChevronDown } from "lucide-react";
+import { Search, ChevronDown, Filter, RotateCcw, Calendar } from "lucide-react";
 
-type UsersFiltersProps = {
+type AuditLogsFiltersProps = {
   search: string;
   setSearch: (s: string) => void;
-  vipLevel: string;
-  setVipLevel: (l: string) => void;
+  action: string;
+  setAction: (a: string) => void;
   status: string;
   setStatus: (s: string) => void;
   dateRange: string;
@@ -13,18 +13,18 @@ type UsersFiltersProps = {
   onReset: () => void;
 };
 
-export function UsersFilters({
+export function AuditLogsFilters({
   search,
   setSearch,
-  vipLevel,
-  setVipLevel,
+  action,
+  setAction,
   status,
   setStatus,
   dateRange,
   setDateRange,
   onFilter,
   onReset,
-}: UsersFiltersProps) {
+}: AuditLogsFiltersProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
       {/* Search bar */}
@@ -32,7 +32,7 @@ export function UsersFilters({
         <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-muted-2" />
         <input
           type="text"
-          placeholder="Search users..."
+          placeholder="Search by user, action, or resource..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full h-9 rounded-xl border border-border bg-card-elevated pl-10 pr-4 text-xs text-white placeholder:text-muted-2 outline-none focus:border-border-strong transition"
@@ -40,6 +40,23 @@ export function UsersFilters({
       </div>
 
       <div className="flex items-center gap-3 w-full sm:w-auto">
+        {/* Action filter */}
+        <div className="relative w-full sm:w-[140px]">
+          <select
+            value={action}
+            onChange={(e) => setAction(e.target.value)}
+            className="w-full h-9 rounded-xl border border-border bg-card-elevated pl-3 pr-8 text-xs text-white outline-none focus:border-border-strong transition appearance-none cursor-pointer"
+          >
+            <option value="all">All Actions</option>
+            <option value="Login">Login</option>
+            <option value="Export Data">Export Data</option>
+            <option value="Configuration Change">Configuration Change</option>
+            <option value="Withdrawal Request">Withdrawal Request</option>
+            <option value="Deposit">Deposit</option>
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-muted-2" />
+        </div>
+
         {/* Status filter */}
         <div className="relative w-full sm:w-[130px]">
           <select
@@ -48,38 +65,23 @@ export function UsersFilters({
             className="w-full h-9 rounded-xl border border-border bg-card-elevated pl-3 pr-8 text-xs text-white outline-none focus:border-border-strong transition appearance-none cursor-pointer"
           >
             <option value="all">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Pending">Pending</option>
-            <option value="Suspended">Suspended</option>
+            <option value="Success">Success</option>
+            <option value="Failed">Failed</option>
+            <option value="Warning">Warning</option>
           </select>
           <ChevronDown className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-muted-2" />
         </div>
 
-        {/* VIP Level filter */}
-        <div className="relative w-full sm:w-[130px]">
-          <select
-            value={vipLevel}
-            onChange={(e) => setVipLevel(e.target.value)}
-            className="w-full h-9 rounded-xl border border-border bg-card-elevated pl-3 pr-8 text-xs text-white outline-none focus:border-border-strong transition appearance-none cursor-pointer"
-          >
-            <option value="all">All Levels</option>
-            <option value="VIP 1">VIP 1</option>
-            <option value="VIP 2">VIP 2</option>
-            <option value="VIP 3">VIP 3</option>
-            <option value="VIP 4">VIP 4</option>
-            <option value="VIP 5">VIP 5</option>
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-muted-2" />
-        </div>
-
-        {/* Countries (mockup placeholder) */}
-        <div className="relative w-full sm:w-[130px] hidden md:block">
-          <select
-            className="w-full h-9 rounded-xl border border-border bg-card-elevated pl-3 pr-8 text-xs text-white outline-none focus:border-border-strong transition appearance-none cursor-pointer"
-          >
-            <option value="all">All Countries</option>
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-muted-2" />
+        {/* Date Range filter */}
+        <div className="relative w-full sm:w-[150px] hidden md:block">
+          <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-muted-2" />
+          <input
+            type="text"
+            placeholder="Select date range"
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+            className="w-full h-9 rounded-xl border border-border bg-card-elevated pl-9 pr-3 text-xs text-white placeholder:text-muted-2 outline-none focus:border-border-strong transition cursor-pointer"
+          />
         </div>
 
         {/* Filter actions */}
