@@ -240,6 +240,7 @@ export default function UsersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [activeDropdownUserId, setActiveDropdownUserId] = useState<string | null>(null);
 
   // Apply filters logic
   const filteredUsers = useMemo(() => {
@@ -571,16 +572,97 @@ export default function UsersPage() {
                         </span>
                       </td>
                       <td className="py-3.5 text-muted-2">{user.registeredAt}</td>
-                      <td className="py-3.5 text-right pr-1">
+                      <td className="py-3.5 text-right pr-1 relative">
                         <div className="inline-flex items-center gap-1">
                           <button
                             type="button"
-                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-card-elevated text-muted hover:text-white transition"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDropdownUserId(
+                                activeDropdownUserId === user.id ? null : user.id
+                              );
+                            }}
+                            className={`flex h-7 w-7 items-center justify-center rounded-lg border bg-card-elevated transition cursor-pointer ${
+                              activeDropdownUserId === user.id
+                                ? "border-purple-bright/50 text-white bg-purple/10"
+                                : "border-border text-muted hover:text-white"
+                            }`}
                             aria-label="Actions"
                           >
                             <MoreVertical className="h-3.5 w-3.5" />
                           </button>
                         </div>
+
+                        {activeDropdownUserId === user.id && (
+                          <>
+                            {/* Backdrop/invisible layer to close on click outside */}
+                            <div 
+                              className="fixed inset-0 z-20 cursor-default" 
+                              onClick={() => setActiveDropdownUserId(null)}
+                            />
+                            <div className="absolute right-1.5 mt-1 w-48 rounded-xl bg-card-elevated border border-border py-1.5 shadow-[0_10px_35px_rgba(0,0,0,0.55)] z-30 text-left">
+                              <button
+                                type="button"
+                                onClick={() => setActiveDropdownUserId(null)}
+                                className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
+                              >
+                                <span className="text-sm">👁</span>
+                                View User
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setActiveDropdownUserId(null)}
+                                className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
+                              >
+                                <span className="text-sm">✏️</span>
+                                Edit User
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setActiveDropdownUserId(null)}
+                                className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
+                              >
+                                <span className="text-sm">🔔</span>
+                                Send Notification
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setActiveDropdownUserId(null)}
+                                className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
+                              >
+                                <span className="text-sm">🔑</span>
+                                Reset Password
+                              </button>
+                              
+                              <div className="my-1 border-t border-border/45" />
+                              
+                              <button
+                                type="button"
+                                onClick={() => setActiveDropdownUserId(null)}
+                                className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
+                              >
+                                <span className="text-sm">⏸</span>
+                                Suspend Account
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setActiveDropdownUserId(null)}
+                                className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
+                              >
+                                <span className="text-sm">🚫</span>
+                                Deactivate Account
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setActiveDropdownUserId(null)}
+                                className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
+                              >
+                                <span className="text-sm">🗃️</span>
+                                Archive User
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </td>
                     </tr>
                   );
