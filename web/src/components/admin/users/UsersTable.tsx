@@ -1,0 +1,346 @@
+import { useState } from "react";
+import {
+  MoreVertical,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown
+} from "lucide-react";
+import type { UserRecord } from "./usersData";
+import { vipBadgeStyles } from "./usersData";
+
+type UsersTableProps = {
+  users: UserRecord[];
+  paginatedUsers: UserRecord[];
+  totalCount: number;
+  currentPage: number;
+  setCurrentPage: (p: number) => void;
+  pageSize: number;
+  setPageSize: (s: number) => void;
+  selectedIds: string[];
+  setSelectedIds: (ids: string[] | ((prev: string[]) => string[])) => void;
+  toggleSelectAll: () => void;
+  toggleSelectRow: (id: string) => void;
+};
+
+export function UsersTable({
+  users,
+  paginatedUsers,
+  totalCount,
+  currentPage,
+  setCurrentPage,
+  pageSize,
+  setPageSize,
+  selectedIds,
+  setSelectedIds,
+  toggleSelectAll,
+  toggleSelectRow,
+}: UsersTableProps) {
+  const [activeDropdownUserId, setActiveDropdownUserId] = useState<string | null>(null);
+
+  const totalPages = Math.max(1, Math.ceil(users.length / pageSize));
+
+  return (
+    <div className="mt-5 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex flex-col">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1100px] text-left text-xs">
+          <thead>
+            <tr className="border-b border-border text-muted-2">
+              <th className="pb-3.5 pl-1 pr-6 font-medium w-14">
+                <label className="relative flex items-center justify-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={
+                      paginatedUsers.length > 0 &&
+                      selectedIds.length === paginatedUsers.length
+                    }
+                    onChange={toggleSelectAll}
+                    className="sr-only"
+                  />
+                  <div className={`h-4.5 w-4.5 rounded-md border flex items-center justify-center transition-all duration-200 ${
+                    paginatedUsers.length > 0 && selectedIds.length === paginatedUsers.length
+                      ? "bg-purple border-purple-bright shadow-[0_0_8px_rgba(123,44,255,0.4)]"
+                      : "border-border bg-card-elevated hover:border-purple-bright/50"
+                  }`}>
+                    {paginatedUsers.length > 0 && selectedIds.length === paginatedUsers.length && (
+                      <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </label>
+              </th>
+              <th className="pb-3.5 font-medium">User</th>
+              <th className="pb-3.5 font-medium">VIP Level</th>
+              <th className="pb-3.5 font-medium">Email / Phone</th>
+              <th className="pb-3.5 font-medium">Total Assets</th>
+              <th className="pb-3.5 font-medium">Deposit Request</th>
+              <th className="pb-3.5 font-medium">Status</th>
+              <th className="pb-3.5 font-medium">Registered At</th>
+              <th className="pb-3.5 font-medium text-right pr-1">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginatedUsers.length > 0 ? (
+              paginatedUsers.map((user, index) => {
+                const isChecked = selectedIds.includes(user.id);
+                return (
+                  <tr
+                    key={user.id}
+                    className={`border-b border-border/45 last:border-0 hover:bg-white/[0.01] transition ${
+                      isChecked ? "bg-purple/5" : ""
+                    }`}
+                  >
+                    <td className="py-3.5 pl-1 pr-6">
+                      <label className="relative flex items-center justify-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleSelectRow(user.id)}
+                          className="sr-only"
+                        />
+                        <div className={`h-4.5 w-4.5 rounded-md border flex items-center justify-center transition-all duration-200 ${
+                          isChecked
+                            ? "bg-purple border-purple-bright shadow-[0_0_8px_rgba(123,44,255,0.4)]"
+                            : "border-border bg-card-elevated hover:border-purple-bright/50"
+                        }`}>
+                          {isChecked && (
+                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                      </label>
+                    </td>
+                    <td className="py-3.5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple/15 text-[10px] font-semibold text-purple-bright ring-1 ring-purple-bright/20">
+                          {user.name
+                            .split(" ")
+                            .map((p) => p[0])
+                            .join("")
+                            .slice(0, 2)}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-white leading-normal">{user.name}</p>
+                          <p className="text-[10px] text-muted-2 leading-none mt-0.5">{user.phone}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3.5">
+                      <span
+                        className={`inline-flex rounded-md px-2 py-0.5 text-[9px] font-semibold tracking-wider ${
+                          vipBadgeStyles[user.vipLevel] || ""
+                        }`}
+                      >
+                        {user.vipLevel}
+                      </span>
+                    </td>
+                    <td className="py-3.5 text-muted-2">{user.email}</td>
+                    <td className="py-3.5 font-semibold text-success">
+                      ${(user.deposited - user.withdrawn + user.earnings).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="py-3.5">
+                      {user.pendingDeposit ? (
+                        <span className="inline-flex rounded-md bg-warning/15 text-warning px-2.5 py-0.5 text-[10px] font-semibold">
+                          Pending (${user.pendingDeposit.toLocaleString("en-US", { minimumFractionDigits: 2 })})
+                        </span>
+                      ) : (
+                        <span className="text-muted-2">-</span>
+                      )}
+                    </td>
+                    <td className="py-3.5">
+                      <span
+                        className={`inline-flex rounded-md px-2.5 py-0.5 text-[10px] font-semibold ${
+                          user.status === "Active"
+                            ? "bg-success/15 text-success"
+                            : "bg-white/[0.06] text-muted-2"
+                        }`}
+                      >
+                        {user.status}
+                      </span>
+                    </td>
+                    <td className="py-3.5 text-muted-2">{user.registeredAt}</td>
+                    <td className="py-3.5 text-right pr-1 relative">
+                      <div className="inline-flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveDropdownUserId(
+                              activeDropdownUserId === user.id ? null : user.id
+                            );
+                          }}
+                          className={`flex h-7 w-7 items-center justify-center rounded-lg border bg-card-elevated transition cursor-pointer ${
+                            activeDropdownUserId === user.id
+                              ? "border-purple-bright/50 text-white bg-purple/10"
+                              : "border-border text-muted hover:text-white"
+                          }`}
+                          aria-label="Actions"
+                        >
+                          <MoreVertical className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+
+                      {activeDropdownUserId === user.id && (
+                        <>
+                          {/* Backdrop/invisible layer to close on click outside */}
+                          <div 
+                            className="fixed inset-0 z-20 cursor-default" 
+                            onClick={() => setActiveDropdownUserId(null)}
+                          />
+                          <div className={`absolute right-1.5 w-48 rounded-xl bg-card-elevated border border-border py-1.5 shadow-[0_10px_35px_rgba(0,0,0,0.55)] z-30 text-left ${
+                            index >= paginatedUsers.length - 4 && paginatedUsers.length > 4
+                              ? "bottom-full mb-1"
+                              : "mt-1"
+                          }`}>
+                            <button
+                              type="button"
+                              onClick={() => setActiveDropdownUserId(null)}
+                              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
+                            >
+                              <span className="text-sm">👁</span>
+                              View User
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setActiveDropdownUserId(null)}
+                              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
+                            >
+                              <span className="text-sm">✏️</span>
+                              Edit User
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setActiveDropdownUserId(null)}
+                              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
+                            >
+                              <span className="text-sm">🔔</span>
+                              Send Notification
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setActiveDropdownUserId(null)}
+                              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
+                            >
+                              <span className="text-sm">🔑</span>
+                              Reset Password
+                            </button>
+                            
+                            <div className="my-1 border-t border-border/45" />
+                            
+                            <button
+                              type="button"
+                              onClick={() => setActiveDropdownUserId(null)}
+                              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
+                            >
+                              <span className="text-sm">⏸</span>
+                              Suspend Account
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setActiveDropdownUserId(null)}
+                              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
+                            >
+                              <span className="text-sm">🚫</span>
+                              Deactivate Account
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setActiveDropdownUserId(null)}
+                              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
+                            >
+                              <span className="text-sm">🗃️</span>
+                              Archive User
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={9} className="py-8 text-center text-muted-2">
+                  No users found matching your filters.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Table Footer / Pagination */}
+      <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-2 border-t border-border/45 pt-4">
+        <div>
+          Showing {users.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to{" "}
+          {Math.min(currentPage * pageSize, users.length)} of{" "}
+          <span className="text-white font-medium">
+            {users.length === totalCount ? "100,254" : users.length}
+          </span>{" "}
+          users
+        </div>
+
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card-elevated text-muted hover:text-white transition disabled:opacity-40 disabled:hover:text-muted cursor-pointer disabled:cursor-not-allowed"
+              aria-label="Previous Page"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            
+            {Array.from({ length: totalPages }).map((_, i) => {
+              const pageNum = i + 1;
+              return (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg border text-xs font-semibold transition cursor-pointer ${
+                    currentPage === pageNum
+                      ? "bg-purple border-purple-bright/35 text-white shadow-[0_4px_12px_rgba(123,44,255,0.3)]"
+                      : "border-border bg-card-elevated text-muted hover:text-white"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+
+            <button
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(currentPage + 1)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card-elevated text-muted hover:text-white transition disabled:opacity-40 disabled:hover:text-muted cursor-pointer disabled:cursor-not-allowed"
+              aria-label="Next Page"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="h-8 rounded-lg border border-border bg-card-elevated pl-2.5 pr-8 text-xs text-white outline-none focus:border-border-strong transition appearance-none cursor-pointer"
+              >
+                <option value={5}>5 / page</option>
+                <option value={10}>10 / page</option>
+                <option value={20}>20 / page</option>
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-2 h-4 w-4 text-muted-2" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
