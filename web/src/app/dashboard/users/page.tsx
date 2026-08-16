@@ -187,7 +187,7 @@ export default function UsersPage() {
   const handleSimulateDailyTrade = async () => {
     try {
       setIsProcessingAction(true);
-      const response = await webApi.post('/admin/simulate-trade');
+      const response = await webApi.post('/users/simulate-trade');
       
       await fetchUsers(); // Refresh the list since many users might have updated
       
