@@ -182,6 +182,26 @@ export default function UsersPage() {
     setToastMessage("Notification sent successfully");
   };
 
+  const handleSimulateTrade = async (user: UserRecord) => {
+    try {
+      const realId = (user as any).dbId || parseInt(user.id.replace('EZT-', ''));
+      const response = await webApi.post('/admin/simulate-trade', { user_id: realId });
+      
+      // Update the user's balance in the table
+      setUsersList(usersList.map((u) => {
+        if (u.id === user.id) {
+          const profit = response.data.profit || 10;
+          return { ...u, deposited: u.deposited + profit };
+        }
+        return u;
+      }));
+      setToastMessage(`Simulated trade for ${user.name} (+${response.data.profit || 10} USDT)`);
+    } catch (err) {
+      console.error("Failed to simulate trade:", err);
+      setToastMessage("Failed to simulate trade");
+    }
+  };
+
   const handleAccountAction = () => {
     if (!accountAction) return;
     setIsProcessingAction(true);
@@ -313,6 +333,7 @@ export default function UsersPage() {
             onViewUser={setViewingUser}
             onEditUser={setEditingUser}
             onNotifyUser={setNotifyingUser}
+            onSimulateTrade={handleSimulateTrade}
             onSuspendUser={(user) => setAccountAction({ user, action: 'suspend' })}
             onUnsuspendUser={(user) => setAccountAction({ user, action: 'unsuspend' })}
             onDeactivateUser={(user) => setAccountAction({ user, action: 'deactivate' })}

@@ -24,6 +24,7 @@ type UsersTableProps = {
   onViewUser?: (user: UserRecord) => void;
   onEditUser?: (user: UserRecord) => void;
   onNotifyUser?: (user: UserRecord) => void;
+  onSimulateTrade?: (user: UserRecord) => void;
   onSuspendUser?: (user: UserRecord) => void;
   onUnsuspendUser?: (user: UserRecord) => void;
   onDeactivateUser?: (user: UserRecord) => void;
@@ -45,6 +46,7 @@ export function UsersTable({
   onViewUser,
   onEditUser,
   onNotifyUser,
+  onSimulateTrade,
   onSuspendUser,
   onUnsuspendUser,
   onDeactivateUser,
@@ -145,16 +147,21 @@ export function UsersTable({
                     </td>
                     <td className="py-3.5 text-muted-2">{user.registeredAt}</td>
                     <td className="py-3.5 text-right pr-1">
-                      <TableActionsMenu estimatedHeight={320}>
-                        <TableActionsMenuItem icon="👁" label="View User" onClick={() => onViewUser?.(user)} />
-                        <TableActionsMenuItem icon="✏️" label="Edit User" onClick={() => onEditUser?.(user)} />
-                        <TableActionsMenuItem
-                          icon="🔔"
-                          label="Send Notification"
-                          onClick={() => onNotifyUser?.(user)}
-                        />
-                        <TableActionsMenuItem icon="🔑" label="Reset Password" />
-                        <TableActionsMenuDivider />
+                        <TableActionsMenu estimatedHeight={350}>
+                          <TableActionsMenuItem icon="👁" label="View User" onClick={() => onViewUser?.(user)} />
+                          <TableActionsMenuItem icon="✏️" label="Edit User" onClick={() => onEditUser?.(user)} />
+                          <TableActionsMenuItem
+                            icon="🔔"
+                            label="Send Notification"
+                            onClick={() => onNotifyUser?.(user)}
+                          />
+                          <TableActionsMenuItem
+                            icon="📈"
+                            label="Simulate Trade ($10)"
+                            onClick={() => onSimulateTrade?.(user)}
+                          />
+                          <TableActionsMenuItem icon="🔑" label="Reset Password" />
+                          <TableActionsMenuDivider />
                         {user.status === "Suspended" ? (
                           <TableActionsMenuItem
                             icon="▶️"

@@ -18,6 +18,7 @@ Route::get('/users', [UserController::class, 'index']);
 Route::get('/users/{id}', [UserController::class, 'show']);
 Route::patch('/users/{id}', [UserController::class, 'update']);
 Route::get('/users/{id}/stats', [UserController::class, 'stats']);
+Route::post('/users/simulate-trade', [\App\Http\Controllers\Admin\SimulatorController::class, 'simulateTrade']);
 
 // ── VIP Plans ─────────────────────────────────────────────────────────────────
 Route::get('/vip-plans', [VipPlanController::class, 'index']);
