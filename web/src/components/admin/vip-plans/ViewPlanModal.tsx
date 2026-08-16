@@ -103,7 +103,32 @@ export function ViewPlanModal({ isOpen, onClose, plan }: ViewPlanModalProps) {
               </span>
             </div>
 
-            <div className="flex items-center justify-between pt-3">
+            <div className="flex items-center justify-between border-b border-border/50 py-3">
+              <div className="flex flex-col gap-1 w-full">
+                <div className="flex items-center gap-2 text-sm text-muted-2 mb-2">
+                  <Users className="h-4 w-4" />
+                  <span>Referral Bonus</span>
+                </div>
+                {plan.referralBonus && (
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="flex flex-col items-center justify-center rounded-lg bg-white/[0.03] py-2 border border-white/[0.05]">
+                      <span className="text-[10px] text-muted-2 uppercase">Level 1</span>
+                      <span className="text-sm font-semibold text-purple-bright">{plan.referralBonus.level1}%</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center rounded-lg bg-white/[0.03] py-2 border border-white/[0.05]">
+                      <span className="text-[10px] text-muted-2 uppercase">Level 2</span>
+                      <span className="text-sm font-semibold text-purple-bright">{plan.referralBonus.level2}%</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center rounded-lg bg-white/[0.03] py-2 border border-white/[0.05]">
+                      <span className="text-[10px] text-muted-2 uppercase">Level 3</span>
+                      <span className="text-sm font-semibold text-purple-bright">{plan.referralBonus.level3}%</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between py-3">
               <div className="flex items-center gap-2 text-sm text-muted-2">
                 <Crown className="h-4 w-4" />
                 <span>Internal ID</span>

@@ -10,6 +10,11 @@ export type VipPlan = {
   durationDays: number;
   totalUsers: number;
   status: "Active" | "Inactive";
+  referralBonus: {
+    level1: number;
+    level2: number;
+    level3: number;
+  };
 };
 
 export const initialVipPlans: VipPlan[] = [
@@ -25,6 +30,7 @@ export const initialVipPlans: VipPlan[] = [
     durationDays: 60,
     totalUsers: 3245,
     status: "Active",
+    referralBonus: { level1: 10, level2: 5, level3: 2 },
   },
   {
     id: "VP2",
@@ -38,6 +44,7 @@ export const initialVipPlans: VipPlan[] = [
     durationDays: 60,
     totalUsers: 2156,
     status: "Active",
+    referralBonus: { level1: 10, level2: 5, level3: 2 },
   },
   {
     id: "VP3",
@@ -51,6 +58,7 @@ export const initialVipPlans: VipPlan[] = [
     durationDays: 60,
     totalUsers: 1984,
     status: "Active",
+    referralBonus: { level1: 10, level2: 5, level3: 2 },
   },
   {
     id: "VP4",
@@ -64,6 +72,7 @@ export const initialVipPlans: VipPlan[] = [
     durationDays: 60,
     totalUsers: 1523,
     status: "Active",
+    referralBonus: { level1: 10, level2: 5, level3: 2 },
   },
   {
     id: "VP5",
@@ -75,8 +84,9 @@ export const initialVipPlans: VipPlan[] = [
     dailyProfitUsdtMin: 100.0,
     dailyProfitUsdtMax: 299.9,
     durationDays: 60,
-    totalUsers: 876,
+    totalUsers: 890,
     status: "Active",
+    referralBonus: { level1: 10, level2: 5, level3: 2 },
   },
   {
     id: "VP6",
@@ -90,6 +100,7 @@ export const initialVipPlans: VipPlan[] = [
     durationDays: 60,
     totalUsers: 423,
     status: "Active",
+    referralBonus: { level1: 10, level2: 5, level3: 2 },
   },
   {
     id: "VP7",
@@ -101,8 +112,9 @@ export const initialVipPlans: VipPlan[] = [
     dailyProfitUsdtMin: 700.0,
     dailyProfitUsdtMax: 1499.9,
     durationDays: 60,
-    totalUsers: 98,
+    totalUsers: 18,
     status: "Active",
+    referralBonus: { level1: 20, level2: 10, level3: 5 },
   },
   {
     id: "VP8",
@@ -116,6 +128,7 @@ export const initialVipPlans: VipPlan[] = [
     durationDays: 60,
     totalUsers: 42,
     status: "Active",
+    referralBonus: { level1: 15, level2: 8, level3: 4 },
   },
   {
     id: "VP9",
@@ -127,8 +140,9 @@ export const initialVipPlans: VipPlan[] = [
     dailyProfitUsdtMin: 3000.0,
     dailyProfitUsdtMax: 4999.9,
     durationDays: 60,
-    totalUsers: 12,
+    totalUsers: 1432,
     status: "Active",
+    referralBonus: { level1: 10, level2: 5, level3: 2 },
   },
   {
     id: "VP10",
@@ -140,8 +154,9 @@ export const initialVipPlans: VipPlan[] = [
     dailyProfitUsdtMin: 5000.0,
     dailyProfitUsdtMax: "Unlimited",
     durationDays: 60,
-    totalUsers: 5,
+    totalUsers: 85,
     status: "Active",
+    referralBonus: { level1: 15, level2: 8, level3: 4 },
   },
 ];
 

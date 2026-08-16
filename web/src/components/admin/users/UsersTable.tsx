@@ -22,6 +22,13 @@ type UsersTableProps = {
   toggleSelectAll: () => void;
   toggleSelectRow: (id: string) => void;
   onViewUser?: (user: UserRecord) => void;
+  onEditUser?: (user: UserRecord) => void;
+  onNotifyUser?: (user: UserRecord) => void;
+  onSuspendUser?: (user: UserRecord) => void;
+  onUnsuspendUser?: (user: UserRecord) => void;
+  onDeactivateUser?: (user: UserRecord) => void;
+  onReactivateUser?: (user: UserRecord) => void;
+  onDeleteUser?: (user: UserRecord) => void;
 };
 
 export function UsersTable({
@@ -36,6 +43,13 @@ export function UsersTable({
   toggleSelectAll,
   toggleSelectRow,
   onViewUser,
+  onEditUser,
+  onNotifyUser,
+  onSuspendUser,
+  onUnsuspendUser,
+  onDeactivateUser,
+  onReactivateUser,
+  onDeleteUser,
 }: UsersTableProps) {
   return (
     <div className="flex flex-col">
@@ -133,22 +147,47 @@ export function UsersTable({
                     <td className="py-3.5 text-right pr-1">
                       <TableActionsMenu estimatedHeight={320}>
                         <TableActionsMenuItem icon="👁" label="View User" onClick={() => onViewUser?.(user)} />
-                        <TableActionsMenuItem icon="✏️" label="Edit User" />
+                        <TableActionsMenuItem icon="✏️" label="Edit User" onClick={() => onEditUser?.(user)} />
                         <TableActionsMenuItem
                           icon="🔔"
                           label="Send Notification"
+                          onClick={() => onNotifyUser?.(user)}
                         />
                         <TableActionsMenuItem icon="🔑" label="Reset Password" />
                         <TableActionsMenuDivider />
-                        <TableActionsMenuItem
-                          icon="⏸"
-                          label="Suspend Account"
+                        {user.status === "Suspended" ? (
+                          <TableActionsMenuItem
+                            icon="▶️"
+                            label="Unsuspend Account"
+                            onClick={() => onUnsuspendUser?.(user)}
+                          />
+                        ) : (
+                          <TableActionsMenuItem
+                            icon="⏸"
+                            label="Suspend Account"
+                            onClick={() => onSuspendUser?.(user)}
+                          />
+                        )}
+                        {user.status === "Inactive" ? (
+                          <TableActionsMenuItem
+                            icon="✅"
+                            label="Reactivate Account"
+                            onClick={() => onReactivateUser?.(user)}
+                          />
+                        ) : (
+                          <TableActionsMenuItem
+                            icon="🚫"
+                            label="Deactivate Account"
+                            tone="danger"
+                            onClick={() => onDeactivateUser?.(user)}
+                          />
+                        )}
+                        <TableActionsMenuItem 
+                          icon="🗑️" 
+                          label="Delete User" 
+                          tone="danger" 
+                          onClick={() => onDeleteUser?.(user)}
                         />
-                        <TableActionsMenuItem
-                          icon="🚫"
-                          label="Deactivate Account"
-                        />
-                        <TableActionsMenuItem icon="🗃️" label="Archive User" />
                       </TableActionsMenu>
                     </td>
                   </tr>

@@ -1,4 +1,4 @@
-export type RowStatus = "Active" | "Inactive";
+export type RowStatus = "Active" | "Inactive" | "Suspended";
 export type KycStatus = "Verified" | "Not Verified";
 
 export type UserRecord = {
@@ -62,7 +62,7 @@ export const initialUsers: UserRecord[] = [
     withdrawn: 120.00,
     earnings: 18.50,
     kycStatus: "Verified",
-    status: "Active",
+    status: "Suspended",
     registeredAt: "May 16, 2024 04:21 PM",
   },
   {

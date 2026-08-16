@@ -21,6 +21,7 @@ import { VipPlansTable } from "@/components/admin/vip-plans/VipPlansTable";
 import { AddPlanModal } from "@/components/admin/vip-plans/AddPlanModal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ViewPlanModal } from "@/components/admin/vip-plans/ViewPlanModal";
+import { EditPlanModal } from "@/components/admin/vip-plans/EditPlanModal";
 
 export default function VipPlansPage() {
   const [plansList, setPlansList] = useState<VipPlan[]>(initialVipPlans);
@@ -126,7 +127,6 @@ export default function VipPlansPage() {
 
   const handleOpenEdit = (plan: VipPlan) => {
     setEditingPlan(plan);
-    setIsAddPlanOpen(true);
   };
 
   const handleConfirmDelete = () => {
@@ -235,15 +235,24 @@ export default function VipPlansPage() {
       />
 
       <AddPlanModal 
-        isOpen={isAddPlanOpen} 
+        isOpen={isAddPlanOpen && !editingPlan} 
         onClose={() => {
           setIsAddPlanOpen(false);
-          setEditingPlan(null);
         }} 
         onSave={handleSavePlan}
-        initialData={editingPlan}
       />
       
+      <EditPlanModal
+        isOpen={!!editingPlan}
+        onClose={() => setEditingPlan(null)}
+        plan={editingPlan}
+        onSave={(updatedPlan) => {
+          setPlansList(plansList.map(p => p.id === updatedPlan.id ? updatedPlan : p));
+          setToastMessage("Plan successfully updated");
+          setEditingPlan(null);
+        }}
+      />
+
       <ViewPlanModal
         isOpen={!!viewingPlan}
         onClose={() => setViewingPlan(null)}
