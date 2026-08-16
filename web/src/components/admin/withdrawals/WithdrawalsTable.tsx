@@ -8,8 +8,8 @@ import {
   FileText,
 } from "lucide-react";
 import { PaginationFooter } from "@/components/admin/PaginationFooter";
-import type { WithdrawalRequest } from "./withdrawalsData";
-import { networkBadgeStyles, statusBadgeStyles } from "./withdrawalsData";
+import type { WithdrawalRequest } from "@/lib/mock-data/withdrawalsData";
+import { networkBadgeStyles, statusBadgeStyles } from "@/lib/mock-data/withdrawalsData";
 
 type WithdrawalsTableProps = {
   withdrawals: WithdrawalRequest[];

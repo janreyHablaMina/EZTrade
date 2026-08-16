@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { PaginationFooter } from "@/components/admin/PaginationFooter";
 import { Eye, MoreHorizontal } from "lucide-react";
-import type { ReferralRecord } from "./referralsData";
-import { vipLevelBadgeStyles, statusBadgeStyles, commissionStatusBadgeStyles } from "./referralsData";
+import type { ReferralRecord } from "@/lib/mock-data/referralsData";
+import { vipLevelBadgeStyles, statusBadgeStyles, commissionStatusBadgeStyles } from "@/lib/mock-data/referralsData";
 
 type ReferralsTableProps = {
   referrals: ReferralRecord[];

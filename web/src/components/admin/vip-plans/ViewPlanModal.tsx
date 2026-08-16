@@ -1,6 +1,6 @@
 import { X, Crown, Users, TrendingUp, Calendar, ShieldCheck } from "lucide-react";
-import type { VipPlan } from "./vipPlansData";
-import { vipPlanBadgeStyles } from "./vipPlansData";
+import type { VipPlan } from "@/lib/mock-data/vipPlansData";
+import { vipPlanBadgeStyles } from "@/lib/mock-data/vipPlansData";
 
 type ViewPlanModalProps = {
   isOpen: boolean;

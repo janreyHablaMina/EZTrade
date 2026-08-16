@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Hexagon, Lock, Mail, ArrowRight, Loader2 } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 
 // Inline Input component since we need custom styling for the icons
 function LoginInput({ icon: Icon, ...props }: any) {
@@ -45,7 +46,7 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-[380px]">
         {/* Logo Header */}
         <div className="mb-8 flex flex-col items-center justify-center gap-3 text-center">
-          <img src="/mobile-logo.png" alt="EZTrade Logo" className="h-14 w-14 rounded-2xl shadow-[0_0_30px_rgba(123,44,255,0.3)]" />
+          <BrandLogo size={56} className="drop-shadow-[0_0_20px_rgba(123,44,255,0.4)]" />
           <div>
             <h1 className="text-2xl font-bold tracking-[0.1em] mt-2">EZTRADE</h1>
             <p className="text-sm text-muted-2 mt-1">Admin Portal Access</p>

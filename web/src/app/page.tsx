@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Download, Shield, Zap, Globe, Crown, ArrowRight, TrendingUp, BarChart3, Lock } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export default function LandingPage() {
   return (
@@ -25,7 +26,7 @@ export default function LandingPage() {
       {/* Navigation */}
       <nav className="flex items-center justify-between px-6 py-4 lg:px-12 backdrop-blur-xl sticky top-0 z-50 border-b border-border/50 bg-bg-deep/70">
         <div className="flex items-center gap-3">
-          <img src="/mobile-logo.png" alt="EZTrade Logo" className="h-10 w-10 rounded-xl shadow-[0_0_15px_rgba(123,44,255,0.3)]" />
+          <BrandLogo size={40} className="drop-shadow-[0_0_15px_rgba(123,44,255,0.3)]" />
           <span className="text-xl font-bold tracking-[0.18em]">EZTRADE</span>
         </div>
         <div className="flex items-center gap-6">
@@ -97,8 +98,8 @@ export default function LandingPage() {
               {/* Top Bar */}
               <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-purple/20 flex items-center justify-center">
-                    <img src="/mobile-logo.png" className="h-5 w-5 opacity-80" alt="logo"/>
+                  <div className="h-8 w-8 rounded-full bg-purple/10 flex items-center justify-center">
+                    <BrandLogo size={20} className="opacity-90" />
                   </div>
                   <span className="font-bold text-sm tracking-widest text-white/90">EZTRADE</span>
                 </div>
@@ -261,7 +262,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-border/50 py-10 text-center bg-bg-deep relative z-10">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <img src="/mobile-logo.png" alt="EZTrade" className="h-6 w-6 rounded-md opacity-50" />
+          <BrandLogo size={24} className="opacity-50" />
           <span className="font-bold tracking-widest text-muted-2 text-sm">EZTRADE</span>
         </div>
         <p className="text-xs text-muted-2">© {new Date().getFullYear()} EZTrade Official. All rights reserved.</p>

@@ -7,8 +7,8 @@ import {
   ChevronDown,
   Edit
 } from "lucide-react";
-import type { UserRecord } from "./usersData";
-import { vipBadgeStyles } from "./usersData";
+import type { UserRecord } from "@/lib/mock-data/usersData";
+import { vipBadgeStyles } from "@/lib/mock-data/usersData";
 
 type UsersTableProps = {
   users: UserRecord[];

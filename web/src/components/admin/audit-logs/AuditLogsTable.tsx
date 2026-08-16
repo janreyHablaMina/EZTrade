@@ -1,6 +1,6 @@
 import { Eye, ShieldAlert, MonitorPlay, History } from "lucide-react";
 import { PaginationFooter } from "@/components/admin/PaginationFooter";
-import type { AuditLogRecord } from "./auditLogsData";
+import type { AuditLogRecord } from "@/lib/mock-data/auditLogsData";
 
 type AuditLogsTableProps = {
   logs: AuditLogRecord[];

@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, ArrowLeftRight } from "lucide-react";
-import type { AssetActivity } from "./assetsData";
+import type { AssetActivity } from "@/lib/mock-data/assetsData";
 
 type RecentActivitiesProps = {
   activities: AssetActivity[];

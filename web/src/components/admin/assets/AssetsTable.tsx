@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { PaginationFooter } from "@/components/admin/PaginationFooter";
 import { Search, RotateCcw, ChevronDown, ChevronLeft, ChevronRight, Eye, MoreHorizontal, TrendingUp, TrendingDown } from "lucide-react";
-import type { AssetRecord } from "./assetsData";
+import type { AssetRecord } from "@/lib/mock-data/assetsData";
 
 type AssetsTableProps = {
   assets: AssetRecord[];

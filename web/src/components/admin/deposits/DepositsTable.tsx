@@ -12,8 +12,8 @@ import {
   ChevronRight,
   ChevronDown,
 } from "lucide-react";
-import type { DepositRequest } from "./depositsData";
-import { networkBadgeStyles, statusBadgeStyles } from "./depositsData";
+import type { DepositRequest } from "@/lib/mock-data/depositsData";
+import { networkBadgeStyles, statusBadgeStyles } from "@/lib/mock-data/depositsData";
 
 type DepositsTableProps = {
   deposits: DepositRequest[];

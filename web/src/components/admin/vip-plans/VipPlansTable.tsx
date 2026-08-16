@@ -6,8 +6,8 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { PaginationFooter } from "@/components/admin/PaginationFooter";
-import type { VipPlan } from "./vipPlansData";
-import { vipPlanBadgeStyles } from "./vipPlansData";
+import type { VipPlan } from "@/lib/mock-data/vipPlansData";
+import { vipPlanBadgeStyles } from "@/lib/mock-data/vipPlansData";
 
 type VipPlansTableProps = {
   plans: VipPlan[];

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { X, Paperclip, Send } from "lucide-react";
-import type { TicketRecord } from "./supportData";
-import { priorityBadgeStyles, statusBadgeStyles } from "./supportData";
+import type { TicketRecord } from "@/lib/mock-data/supportData";
+import { priorityBadgeStyles, statusBadgeStyles } from "@/lib/mock-data/supportData";
 
 type TicketDetailsProps = {
   ticket: TicketRecord;

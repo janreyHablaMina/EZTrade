@@ -14,8 +14,8 @@ import {
   ArrowLeftRight,
   TrendingUp,
 } from "lucide-react";
-import type { TransactionRecord } from "./transactionsData";
-import { typeBadgeStyles, statusBadgeStyles } from "./transactionsData";
+import type { TransactionRecord } from "@/lib/mock-data/transactionsData";
+import { typeBadgeStyles, statusBadgeStyles } from "@/lib/mock-data/transactionsData";
 
 type TransactionsTableProps = {
   transactions: TransactionRecord[];

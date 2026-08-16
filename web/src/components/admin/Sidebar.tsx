@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BrandLogo } from "@/components/BrandLogo";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
@@ -102,11 +103,11 @@ export function Sidebar() {
 
   return (
     <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-border bg-bg-deep/90 px-3 py-4 lg:flex">
-      <div className="mb-6 flex items-center gap-3 px-2">
-        <img src="/mobile-logo.png" alt="EZTrade Logo" className="h-9 w-9 rounded-xl shadow-[0_0_15px_rgba(123,44,255,0.3)]" />
+      <div className="flex items-center gap-3 px-6 py-6 border-b border-white/[0.05]">
+        <BrandLogo size={32} className="drop-shadow-[0_0_15px_rgba(123,44,255,0.4)]" />
         <div>
-          <p className="text-sm font-bold tracking-[0.18em] text-white">EZTRADE</p>
-          <p className="text-[10px] tracking-wide text-muted-2">Admin Panel</p>
+          <span className="text-sm font-bold tracking-[0.18em] text-white">EZTRADE</span>
+          <span className="block text-[9px] font-semibold text-purple-bright tracking-widest uppercase mt-0.5">Admin Panel</span>
         </div>
       </div>
 

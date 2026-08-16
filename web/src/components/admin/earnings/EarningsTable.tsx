@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { PaginationFooter } from "@/components/admin/PaginationFooter";
 import { TrendingUp, Share2, Eye } from "lucide-react";
-import type { EarningRecord } from "./earningsData";
-import { vipLevelBadgeStyles, statusBadgeStyles } from "./earningsData";
+import type { EarningRecord } from "@/lib/mock-data/earningsData";
+import { vipLevelBadgeStyles, statusBadgeStyles } from "@/lib/mock-data/earningsData";
 
 type EarningsTableProps = {
   earnings: EarningRecord[];

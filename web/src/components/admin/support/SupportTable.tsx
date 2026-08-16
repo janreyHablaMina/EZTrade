@@ -2,8 +2,8 @@
 
 import { Eye, MoreHorizontal, ArrowDownToLine, Crown, Share2, Shield, Wrench, ArrowLeftRight, FileCheck } from "lucide-react";
 import { PaginationFooter } from "@/components/admin/PaginationFooter";
-import type { TicketRecord } from "./supportData";
-import { priorityBadgeStyles, statusBadgeStyles, categoryIconColors } from "./supportData";
+import type { TicketRecord } from "@/lib/mock-data/supportData";
+import { priorityBadgeStyles, statusBadgeStyles, categoryIconColors } from "@/lib/mock-data/supportData";
 import { useState } from "react";
 
 type SupportTableProps = {
