@@ -3,10 +3,8 @@ export type VipPlan = {
   level: string; // e.g. "VIP 1", "VIP 2"...
   planName: string; // e.g. "Starter Plan"...
   minDeposit: number;
-  maxDeposit: number | "Unlimited";
   dailyProfitPercent: number; // e.g. 10.00
   dailyProfitUsdtMin: number;
-  dailyProfitUsdtMax: number | "Unlimited";
   durationDays: number;
   totalUsers: number;
   status: "Active" | "Inactive";

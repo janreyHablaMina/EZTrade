@@ -24,7 +24,37 @@ import { ViewPlanModal } from "@/components/admin/vip-plans/ViewPlanModal";
 import { EditPlanModal } from "@/components/admin/vip-plans/EditPlanModal";
 
 export default function VipPlansPage() {
-  const [plansList, setPlansList] = useState<VipPlan[]>(initialVipPlans);
+  const [plansList, setPlansList] = useState<VipPlan[]>([]);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(true);
+
+  // Fetch plans on mount
+  useEffect(() => {
+    async function fetchPlans() {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/vip-plans");
+        if (res.ok) {
+          const data = await res.json();
+          const mappedPlans: VipPlan[] = data.map((p: any) => ({
+            id: `VP${p.id}`,
+            level: p.level,
+            minDeposit: Number(p.min_deposit),
+            dailyProfitPercent: Number(p.daily_profit_percent),
+            dailyProfitUsdtMin: Number(p.min_deposit) * (Number(p.daily_profit_percent) / 100),
+            durationDays: Number(p.duration_days),
+            totalUsers: 0,
+            status: p.status,
+          }));
+          setPlansList(mappedPlans);
+        }
+      } catch (err) {
+        console.error("Failed to fetch VIP plans:", err);
+      } finally {
+        setIsLoadingPlans(false);
+      }
+    }
+    fetchPlans();
+  }, []);
+
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [isAddPlanOpen, setIsAddPlanOpen] = useState(false);
@@ -102,20 +132,35 @@ export default function VipPlansPage() {
       setPlansList(updatedPlans);
       setToastMessage("Edited successfully");
     } else {
-      const newPlan: VipPlan = {
-        id: `VP${plansList.length + 1}`,
-        level: data.level || `VIP ${plansList.length + 1}`,
-        minDeposit: Number(data.minDeposit),
-        maxDeposit: Number(data.maxDeposit),
-        dailyProfitPercent: Number(data.dailyProfitPercent),
-        dailyProfitUsdtMin: Number(data.minDeposit) * (Number(data.dailyProfitPercent) / 100),
-        dailyProfitUsdtMax: Number(data.maxDeposit) * (Number(data.dailyProfitPercent) / 100),
-        durationDays: Number(data.durationDays),
-        totalUsers: 0,
-        status: "Active",
-      } as VipPlan; // forcefully cast to ignore missing planName if we completely stripped it in VipPlan type
-      setPlansList([newPlan, ...plansList]);
-      setToastMessage("VIP Plan successfully created");
+      // Create new plan via API
+      fetch("http://127.0.0.1:8000/api/vip-plans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          level: data.level || `VIP ${plansList.length + 1}`,
+          min_deposit: Number(data.minDeposit),
+          daily_profit_percent: Number(data.dailyProfitPercent),
+          duration_days: Number(data.durationDays),
+          status: "Active"
+        }),
+      }).then(res => res.json()).then(responseData => {
+        const p = responseData.plan;
+        const newPlan: VipPlan = {
+          id: `VP${p.id}`,
+          level: p.level,
+          minDeposit: Number(p.min_deposit),
+          dailyProfitPercent: Number(p.daily_profit_percent),
+          dailyProfitUsdtMin: Number(p.min_deposit) * (Number(p.daily_profit_percent) / 100),
+          durationDays: Number(p.duration_days),
+          totalUsers: 0,
+          status: p.status,
+        } as VipPlan;
+        setPlansList((prev) => [newPlan, ...prev]);
+        setToastMessage("VIP Plan successfully created");
+      }).catch(err => {
+        console.error(err);
+        setToastMessage("Error creating plan");
+      });
     }
     setEditingPlan(null);
   };
@@ -221,18 +266,22 @@ export default function VipPlansPage() {
       />
 
       {/* VIP Plans Table Card */}
-      <VipPlansTable
-        plans={filteredPlans}
-        paginatedPlans={paginatedPlans}
-        totalCount={filteredPlans.length}
-        currentPage={currentPage}
-        setCurrentPage={setCurrentPage}
-        pageSize={pageSize}
-        setPageSize={setPageSize}
-        onEdit={handleOpenEdit}
-        onView={(plan) => setViewingPlan(plan)}
-        onDelete={(plan) => setPlanToDelete(plan)}
-      />
+      {isLoadingPlans ? (
+        <div className="py-8 text-center text-muted-2">Loading plans...</div>
+      ) : (
+        <VipPlansTable
+          plans={filteredPlans}
+          paginatedPlans={paginatedPlans}
+          totalCount={filteredPlans.length}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
+          onEdit={handleOpenEdit}
+          onView={(plan) => setViewingPlan(plan)}
+          onDelete={(plan) => setPlanToDelete(plan)}
+        />
+      )}
 
       <AddPlanModal 
         isOpen={isAddPlanOpen && !editingPlan} 

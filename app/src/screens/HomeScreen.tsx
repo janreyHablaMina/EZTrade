@@ -1,4 +1,4 @@
-﻿import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo } from 'react';
 import {
   Dimensions,
@@ -11,6 +11,8 @@ import {
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { MarketOverview } from '../components/home/MarketOverview';
 import { colors } from '../theme/colors';
+import { apiClient } from '../lib/api';
+import { useState, useEffect } from 'react';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const ASSETS_CARD_WIDTH = SCREEN_WIDTH - 40; // content horizontal padding
@@ -18,7 +20,7 @@ const BAR_CHART_HEIGHT = 96;
 const BG_BAR_HEIGHTS = [34, 48, 40, 62, 52, 74, 58, 80, 66, 88, 70, 92];
 
 type HomeScreenProps = {
-  userName?: string;
+  user?: any;
   onOpenPlans?: () => void;
   onOpenDeposit?: () => void;
   onOpenWithdraw?: () => void;
@@ -109,13 +111,31 @@ function ActionIcon({
 }
 
 export function HomeScreen({
-  userName = 'John Doe',
+  user,
   onOpenPlans,
   onOpenDeposit,
   onOpenWithdraw,
   onOpenAssets,
   onOpenTransactions,
 }: HomeScreenProps) {
+  const [userData, setUserData] = useState<any>(user);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    apiClient.get(`/users/${user.id}`)
+      .then(data => setUserData(data))
+      .catch(console.error);
+  }, [user]);
+
+  const userName = userData?.name || 'John Doe';
+  const balance = Number(userData?.balance || 0);
+  const activePlan = userData?.vip_plan;
+  const activePlanName = activePlan ? activePlan.level.toUpperCase() : 'None';
+  const dailyProfitPercent = activePlan ? Number(activePlan.daily_profit_percent) : 0;
+  const estDailyProfit = activePlan ? (Number(activePlan.min_deposit) * dailyProfitPercent) / 100 : 0;
+  // Mocking total profit as 0 for now since we don't have a transactions history table calculating it yet
+  const totalProfit = 0.00;
+
   const greeting = useMemo(() => greetingForNow(), []);
   const initials = userName
     .split(' ')
@@ -145,19 +165,19 @@ export function HomeScreen({
             <Text style={styles.greeting}>{greeting}</Text>
             <Text style={styles.userName}>
               {userName}{' '}
-              <Text style={styles.wave}>ðŸ‘‹</Text>
+              <Text style={styles.wave}>👋</Text>
             </Text>
           </View>
         </View>
 
         <Pressable onPress={onOpenPlans}>
           <LinearGradient
-            colors={['#9b5cff', '#6d28d9']}
+            colors={activePlan ? ['#9b5cff', '#6d28d9'] : ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.vipBadge}
           >
-            <Text style={styles.vipText}>VIP 1</Text>
+            <Text style={styles.vipText}>{activePlan ? activePlanName : 'No VIP'}</Text>
           </LinearGradient>
         </Pressable>
       </View>
@@ -199,15 +219,15 @@ export function HomeScreen({
         </View>
 
         <Text style={styles.assetsLabel}>Total Assets</Text>
-        <Text style={styles.assetsValue}>$12.50</Text>
-        <Text style={styles.assetsChange}>+20.00% today</Text>
+        <Text style={styles.assetsValue}>${balance.toFixed(2)}</Text>
+        <Text style={styles.assetsChange}>+0.00% today</Text>
       </LinearGradient>
 
       <View style={styles.statsRow}>
         {[
-          { label: 'Daily Profit', value: '$2.50' },
-          { label: 'Total Profit', value: '$2.50' },
-          { label: 'Active Plan', value: 'VIP 1' },
+          { label: 'Daily Profit', value: `+$${estDailyProfit.toFixed(2)}` },
+          { label: 'Total Profit', value: `+$${totalProfit.toFixed(2)}` },
+          { label: 'Active Plan', value: activePlanName },
         ].map((stat) => (
           <View key={stat.label} style={styles.statCard}>
             <Text style={styles.statLabel}>{stat.label}</Text>

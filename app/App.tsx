@@ -12,9 +12,10 @@ import { LoginScreen } from './src/screens/LoginScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { RegisterScreen } from './src/screens/RegisterScreen';
 import { SplashScreen } from './src/screens/SplashScreen';
+import { VerifyOtpScreen } from './src/screens/VerifyOtpScreen';
 import { colors } from './src/theme/colors';
 
-type Screen = 'splash' | 'onboarding' | 'login' | 'register' | 'home';
+type Screen = 'splash' | 'onboarding' | 'login' | 'register' | 'verify-otp' | 'home';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -24,6 +25,8 @@ export default function App() {
     Outfit_800ExtraBold,
   });
   const [screen, setScreen] = useState<Screen>('splash');
+  const [user, setUser] = useState<any>(null);
+  const [registrationEmail, setRegistrationEmail] = useState('');
 
   useEffect(() => {
     if (!fontsLoaded) return;
@@ -46,7 +49,10 @@ export default function App() {
   if (screen === 'login') {
     return (
       <LoginScreen
-        onLogin={() => setScreen('home')}
+        onLogin={(user) => {
+          setUser(user);
+          setScreen('home');
+        }}
         onGoogleLogin={() => setScreen('home')}
         onForgotPassword={() => {
           // Frontend only for now
@@ -59,15 +65,34 @@ export default function App() {
   if (screen === 'register') {
     return (
       <RegisterScreen
-        onCreateAccount={() => setScreen('home')}
+        onCreateAccount={(email) => {
+          setRegistrationEmail(email);
+          setScreen('verify-otp');
+        }}
         onGoogleSignUp={() => setScreen('home')}
         onLogin={() => setScreen('login')}
       />
     );
   }
 
+  if (screen === 'verify-otp') {
+    return (
+      <VerifyOtpScreen
+        email={registrationEmail}
+        onVerified={(newUser) => {
+          setUser(newUser);
+          setScreen('home');
+        }}
+        onBack={() => setScreen('register')}
+      />
+    );
+  }
+
   if (screen === 'home') {
-    return <MainApp onLogout={() => setScreen('login')} />;
+    return <MainApp user={user} onLogout={() => {
+      setUser(null);
+      setScreen('login');
+    }} />;
   }
 
   return (

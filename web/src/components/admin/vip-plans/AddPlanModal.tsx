@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Crown, Settings2, CircleDollarSign } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
@@ -15,7 +15,6 @@ export function AddPlanModal({ isOpen, onClose, onSave, initialData }: AddPlanMo
   const [formData, setFormData] = useState({
     level: "",
     minDeposit: "",
-    maxDeposit: "",
     dailyProfitPercent: "",
     durationDays: "",
   });
@@ -25,7 +24,6 @@ export function AddPlanModal({ isOpen, onClose, onSave, initialData }: AddPlanMo
       setFormData({
         level: initialData.level || "",
         minDeposit: initialData.minDeposit?.toString() || "",
-        maxDeposit: initialData.maxDeposit?.toString() || "",
         dailyProfitPercent: initialData.dailyProfitPercent?.toString() || "",
         durationDays: initialData.durationDays?.toString() || "",
       });
@@ -33,7 +31,6 @@ export function AddPlanModal({ isOpen, onClose, onSave, initialData }: AddPlanMo
       setFormData({
         level: "",
         minDeposit: "",
-        maxDeposit: "",
         dailyProfitPercent: "",
         durationDays: "",
       });
@@ -61,89 +58,120 @@ export function AddPlanModal({ isOpen, onClose, onSave, initialData }: AddPlanMo
         onClick={!isSaving ? onClose : undefined}
       />
       
-      <div className="relative z-10 w-full max-w-lg rounded-2xl border border-border bg-card shadow-[0_20px_60px_rgba(0,0,0,0.6)] animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between border-b border-border p-5">
-          <h2 className="text-lg font-semibold text-white">{initialData ? "Edit VIP Plan" : "Add New VIP Plan"}</h2>
+      <div className="relative z-10 w-full max-w-xl rounded-2xl border border-border bg-card shadow-[0_30px_80px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-200 overflow-hidden">
+        {/* Premium subtle gradient header line */}
+        <div className="h-1 w-full bg-gradient-to-r from-purple-bright via-purple to-blue-glow/80" />
+        
+        <div className="flex items-center justify-between border-b border-border/60 p-6 bg-white/[0.01]">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple/15 text-purple-bright ring-1 ring-purple-bright/20 shadow-[0_0_15px_rgba(123,44,255,0.15)]">
+              <Crown className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white tracking-tight">{initialData ? "Edit VIP Plan Configuration" : "Create New VIP Plan"}</h2>
+              <p className="text-xs text-muted-2 mt-0.5">Configure the tiers and earning potential for users.</p>
+            </div>
+          </div>
           <button
             type="button"
             onClick={!isSaving ? onClose : undefined}
             disabled={isSaving}
-            className="rounded-lg p-1.5 text-muted transition hover:bg-white/10 hover:text-white cursor-pointer disabled:opacity-50"
+            className="rounded-lg p-2 text-muted-2 transition hover:bg-white/10 hover:text-white cursor-pointer disabled:opacity-50"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form className="flex flex-col gap-5 p-5" onSubmit={handleSubmit}>
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-2 ml-1">Level (Badge Text)</label>
-            <Input 
-              placeholder="e.g. VIP 1" 
-              required 
-              disabled={isSaving}
-              value={formData.level}
-              onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-            />
-          </div>
+        <form className="flex flex-col p-6 gap-8" onSubmit={handleSubmit}>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted-2 ml-1">Min Deposit (USDT)</label>
-              <Input 
-                type="number" 
-                placeholder="0" 
-                required 
-                disabled={isSaving}
-                value={formData.minDeposit}
-                onChange={(e) => setFormData({ ...formData, minDeposit: e.target.value })}
-              />
+          {/* Section 1: Basic Information */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-border/40">
+              <Settings2 className="h-4 w-4 text-muted-2" />
+              <h3 className="text-sm font-semibold text-white/90 uppercase tracking-wide">Basic Details</h3>
             </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted-2 ml-1">Max Deposit (USDT)</label>
-              <Input 
-                type="number" 
-                placeholder="1000" 
-                required 
-                disabled={isSaving}
-                value={formData.maxDeposit}
-                onChange={(e) => setFormData({ ...formData, maxDeposit: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted-2 ml-1">Daily Profit (%)</label>
-              <Input 
-                type="number" 
-                step="0.01" 
-                placeholder="1.5" 
-                required 
-                disabled={isSaving}
-                value={formData.dailyProfitPercent}
-                onChange={(e) => setFormData({ ...formData, dailyProfitPercent: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted-2 ml-1">Duration (Days)</label>
-              <Input 
-                type="number" 
-                placeholder="30" 
-                required 
-                disabled={isSaving}
-                value={formData.durationDays}
-                onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
-              />
+            
+            <div className="grid grid-cols-2 gap-5">
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-muted-2 uppercase tracking-wider ml-1">Plan Level / Badge</label>
+                <Input 
+                  placeholder="e.g. VIP 1" 
+                  required 
+                  disabled={isSaving}
+                  value={formData.level}
+                  onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+                  className="bg-black/20 focus:bg-card focus:ring-purple/50 border-border/60"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-muted-2 uppercase tracking-wider ml-1">Duration (Days)</label>
+                <div className="relative">
+                  <Input 
+                    type="number" 
+                    placeholder="30" 
+                    required 
+                    disabled={isSaving}
+                    value={formData.durationDays}
+                    onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
+                    className="bg-black/20 focus:bg-card focus:ring-purple/50 border-border/60 pr-10"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-2">Days</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="mt-2 flex items-center justify-end gap-3 border-t border-border pt-5">
-            <Button variant="outline" onClick={onClose} type="button" disabled={isSaving}>
+          {/* Section 2: Financial Configuration */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-border/40">
+              <CircleDollarSign className="h-4 w-4 text-muted-2" />
+              <h3 className="text-sm font-semibold text-white/90 uppercase tracking-wide">Financial Settings</h3>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-5">
+              <div className="col-span-2 sm:col-span-1">
+                <label className="mb-2 block text-xs font-semibold text-muted-2 uppercase tracking-wider ml-1">Deposit Amount</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-2">$</span>
+                  <Input 
+                    type="number" 
+                    placeholder="0.00" 
+                    required 
+                    disabled={isSaving}
+                    value={formData.minDeposit}
+                    onChange={(e) => setFormData({ ...formData, minDeposit: e.target.value })}
+                    className="bg-black/20 focus:bg-card focus:ring-purple/50 border-border/60 pl-8"
+                  />
+                </div>
+              </div>
+              <div className="col-span-2 sm:col-span-1">
+                <label className="mb-2 block text-xs font-semibold text-muted-2 uppercase tracking-wider ml-1">Daily Profit</label>
+                <div className="relative">
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    placeholder="1.50" 
+                    required 
+                    disabled={isSaving}
+                    value={formData.dailyProfitPercent}
+                    onChange={(e) => setFormData({ ...formData, dailyProfitPercent: e.target.value })}
+                    className="bg-black/20 focus:bg-card focus:ring-purple/50 border-border/60 pr-8"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-2">%</span>
+                </div>
+                <p className="mt-1.5 ml-1 text-[10px] text-muted-2/80">Percentage earned on deposit amount per day.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Actions */}
+          <div className="mt-4 flex items-center justify-end gap-3 pt-6 border-t border-border/50">
+            <Button variant="outline" onClick={onClose} type="button" disabled={isSaving} className="px-5 font-semibold">
               Cancel
             </Button>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-              {isSaving ? "Saving..." : "Save Plan"}
+            <Button type="submit" disabled={isSaving} className="px-6 font-semibold bg-purple hover:bg-purple-bright shadow-[0_0_15px_rgba(123,44,255,0.3)]">
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSaving ? "Saving Plan..." : (initialData ? "Update Plan" : "Create Plan")}
             </Button>
           </div>
         </form>

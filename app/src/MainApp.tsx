@@ -23,8 +23,7 @@ import { VipPlansScreen } from './screens/VipPlansScreen';
 import { WithdrawScreen } from './screens/WithdrawScreen';
 import { colors } from './theme/colors';
 
-// Change this to your local IP address if testing on a physical device
-const LOCAL_API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
+const LOCAL_API_URL = 'http://192.168.100.6:8000';
 
 type WalletStep = 'deposit' | 'txid' | 'verifying' | 'success';
 type Overlay =
@@ -48,14 +47,15 @@ const OVERLAY_SCREENS = {
 } as const;
 
 type MainAppProps = {
-  userName?: string;
+  user?: any;
   onLogout?: () => void;
 };
 
 export function MainApp({
-  userName = 'John Doe',
+  user,
   onLogout,
 }: MainAppProps) {
+  const userName = user?.name || 'John Doe';
   const [tab, setTab] = useState<TabKey>('home');
   const [walletStep, setWalletStep] = useState<WalletStep | null>(null);
   const [depositNetwork, setDepositNetwork] = useState('TRC20 (USDT)');
@@ -112,7 +112,7 @@ export function MainApp({
 
   let screen = (
     <HomeScreen
-      userName={userName}
+      user={user}
       onOpenPlans={() => setTab('plans')}
       onOpenDeposit={() => {
         setDepositAmount('');
@@ -204,10 +204,8 @@ export function MainApp({
   } else if (tab === 'plans') {
     screen = (
       <VipPlansScreen
+        user={user}
         onBack={() => setTab('home')}
-        onGetPlan={() => {
-          // Frontend only for now
-        }}
       />
     );
   } else if (tab === 'trade') {

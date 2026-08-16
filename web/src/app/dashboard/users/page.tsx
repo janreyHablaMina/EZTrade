@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Users,
   UserCheck,
@@ -31,7 +31,42 @@ export default function UsersPage() {
   const [vipLevel, setVipLevel] = useState("all");
   const [status, setStatus] = useState("all");
   const [dateRange, setDateRange] = useState("");
-  const [usersList, setUsersList] = useState<UserRecord[]>(initialUsers);
+  const [usersList, setUsersList] = useState<UserRecord[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/users");
+        if (res.ok) {
+          const data = await res.json();
+          const mappedUsers: UserRecord[] = data.map((u: any) => ({
+            id: `EZT-${u.id.toString().padStart(4, '0')}`,
+            name: u.name,
+            email: u.email,
+            phone: "N/A",
+            vipLevel: "VIP 1",
+            role: "User",
+            deposited: 0,
+            withdrawn: 0,
+            earnings: 0,
+            kycStatus: "Not Verified",
+            status: u.status || "Active",
+            registeredAt: new Date(u.created_at).toLocaleDateString('en-US', {
+              year: 'numeric', month: 'short', day: 'numeric',
+              hour: '2-digit', minute: '2-digit'
+            }),
+          }));
+          setUsersList(mappedUsers);
+        }
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    }
+    fetchUsers();
+  }, []);
   const [editingUser, setEditingUser] = useState<UserRecord | null>(null);
   const [notifyingUser, setNotifyingUser] = useState<UserRecord | null>(null);
   const [accountAction, setAccountAction] = useState<{ user: UserRecord; action: 'suspend' | 'unsuspend' | 'deactivate' | 'reactivate' | 'delete' } | null>(null);
@@ -244,11 +279,13 @@ export default function UsersPage() {
             onReset={handleReset}
           />
 
-          {/* Table */}
-          <UsersTable
-            users={filteredUsers}
-            paginatedUsers={paginatedUsers}
-            totalCount={usersList.length}
+          {isLoadingUsers ? (
+            <div className="py-8 text-center text-muted-2">Loading users...</div>
+          ) : (
+            <UsersTable
+              users={filteredUsers}
+              paginatedUsers={paginatedUsers}
+              totalCount={usersList.length}
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
             pageSize={pageSize}
@@ -264,8 +301,9 @@ export default function UsersPage() {
             onUnsuspendUser={(user) => setAccountAction({ user, action: 'unsuspend' })}
             onDeactivateUser={(user) => setAccountAction({ user, action: 'deactivate' })}
             onReactivateUser={(user) => setAccountAction({ user, action: 'reactivate' })}
-            onDeleteUser={(user) => setAccountAction({ user, action: 'delete' })}
-          />
+              onDeleteUser={(user) => setAccountAction({ user, action: 'delete' })}
+            />
+          )}
         </div>
       </div>
 

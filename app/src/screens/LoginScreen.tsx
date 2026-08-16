@@ -4,9 +4,11 @@ import { AuthScreen } from '../components/auth/AuthScreen';
 import { CheckBox } from '../components/auth/CheckBox';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { TextField } from '../components/TextField';
+import { apiClient } from '../lib/api';
 
 type LoginScreenProps = {
-  onLogin?: () => void;
+  onLogin?: (user: any) => void;
+
   onGoogleLogin?: () => void;
   onForgotPassword?: () => void;
   onRegister?: () => void;
@@ -21,8 +23,30 @@ export function LoginScreen({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const canLogin = email.trim().length > 3 && password.length > 0;
+
+  const handleLogin = async () => {
+    if (!canLogin) return;
+    setIsLoading(true);
+    setErrorMsg('');
+    try {
+      const response = await apiClient.post('/login', {
+        email: email.trim(),
+        password: password,
+      });
+      onLogin?.(response.user);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
+
     <AuthScreen
       title="Welcome Back"
       subtitle="Login to continue to EZTRADE"
@@ -58,8 +82,16 @@ export function LoginScreen({
           <Text style={styles.forgot}>Forgot Password?</Text>
         </Pressable>
       </View>
-      <PrimaryButton label="Login" onPress={onLogin} />
+      {errorMsg ? (
+        <Text style={styles.errorText}>{errorMsg}</Text>
+      ) : null}
+      <PrimaryButton 
+        label={isLoading ? "Logging in..." : "Login"} 
+        onPress={handleLogin} 
+        disabled={!canLogin || isLoading}
+      />
     </AuthScreen>
+
   );
 }
 
@@ -75,5 +107,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Outfit_500Medium',
     fontSize: 14,
     color: 'rgba(255,255,255,0.82)',
+  },
+  errorText: {
+    fontFamily: 'Outfit_400Regular',
+    fontSize: 12,
+    color: '#f87171',
+    marginTop: -4,
+    marginBottom: 8,
   },
 });

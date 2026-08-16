@@ -4,10 +4,10 @@ import { AuthScreen } from '../components/auth/AuthScreen';
 import { CheckBox } from '../components/auth/CheckBox';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { TextField } from '../components/TextField';
+import { apiClient } from '../lib/api';
 import { colors } from '../theme/colors';
-
 type RegisterScreenProps = {
-  onCreateAccount?: () => void;
+  onCreateAccount?: (user: any) => void;
   onGoogleSignUp?: () => void;
   onLogin?: () => void;
 };
@@ -23,7 +23,8 @@ export function RegisterScreen({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [agreed, setAgreed] = useState(false);
-
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const passwordsMatch =
     password.length >= 6 && password === confirmPassword;
   const canCreate =
@@ -31,6 +32,25 @@ export function RegisterScreen({
     name.trim().length >= 2 &&
     email.trim().length > 3 &&
     passwordsMatch;
+
+  const handleRegister = async () => {
+    if (!canCreate) return;
+    setIsLoading(true);
+    setErrorMsg('');
+    try {
+      const response = await apiClient.post('/register', {
+        name: name.trim(),
+        email: email.trim(),
+        password: password,
+      });
+      // Backend returns requires_otp
+      onCreateAccount?.(email.trim());
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Registration failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <AuthScreen
@@ -86,18 +106,18 @@ export function RegisterScreen({
           <Text style={styles.agreeLink}>Privacy Policy</Text>
         </Text>
       </CheckBox>
+      {errorMsg ? (
+        <Text style={styles.errorText}>{errorMsg}</Text>
+      ) : null}
       {confirmPassword.length > 0 && !passwordsMatch ? (
         <Text style={styles.errorText}>
           Passwords must match and be at least 6 characters.
         </Text>
       ) : null}
       <PrimaryButton
-        label="Create Account"
-        onPress={() => {
-          if (!canCreate) return;
-          onCreateAccount?.();
-        }}
-        disabled={!canCreate}
+        label={isLoading ? "Creating..." : "Create Account"}
+        onPress={handleRegister}
+        disabled={!canCreate || isLoading}
       />
     </AuthScreen>
   );

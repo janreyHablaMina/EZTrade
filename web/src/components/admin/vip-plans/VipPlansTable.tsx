@@ -9,6 +9,29 @@ import { PaginationFooter } from "@/components/admin/PaginationFooter";
 import type { VipPlan } from "@/lib/mock-data/vipPlansData";
 import { vipPlanBadgeStyles } from "@/lib/mock-data/vipPlansData";
 
+const randomBadgeStyles = [
+  "bg-blue-400/10 text-blue-400 border border-blue-400/20",
+  "bg-pink-500/10 text-pink-500 border border-pink-500/20",
+  "bg-teal-400/10 text-teal-400 border border-teal-400/20",
+  "bg-yellow-400/10 text-yellow-400 border border-yellow-400/20",
+  "bg-indigo-400/10 text-indigo-400 border border-indigo-400/20",
+  "bg-rose-500/10 text-rose-500 border border-rose-500/20",
+  "bg-cyan-400/10 text-cyan-400 border border-cyan-400/20",
+  "bg-lime-400/10 text-lime-400 border border-lime-400/20",
+];
+
+function getBadgeStyleForLevel(level: string) {
+  if (vipPlanBadgeStyles[level]) {
+    return vipPlanBadgeStyles[level];
+  }
+  let hash = 0;
+  for (let i = 0; i < level.length; i++) {
+    hash = level.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % randomBadgeStyles.length;
+  return randomBadgeStyles[index];
+}
+
 type VipPlansTableProps = {
   plans: VipPlan[];
   paginatedPlans: VipPlan[];
@@ -148,8 +171,7 @@ export function VipPlansTable({
           <thead>
             <tr className="border-b border-border text-muted-2">
               <th className="pb-3.5 pl-1 font-medium">Level</th>
-              <th className="pb-3.5 font-medium">Min Deposit (USDT)</th>
-              <th className="pb-3.5 font-medium">Max Deposit (USDT)</th>
+              <th className="pb-3.5 font-medium">Deposit Amount (USDT)</th>
               <th className="pb-3.5 font-medium">Daily Profit (%)</th>
               <th className="pb-3.5 font-medium">Daily Profit (USDT)</th>
               <th className="pb-3.5 font-medium">Duration (Days)</th>
@@ -168,8 +190,8 @@ export function VipPlansTable({
                   >
                     <td className="py-3.5 pl-1">
                       <span
-                        className={`inline-flex rounded-md px-2 py-0.5 text-[9px] font-semibold tracking-wider ${
-                          vipPlanBadgeStyles[plan.level] || "bg-white/10 text-muted border border-white/10"
+                        className={`inline-flex rounded-md px-2 py-0.5 text-[9px] font-semibold tracking-wider uppercase ${
+                          getBadgeStyleForLevel(plan.level)
                         }`}
                       >
                         {plan.level}
@@ -178,18 +200,11 @@ export function VipPlansTable({
                     <td className="py-3.5 text-muted-2">
                       {plan.minDeposit.toLocaleString("en-US")}
                     </td>
-                    <td className="py-3.5 text-muted-2">
-                      {typeof plan.maxDeposit === "number"
-                        ? plan.maxDeposit.toLocaleString("en-US")
-                        : plan.maxDeposit}
-                    </td>
                     <td className="py-3.5 font-semibold text-success">
                       {plan.dailyProfitPercent.toFixed(2)}%
                     </td>
                     <td className="py-3.5 text-muted-2">
-                      {typeof plan.dailyProfitUsdtMax === "number"
-                        ? `${plan.dailyProfitUsdtMin.toFixed(2)} - ${plan.dailyProfitUsdtMax.toFixed(2)}`
-                        : `${plan.dailyProfitUsdtMin.toLocaleString("en-US", { minimumFractionDigits: 2 })}+`}
+                      {plan.dailyProfitUsdtMin.toFixed(2)}
                     </td>
                     <td className="py-3.5 text-muted-2">
                       {plan.durationDays}
@@ -221,7 +236,7 @@ export function VipPlansTable({
               })
             ) : (
               <tr>
-                <td colSpan={9} className="py-8 text-center text-muted-2">
+                <td colSpan={8} className="py-8 text-center text-muted-2">
                   No plans found matching your filters.
                 </td>
               </tr>
