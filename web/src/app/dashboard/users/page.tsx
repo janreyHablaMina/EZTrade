@@ -57,7 +57,6 @@ export default function UsersPage() {
             }),
           }));
           setUsersList(mappedUsers);
-        }
       } catch (err) {
         console.error("Failed to fetch users:", err);
       } finally {
