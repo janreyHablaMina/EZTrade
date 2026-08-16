@@ -23,9 +23,6 @@ Route::get('/users/{id}/stats', [UserController::class, 'stats']);
 Route::get('/vip-plans', [VipPlanController::class, 'index']);
 Route::post('/vip-plans', [VipPlanController::class, 'store']);
 
-    // ── Simulator ─────────────
-    Route::post('/simulate-trade', [\App\Http\Controllers\SimulatorController::class, 'simulateTrade']);
-
     // ── Deposits ─────────────────────────────────────────────────────────────────
     Route::get('/deposits', [\App\Http\Controllers\DepositController::class, 'index']);
     Route::post('/deposits', [\App\Http\Controllers\DepositController::class, 'store']);

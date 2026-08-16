@@ -120,7 +120,7 @@ export function HomeScreen({
   onOpenAssets,
   onOpenTransactions,
 }: HomeScreenProps) {
-  const { userData, stats, hasUnread, reload } = useHomeStats(user);
+  const { userData, stats, hasUnread } = useHomeStats(user);
 
   const userName = userData?.name || 'John Doe';
   const balance = Number(stats.balance || userData?.balance || 0);
@@ -229,31 +229,6 @@ export function HomeScreen({
           {stats.today_profit > 0 ? `+$${Number(stats.today_profit).toFixed(2)} Earned Today` : '$0.00 Earned Today'}
         </Text>
       </LinearGradient>
-
-      {/* Temporary Simulate Trade Button */}
-      <Pressable
-        style={{
-          backgroundColor: colors.success,
-          padding: 12,
-          borderRadius: 12,
-          alignItems: 'center',
-          marginTop: 16,
-          marginBottom: 8,
-        }}
-        onPress={async () => {
-          try {
-            const { apiClient } = require('../lib/api');
-            await apiClient.post('/simulate-trade');
-            reload();
-          } catch (err) {
-            console.error('Simulation failed', err);
-          }
-        }}
-      >
-        <Text style={{ color: 'white', fontFamily: 'Outfit_700Bold', fontSize: 16 }}>
-          Simulate Trade ($10)
-        </Text>
-      </Pressable>
 
       <View style={styles.statsRow}>
         {[
