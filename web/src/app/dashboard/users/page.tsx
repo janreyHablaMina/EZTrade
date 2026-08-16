@@ -41,15 +41,16 @@ export default function UsersPage() {
         const data = await webApi.get("/users");
         const mappedUsers: UserRecord[] = data.map((u: any) => ({
             id: `EZT-${u.id.toString().padStart(4, '0')}`,
+            dbId: u.id, // Store real ID for API calls
             name: u.name,
             email: u.email,
-            phone: "N/A",
-            vipLevel: "VIP 1",
-            role: "User",
+            phone: u.phone || "N/A",
+            vipLevel: u.vip_plan ? u.vip_plan.level : "None",
+            role: u.role || "User",
             deposited: 0,
             withdrawn: 0,
             earnings: 0,
-            kycStatus: "Not Verified",
+            kycStatus: u.kyc_status || "Not Verified",
             status: u.status || "Active",
             registeredAt: new Date(u.created_at).toLocaleDateString('en-US', {
               year: 'numeric', month: 'short', day: 'numeric',
@@ -151,10 +152,25 @@ export default function UsersPage() {
     setCurrentPage(1);
   };
 
-  const handleSaveUser = (updatedUser: UserRecord) => {
-    setUsersList(usersList.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
-    setEditingUser(null);
-    setToastMessage("User updated successfully");
+  const handleSaveUser = async (updatedUser: UserRecord) => {
+    try {
+      const realId = (updatedUser as any).dbId || parseInt(updatedUser.id.replace('EZT-', ''));
+      await webApi.patch(`/users/${realId}`, {
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone !== "N/A" ? updatedUser.phone : null,
+        vipLevel: updatedUser.vipLevel,
+        role: updatedUser.role,
+        status: updatedUser.status,
+        kyc_status: updatedUser.kycStatus
+      });
+      setUsersList(usersList.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+      setEditingUser(null);
+      setToastMessage("User updated successfully");
+    } catch (err) {
+      console.error("Failed to update user:", err);
+      setToastMessage("Failed to update user");
+    }
   };
 
   const handleSendNotification = (notification: { title: string; message: string; type: string }) => {

@@ -16,6 +16,7 @@ Route::post('/login', [AuthController::class, 'login']);
 // ── Users ─────────────────────────────────────────────────────────────────────
 Route::get('/users', [UserController::class, 'index']);
 Route::get('/users/{id}', [UserController::class, 'show']);
+Route::patch('/users/{id}', [UserController::class, 'update']);
 Route::get('/users/{id}/stats', [UserController::class, 'stats']);
 
 // ── VIP Plans ─────────────────────────────────────────────────────────────────

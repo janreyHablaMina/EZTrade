@@ -10,7 +10,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        return response()->json(User::orderBy('created_at', 'desc')->get());
+        return response()->json(User::with('vipPlan')->orderBy('created_at', 'desc')->get());
     }
 
     public function show($id)
@@ -52,7 +52,43 @@ class UserController extends Controller
             'today_profit'  => round(floatval($todayProfit), 2),
             'today_percent' => $todayPercent,
             'daily_profit'  => $dailyProfit,
-            'balance'       => $balance,
+            'balance'       => round($balance, 2),
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|unique:users,email,' . $id,
+            'phone' => 'nullable|string|max:20',
+            'role' => 'sometimes|in:User,Ambassador',
+            'status' => 'sometimes|in:Active,Inactive,Suspended',
+            'kyc_status' => 'sometimes|in:Verified,Not Verified',
+            'vipLevel' => 'nullable|string'
+        ]);
+
+        // Map vipLevel to vip_plan_id
+        if (isset($validated['vipLevel'])) {
+            $plan = \App\Models\VipPlan::where('level', $validated['vipLevel'])->first();
+            if ($plan) {
+                $validated['vip_plan_id'] = $plan->id;
+            } else if (strtolower($validated['vipLevel']) === 'none') {
+                $validated['vip_plan_id'] = null;
+            }
+            unset($validated['vipLevel']);
+        }
+
+        $user->update($validated);
+
+        return response()->json([
+            'message' => 'User updated successfully',
+            'user' => $user->load('vipPlan')
         ]);
     }
 }

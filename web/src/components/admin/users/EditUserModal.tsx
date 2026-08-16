@@ -122,6 +122,7 @@ export function EditUserModal({ isOpen, onClose, user, onSave }: EditUserModalPr
                     value={formData.vipLevel}
                     onChange={(e) => handleChange("vipLevel", e.target.value)}
                   >
+                    <option value="None">None</option>
                     {initialVipPlans.map(plan => (
                       <option key={plan.id} value={plan.level}>{plan.level} - {plan.planName}</option>
                     ))}

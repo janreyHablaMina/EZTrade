@@ -23,6 +23,10 @@ class User extends Authenticatable
         'otp_expires_at',
         'balance',
         'vip_plan_id',
+        'phone',
+        'role',
+        'status',
+        'kyc_status',
     ];
     protected $hidden = ['password', 'remember_token', 'otp'];
 
