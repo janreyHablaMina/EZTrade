@@ -143,7 +143,7 @@ export function HomeScreen({
     { key: 'deposit', label: 'Deposit' },
     { key: 'withdraw', label: 'Withdraw' },
     { key: 'assets', label: 'My Assets' },
-    { key: 'transactions', label: 'Transactions' },
+    { key: 'trade', label: 'Trade' },
   ] as const;
 
   return (
@@ -232,28 +232,6 @@ export function HomeScreen({
         </Text>
       </LinearGradient>
 
-      {/* Primary Trade Action Button */}
-      <Pressable
-        style={{
-          backgroundColor: '#9b5cff',
-          padding: 14,
-          borderRadius: 14,
-          alignItems: 'center',
-          marginTop: 16,
-          marginBottom: 8,
-          shadowColor: '#9b5cff',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 5,
-        }}
-        onPress={onOpenTrade}
-      >
-        <Text style={{ color: 'white', fontFamily: 'Outfit_700Bold', fontSize: 16, letterSpacing: 0.5 }}>
-          Start Trading Now
-        </Text>
-      </Pressable>
-
       <View style={styles.statsRow}>
         {[
           { label: 'Daily Profit', value: `+$${estDailyProfit.toFixed(2)}` },
@@ -276,11 +254,11 @@ export function HomeScreen({
               if (action.key === 'assets') onOpenAssets?.();
               if (action.key === 'deposit') onOpenDeposit?.();
               if (action.key === 'withdraw') onOpenWithdraw?.();
-              if (action.key === 'transactions') onOpenTransactions?.();
+              if (action.key === 'trade') onOpenTrade?.();
             }}
           >
             <View style={styles.actionIcon}>
-              <ActionIcon type={action.key} />
+              <ActionIcon type={action.key as any} />
             </View>
             <Text style={styles.actionLabel}>{action.label}</Text>
           </Pressable>
