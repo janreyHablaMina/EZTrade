@@ -42,7 +42,7 @@ class UserController extends Controller
         $dailyProfit = 0;
         if ($user->vipPlan) {
             $dailyProfit = round(
-                $balance * floatval($user->vipPlan->daily_profit_percent) / 100,
+                floatval($user->vipPlan->min_deposit) * floatval($user->vipPlan->daily_profit_percent) / 100,
                 2
             );
         }

@@ -80,10 +80,10 @@ class TradingCodeController extends Controller
             return response()->json(['message' => 'You have already redeemed this code.'], 400);
         }
 
-        // Calculate reward: (balance * daily_profit_percent / 100)
+        // Calculate reward: (min_deposit * daily_profit_percent / 100)
         $rewardAmount = 0.00;
         if ($user->vipPlan && !is_null($user->vipPlan->daily_profit_percent)) {
-            $rewardAmount = round(floatval($user->balance) * floatval($user->vipPlan->daily_profit_percent) / 100, 2);
+            $rewardAmount = round(floatval($user->vipPlan->min_deposit) * floatval($user->vipPlan->daily_profit_percent) / 100, 2);
         }
 
         // Credit balance
