@@ -11,6 +11,7 @@ import { AssetsScreen } from './screens/AssetsScreen';
 import { DepositScreen } from './screens/DepositScreen';
 import { DepositSuccessScreen } from './screens/DepositSuccessScreen';
 import { HomeScreen } from './screens/HomeScreen';
+import { NotificationsScreen } from './screens/NotificationsScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
 import { SecurityScreen } from './screens/SecurityScreen';
 import { SubmitTxidScreen } from './screens/SubmitTxidScreen';
@@ -114,6 +115,7 @@ export function MainApp({
     <HomeScreen
       user={user}
       onOpenPlans={() => setTab('plans')}
+      onOpenNotifications={() => setTab('notifications')}
       onOpenDeposit={() => {
         setDepositAmount('');
         setWalletStep('deposit');
@@ -209,7 +211,11 @@ export function MainApp({
       />
     );
   } else if (tab === 'trade') {
-    screen = <TradeScreen onBack={() => setTab('home')} />;
+    screen = <TradeScreen user={user} onBack={() => setTab('home')} />;
+  } else if (tab === 'notifications') {
+    screen = (
+      <NotificationsScreen user={user} onBack={() => setTab('home')} />
+    );
   }
 
   return (

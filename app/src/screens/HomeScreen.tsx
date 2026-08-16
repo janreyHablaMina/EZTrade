@@ -13,6 +13,7 @@ import { MarketOverview } from '../components/home/MarketOverview';
 import { colors } from '../theme/colors';
 import { apiClient } from '../lib/api';
 import { useState, useEffect } from 'react';
+import { Bell, MessageCircle } from 'lucide-react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const ASSETS_CARD_WIDTH = SCREEN_WIDTH - 40; // content horizontal padding
@@ -22,6 +23,7 @@ const BG_BAR_HEIGHTS = [34, 48, 40, 62, 52, 74, 58, 80, 66, 88, 70, 92];
 type HomeScreenProps = {
   user?: any;
   onOpenPlans?: () => void;
+  onOpenNotifications?: () => void;
   onOpenDeposit?: () => void;
   onOpenWithdraw?: () => void;
   onOpenAssets?: () => void;
@@ -113,28 +115,45 @@ function ActionIcon({
 export function HomeScreen({
   user,
   onOpenPlans,
+  onOpenNotifications,
   onOpenDeposit,
   onOpenWithdraw,
   onOpenAssets,
   onOpenTransactions,
 }: HomeScreenProps) {
   const [userData, setUserData] = useState<any>(user);
+  const [hasUnread, setHasUnread] = useState(false);
+  const [stats, setStats] = useState({ total_profit: 0, today_profit: 0, today_percent: 0, daily_profit: 0, balance: 0 });
 
   useEffect(() => {
     if (!user?.id) return;
+    
+    // Fetch user details
     apiClient.get(`/users/${user.id}`)
       .then(data => setUserData(data))
+      .catch(console.error);
+
+    // Fetch user stats (total profit, daily profit)
+    apiClient.get(`/users/${user.id}/stats`)
+      .then((res: any) => setStats(res))
+      .catch(console.error);
+
+    // Fetch unread notifications status
+    apiClient.get(`/notifications?user_id=${user.id}`)
+      .then((res: any) => {
+        const unread = res?.some((n: any) => !n.is_read);
+        setHasUnread(unread);
+      })
       .catch(console.error);
   }, [user]);
 
   const userName = userData?.name || 'John Doe';
-  const balance = Number(userData?.balance || 0);
+  const balance = Number(stats.balance || userData?.balance || 0);
   const activePlan = userData?.vip_plan;
   const activePlanName = activePlan ? activePlan.level.toUpperCase() : 'None';
   const dailyProfitPercent = activePlan ? Number(activePlan.daily_profit_percent) : 0;
-  const estDailyProfit = activePlan ? (Number(activePlan.min_deposit) * dailyProfitPercent) / 100 : 0;
-  // Mocking total profit as 0 for now since we don't have a transactions history table calculating it yet
-  const totalProfit = 0.00;
+  const estDailyProfit = stats.daily_profit;
+  const totalProfit = stats.total_profit;
 
   const greeting = useMemo(() => greetingForNow(), []);
   const initials = userName
@@ -163,23 +182,35 @@ export function HomeScreen({
           </View>
           <View>
             <Text style={styles.greeting}>{greeting}</Text>
-            <Text style={styles.userName}>
-              {userName}{' '}
-              <Text style={styles.wave}>👋</Text>
-            </Text>
+            <View style={styles.nameRow}>
+              <Text style={styles.userName}>
+                {userName}{' '}
+                <Text style={styles.wave}>👋</Text>
+              </Text>
+              
+              <Pressable onPress={onOpenPlans}>
+                <LinearGradient
+                  colors={activePlan ? ['#9b5cff', '#6d28d9'] : ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.vipBadge}
+                >
+                  <Text style={styles.vipText}>{activePlan ? activePlanName : 'No VIP'}</Text>
+                </LinearGradient>
+              </Pressable>
+            </View>
           </View>
         </View>
 
-        <Pressable onPress={onOpenPlans}>
-          <LinearGradient
-            colors={activePlan ? ['#9b5cff', '#6d28d9'] : ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.vipBadge}
-          >
-            <Text style={styles.vipText}>{activePlan ? activePlanName : 'No VIP'}</Text>
-          </LinearGradient>
-        </Pressable>
+        <View style={styles.headerRight}>
+          <Pressable style={styles.iconButton}>
+            <MessageCircle size={22} color="rgba(255,255,255,0.8)" strokeWidth={2} />
+          </Pressable>
+          <Pressable style={styles.iconButton} onPress={onOpenNotifications}>
+            {hasUnread && <View style={styles.notificationDot} />}
+            <Bell size={22} color="rgba(255,255,255,0.8)" strokeWidth={2} />
+          </Pressable>
+        </View>
       </View>
 
       <LinearGradient
@@ -220,7 +251,9 @@ export function HomeScreen({
 
         <Text style={styles.assetsLabel}>Total Assets</Text>
         <Text style={styles.assetsValue}>${balance.toFixed(2)}</Text>
-        <Text style={styles.assetsChange}>+0.00% today</Text>
+        <Text style={[styles.assetsChange, stats.today_profit > 0 && styles.assetsChangePositive]}>
+          {stats.today_profit > 0 ? `+$${Number(stats.today_profit).toFixed(2)} Earned Today` : '$0.00 Earned Today'}
+        </Text>
       </LinearGradient>
 
       <View style={styles.statsRow}>
@@ -311,24 +344,58 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(255,255,255,0.65)',
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 2,
+  },
   userName: {
     fontFamily: 'Outfit_700Bold',
     fontSize: 18,
     color: colors.white,
-    marginTop: 2,
   },
   wave: {
     fontSize: 16,
   },
   vipBadge: {
     borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   vipText: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 12,
+    fontFamily: 'Outfit_800ExtraBold',
+    fontSize: 10,
     color: colors.white,
+    letterSpacing: 0.5,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  notificationDot: {
+    position: 'absolute',
+    top: 8,
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.green,
+    borderWidth: 1.5,
+    borderColor: '#111',
+    zIndex: 1,
   },
   assetsCard: {
     borderRadius: 24,
@@ -362,7 +429,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontFamily: 'Outfit_700Bold',
     fontSize: 14,
-    color: '#86efac',
+    color: 'rgba(255,255,255,0.45)',
+  },
+  assetsChangePositive: {
+    color: '#4ade80',
   },
   statsRow: {
     flexDirection: 'row',

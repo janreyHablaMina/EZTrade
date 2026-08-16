@@ -7,52 +7,35 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
+  Alert,
+  Clipboard,
 } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { CheckIcon } from '../components/icons/CheckIcon';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
+import { apiClient } from '../lib/api';
+import { Key, Zap, Clock, CheckCircle, Copy } from 'lucide-react-native';
 
 const useNativeDriver = Platform.OS !== 'web';
 const RING_SIZE = 188;
 const RING_R = 82;
 const RING_C = 2 * Math.PI * RING_R;
-const DAY_MS = 24 * 60 * 60 * 1000;
-const REWARD = 2;
 
 type TradeScreenProps = {
   onBack?: () => void;
+  user?: any;
 };
-
-function formatClock(ms: number) {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  const h = String(Math.floor(total / 3600)).padStart(2, '0');
-  const m = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
-  const s = String(total % 60).padStart(2, '0');
-  return `${h}:${m}:${s}`;
-}
 
 function ProgressRing({ progress }: { progress: number }) {
   const offset = RING_C * (1 - progress);
-
   return (
     <Svg width={RING_SIZE} height={RING_SIZE} style={StyleSheet.absoluteFill}>
+      <Circle cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R} stroke="rgba(167, 139, 250, 0.18)" strokeWidth={8} fill="none" />
       <Circle
-        cx={RING_SIZE / 2}
-        cy={RING_SIZE / 2}
-        r={RING_R}
-        stroke="rgba(167, 139, 250, 0.18)"
-        strokeWidth={8}
-        fill="none"
-      />
-      <Circle
-        cx={RING_SIZE / 2}
-        cy={RING_SIZE / 2}
-        r={RING_R}
-        stroke={colors.purpleBright}
-        strokeWidth={8}
-        fill="none"
+        cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
+        stroke={colors.purpleBright} strokeWidth={8} fill="none"
         strokeDasharray={`${RING_C} ${RING_C}`}
         strokeDashoffset={offset}
         strokeLinecap="round"
@@ -62,155 +45,197 @@ function ProgressRing({ progress }: { progress: number }) {
   );
 }
 
-export function TradeScreen({ onBack }: TradeScreenProps) {
-  const [claimed, setClaimed] = useState(false);
-  const [claiming, setClaiming] = useState(false);
-  const [remaining, setRemaining] = useState(DAY_MS);
-  const claimScale = useRef(new Animated.Value(1)).current;
-  const floatY = useRef(new Animated.Value(0)).current;
+export function TradeScreen({ onBack, user }: TradeScreenProps) {
+  const [code, setCode] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [redeemed, setRedeemed] = useState(false);
+  const [reward, setReward] = useState(0);
+  const [newBalance, setNewBalance] = useState(0);
+  const [errorMsg, setErrorMsg] = useState('');
 
+  const successScale = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const ringProgress = redeemed ? 1 : 0;
+
+  // Pulse animation for the code input box
   useEffect(() => {
+    if (redeemed) return;
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(floatY, {
-          toValue: -6,
-          duration: 1400,
-          useNativeDriver,
-        }),
-        Animated.timing(floatY, {
-          toValue: 0,
-          duration: 1400,
-          useNativeDriver,
-        }),
-      ]),
+        Animated.timing(pulseAnim, { toValue: 1.02, duration: 1200, useNativeDriver }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 1200, useNativeDriver }),
+      ])
     );
-    if (!claimed) loop.start();
-    else {
-      loop.stop();
-      floatY.setValue(0);
-    }
+    loop.start();
     return () => loop.stop();
-  }, [claimed, floatY]);
+  }, [redeemed]);
 
-  useEffect(() => {
-    if (!claimed) return;
-    const endsAt = Date.now() + DAY_MS;
-    const tick = () => setRemaining(Math.max(0, endsAt - Date.now()));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [claimed]);
+  const handleSubmit = async () => {
+    if (!code.trim()) {
+      setErrorMsg('Please enter a trading code.');
+      return;
+    }
+    setErrorMsg('');
+    setSubmitting(true);
 
-  const handleQuantify = () => {
-    if (claimed || claiming) return;
-    setClaiming(true);
-    Animated.sequence([
-      Animated.timing(claimScale, {
-        toValue: 0.92,
-        duration: 110,
-        useNativeDriver,
-      }),
-      Animated.spring(claimScale, {
+    try {
+      const endpoint = user?.id
+        ? `/trading-codes/redeem?user_id=${user.id}`
+        : '/trading-codes/redeem';
+
+      const res = await apiClient.post(endpoint, { code: code.trim() });
+
+      setReward(res.reward ?? 0);
+      setNewBalance(res.new_balance ?? 0);
+      setRedeemed(true);
+
+      // Success pop animation
+      Animated.spring(successScale, {
         toValue: 1,
         friction: 5,
+        tension: 80,
         useNativeDriver,
-      }),
-    ]).start(() => {
-      setClaiming(false);
-      setClaimed(true);
-    });
+      }).start();
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Something went wrong. Try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const progress = claimed ? remaining / DAY_MS : 1;
+  const handleReset = () => {
+    setCode('');
+    setRedeemed(false);
+    setReward(0);
+    setErrorMsg('');
+    successScale.setValue(0);
+  };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
+    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <ScreenHeader title="Trade" onBack={onBack} padded={false} />
-      <Text style={styles.subtitle}>Daily Quantify</Text>
+      <Text style={styles.subtitle}>Enter your trading code to quantify today's yield</Text>
 
+      {/* Hero orb */}
       <View style={styles.hero}>
-        <Animated.View
-          style={{
-            transform: [{ translateY: claimed ? 0 : floatY }, { scale: claimScale }],
-          }}
-        >
-          <View style={styles.orbWrap}>
-            <ProgressRing progress={progress} />
-            {claimed ? (
-              <View style={styles.orbDone}>
-                <CheckIcon size={28} color={colors.white} />
-                <Text style={styles.orbDoneTitle}>Claimed</Text>
-                <Text style={styles.orbDoneSub}>{formatClock(remaining)}</Text>
-              </View>
-            ) : (
-              <Pressable
-                onPress={handleQuantify}
-                disabled={claiming}
-                style={styles.orbPress}
-              >
-                <LinearGradient
-                  colors={['#c084fc', '#7c3aed', '#4c1d95']}
-                  start={{ x: 0.15, y: 0 }}
-                  end={{ x: 0.9, y: 1 }}
-                  style={styles.orb}
-                >
-                  <Text style={styles.orbKicker}>Tap to</Text>
-                  <Text style={styles.orbTitle}>
-                    {claiming ? '...' : 'Quantify'}
-                  </Text>
-                  <Text style={styles.orbReward}>+{REWARD.toFixed(2)} USDT</Text>
-                </LinearGradient>
-              </Pressable>
-            )}
-          </View>
-        </Animated.View>
-
-        <Text style={styles.heroHint}>
-          {claimed
-            ? 'Next reward unlocks when the timer hits zero.'
-            : 'Claim today’s VIP profit. One tap per day.'}
-        </Text>
-      </View>
-
-      <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <Text style={styles.statLabel}>Days Left</Text>
-          <Text style={styles.statValue}>{claimed ? '59 days' : '60 days'}</Text>
+        <View style={styles.orbWrap}>
+          <ProgressRing progress={redeemed ? 1 : 0} />
+          {redeemed ? (
+            <Animated.View style={[styles.orbSuccess, { transform: [{ scale: successScale }] }]}>
+              <CheckCircle size={32} color="#4ade80" />
+              <Text style={styles.orbSuccessLabel}>Quantified!</Text>
+              <Text style={styles.orbSuccessReward}>+${Number(reward).toFixed(2)}</Text>
+            </Animated.View>
+          ) : (
+            <Animated.View style={[styles.orbIdle, { transform: [{ scale: pulseAnim }] }]}>
+              <Zap size={32} color="rgba(167,139,250,0.8)" />
+              <Text style={styles.orbIdleLabel}>Awaiting</Text>
+              <Text style={styles.orbIdleSub}>Code</Text>
+            </Animated.View>
+          )}
         </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statLabel}>Today</Text>
-          <Text style={[styles.statValue, claimed && styles.statGreen]}>
-            {claimed ? `+${REWARD.toFixed(2)}` : 'Ready'}
+
+        {redeemed ? (
+          <Text style={styles.heroHintSuccess}>
+            Your VIP yield has been credited to your balance.
           </Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statLabel}>Plan</Text>
-          <Text style={styles.statValue}>VIP 1</Text>
-        </View>
+        ) : (
+          <Text style={styles.heroHint}>
+            Check your notifications for the latest trading code from the admin.
+          </Text>
+        )}
       </View>
 
-      <View style={styles.planCard}>
-        <View style={styles.planRow}>
-          <Text style={styles.planLabel}>Daily rate</Text>
-          <Text style={styles.planGreen}>+20%</Text>
-        </View>
-        <View style={[styles.planRow, styles.planRowLast]}>
-          <Text style={styles.planLabel}>Deposit</Text>
-          <Text style={styles.planValue}>10 USDT</Text>
-        </View>
-      </View>
+      {/* Code Input Section */}
+      {!redeemed ? (
+        <View style={styles.inputSection}>
+          <LinearGradient
+            colors={['rgba(255,255,255,0.07)', 'rgba(255,255,255,0.03)']}
+            style={styles.inputCard}
+          >
+            <View style={styles.inputHeader}>
+              <Key size={18} color="rgba(167,139,250,0.8)" />
+              <Text style={styles.inputLabel}>Trading Code</Text>
+            </View>
 
+            <TextInput
+              style={styles.textInput}
+              value={code}
+              onChangeText={(t) => { setCode(t.toUpperCase()); setErrorMsg(''); }}
+              placeholder="e.g. EZ9X2P4A"
+              placeholderTextColor="rgba(255,255,255,0.2)"
+              autoCapitalize="characters"
+              autoCorrect={false}
+              editable={!submitting}
+            />
+
+            {errorMsg ? (
+              <Text style={styles.errorText}>{errorMsg}</Text>
+            ) : null}
+
+            <Pressable
+              style={[styles.submitBtn, (!code.trim() || submitting) && styles.submitBtnDisabled]}
+              onPress={handleSubmit}
+              disabled={!code.trim() || submitting}
+            >
+              <LinearGradient
+                colors={['#c084fc', '#7c3aed', '#4c1d95']}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                style={styles.submitBtnGradient}
+              >
+                <Zap size={18} color={colors.white} />
+                <Text style={styles.submitBtnText}>
+                  {submitting ? 'Quantifying...' : 'Quantify Yield'}
+                </Text>
+              </LinearGradient>
+            </Pressable>
+
+            <View style={styles.expiryRow}>
+              <Clock size={12} color="rgba(255,255,255,0.35)" />
+              <Text style={styles.expiryText}>Codes expire 30 minutes after broadcast</Text>
+            </View>
+          </LinearGradient>
+        </View>
+      ) : (
+        <View style={styles.inputSection}>
+          <LinearGradient
+            colors={['rgba(74,222,128,0.08)', 'rgba(74,222,128,0.03)']}
+            style={[styles.inputCard, styles.successCard]}
+          >
+            <Text style={styles.successTitle}>Reward Summary</Text>
+
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Code Used</Text>
+              <Text style={styles.summaryValue}>{code}</Text>
+            </View>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Yield Earned</Text>
+              <Text style={[styles.summaryValue, styles.summaryGreen]}>+${Number(reward).toFixed(2)} USDT</Text>
+            </View>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>New Balance</Text>
+              <Text style={styles.summaryValue}>${Number(newBalance).toFixed(2)} USDT</Text>
+            </View>
+
+            <Pressable style={styles.resetBtn} onPress={handleReset}>
+              <Text style={styles.resetBtnText}>Enter Another Code</Text>
+            </Pressable>
+          </LinearGradient>
+        </View>
+      )}
+
+      {/* Info Card */}
       <View style={styles.infoCard}>
         <Text style={styles.infoTitle}>How it works</Text>
         {[
-          'Your VIP plan earns a daily reward automatically.',
-          'Quantify once a day to add it to your balance.',
-          'Come back after the countdown for the next claim.',
+          'Admin broadcasts a unique trading code via notifications.',
+          'You have 30 minutes to enter the code in the Trade tab.',
+          'A valid code instantly earns your active VIP plan\'s daily yield.',
+          'Each code can only be used once per user.',
         ].map((step, index) => (
-          <View key={step} style={styles.infoRow}>
+          <View key={index} style={styles.infoRow}>
             <View style={styles.stepBadge}>
               <Text style={styles.stepBadgeText}>{index + 1}</Text>
             </View>
@@ -226,8 +251,8 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingTop: 58,
-    paddingBottom: 28,
-    gap: 14,
+    paddingBottom: 40,
+    gap: 16,
   },
   subtitle: {
     marginTop: -8,
@@ -246,132 +271,184 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  orbPress: {
-    width: 148,
-    height: 148,
-    borderRadius: 74,
-  },
-  orb: {
-    width: 148,
-    height: 148,
-    borderRadius: 74,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-  },
-  orbKicker: {
-    fontFamily: 'Outfit_500Medium',
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
-  },
-  orbTitle: {
-    fontFamily: 'Outfit_800ExtraBold',
-    fontSize: 24,
-    color: colors.white,
-    marginTop: 2,
-  },
-  orbReward: {
-    marginTop: 4,
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 13,
-    color: '#bbf7d0',
-  },
-  orbDone: {
+  orbIdle: {
     width: 148,
     height: 148,
     borderRadius: 74,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    backgroundColor: 'rgba(34, 197, 94, 0.18)',
+    backgroundColor: 'rgba(124,58,237,0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(134, 239, 172, 0.4)',
+    borderColor: 'rgba(167,139,250,0.3)',
   },
-  orbDoneTitle: {
+  orbIdleLabel: {
     fontFamily: 'Outfit_700Bold',
     fontSize: 16,
+    color: 'rgba(255,255,255,0.7)',
+  },
+  orbIdleSub: {
+    fontFamily: 'Outfit_400Regular',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.4)',
+  },
+  orbSuccess: {
+    width: 148,
+    height: 148,
+    borderRadius: 74,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(74,222,128,0.4)',
+  },
+  orbSuccessLabel: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 15,
     color: '#bbf7d0',
   },
-  orbDoneSub: {
-    fontFamily: 'Outfit_500Medium',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.7)',
+  orbSuccessReward: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 16,
+    color: '#4ade80',
   },
   heroHint: {
     fontFamily: 'Outfit_400Regular',
     fontSize: 13,
-    color: 'rgba(255,255,255,0.55)',
+    color: 'rgba(255,255,255,0.45)',
     textAlign: 'center',
     lineHeight: 19,
     paddingHorizontal: 12,
   },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: colors.cardFill,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    alignItems: 'center',
-    gap: 4,
-  },
-  statLabel: {
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.45)',
-  },
-  statValue: {
-    fontFamily: 'Outfit_700Bold',
+  heroHintSuccess: {
+    fontFamily: 'Outfit_500Medium',
     fontSize: 14,
-    color: colors.white,
+    color: '#86efac',
+    textAlign: 'center',
+    lineHeight: 20,
+    paddingHorizontal: 12,
   },
-  statGreen: {
-    color: '#4ade80',
-  },
-  planCard: {
-    backgroundColor: colors.cardFill,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
+  inputSection: {
     borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 4,
+    overflow: 'hidden',
   },
-  planRow: {
+  inputCard: {
+    padding: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    gap: 14,
+  },
+  successCard: {
+    borderColor: 'rgba(74,222,128,0.2)',
+  },
+  inputHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+  },
+  inputLabel: {
+    fontFamily: 'Outfit_600SemiBold',
+    fontSize: 16,
+    color: colors.white,
+  },
+  textInput: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 20,
+    color: colors.white,
+    letterSpacing: 4,
+    textAlign: 'center',
+  },
+  errorText: {
+    fontFamily: 'Outfit_400Regular',
+    fontSize: 13,
+    color: '#f87171',
+    textAlign: 'center',
+  },
+  submitBtn: {
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  submitBtnDisabled: {
+    opacity: 0.5,
+  },
+  submitBtnGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+  },
+  submitBtnText: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 16,
+    color: colors.white,
+  },
+  expiryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+  },
+  expiryText: {
+    fontFamily: 'Outfit_400Regular',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.35)',
+  },
+  // Success state
+  successTitle: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 18,
+    color: '#bbf7d0',
+    marginBottom: 4,
+  },
+  summaryRow: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 13,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
+    alignItems: 'center',
   },
-  planRowLast: {
-    borderBottomWidth: 0,
-  },
-  planLabel: {
+  summaryLabel: {
     fontFamily: 'Outfit_400Regular',
     fontSize: 14,
-    color: 'rgba(255,255,255,0.55)',
+    color: 'rgba(255,255,255,0.5)',
   },
-  planValue: {
+  summaryValue: {
     fontFamily: 'Outfit_700Bold',
     fontSize: 15,
     color: colors.white,
   },
-  planGreen: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 15,
+  summaryGreen: {
     color: '#4ade80',
   },
-  infoCard: {
-    backgroundColor: colors.cardFill,
+  summaryDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  resetBtn: {
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  resetBtnText: {
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.6)',
+  },
+  // Info card
+  infoCard: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
     borderRadius: 20,
     padding: 16,
     gap: 12,
@@ -387,8 +464,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   stepBadge: {
-    width: 24,
-    height: 24,
+    width: 24, height: 24,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',

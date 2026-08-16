@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   ArrowDownToLine,
@@ -96,15 +96,33 @@ function CategoryCard({
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<NotificationRecord[]>(initialNotifications);
+  const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [tab, setTab] = useState<"all" | "unread" | "read">("all");
   const [category, setCategory] = useState<"all" | NotificationCategory>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/notifications")
+      .then(res => res.json())
+      .then(data => {
+        setNotifications(data.map((n: any) => ({
+          id: n.id.toString(),
+          title: n.title,
+          description: n.message,
+          category: n.type,
+          iconType: n.type.toLowerCase(),
+          dateTime: new Date(n.created_at).toLocaleString(),
+          isRead: n.is_read
+        })));
+      })
+      .catch(console.error);
+  }, []);
+
   // Modal State
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [composeTitle, setComposeTitle] = useState("");
   const [composeMessage, setComposeMessage] = useState("");
   const [composeCategory, setComposeCategory] = useState<NotificationCategory>("System");
@@ -143,24 +161,26 @@ export default function NotificationsPage() {
     e.preventDefault();
     setIsSending(true);
     try {
-      const res = await fetch("/api/notifications", {
+      const res = await fetch("http://127.0.0.1:8000/api/notifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: composeTitle,
           message: composeMessage,
-          category: composeCategory,
+          type: composeCategory,
         }),
       });
 
       if (res.ok) {
+        const data = await res.json();
+        const n = data.notification;
         // Add it to local list so we can see it
         const newNotif: NotificationRecord = {
-          id: Date.now().toString(),
-          title: composeTitle,
-          description: composeMessage,
-          category: composeCategory,
-          iconType: "system",
+          id: n.id.toString(),
+          title: n.title,
+          description: n.message,
+          category: n.type,
+          iconType: n.type.toLowerCase() as any,
           dateTime: "Just now",
           isRead: false,
         };
@@ -176,6 +196,34 @@ export default function NotificationsPage() {
     }
   };
 
+  const handleGenerateTradingCode = async () => {
+    setIsGenerating(true);
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/trading-codes/generate", {
+        method: "POST",
+      });
+      if (res.ok) {
+        // Refresh notifications to show the newly created one
+        const reloadRes = await fetch("http://127.0.0.1:8000/api/notifications");
+        const data = await reloadRes.json();
+        setNotifications(data.map((n: any) => ({
+          id: n.id.toString(),
+          title: n.title,
+          description: n.message,
+          category: n.type,
+          iconType: n.type.toLowerCase(),
+          dateTime: new Date(n.created_at).toLocaleString(),
+          isRead: n.is_read
+        })));
+        alert("Trading Code generated and broadcasted successfully!");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <AdminShell>
       <div className="w-full">
@@ -187,13 +235,23 @@ export default function NotificationsPage() {
               Dashboard <span className="mx-1">&gt;</span> Notifications
             </p>
           </div>
-          <button
-            onClick={() => setIsComposeOpen(true)}
-            className="flex items-center justify-center gap-2 rounded-xl bg-purple px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(123,44,255,0.3)] transition hover:bg-purple-bright hover:shadow-[0_8px_20px_rgba(123,44,255,0.45)] cursor-pointer"
-          >
-            <Send className="h-4 w-4" />
-            Send Notification
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleGenerateTradingCode}
+              disabled={isGenerating}
+              className="flex items-center justify-center gap-2 rounded-xl bg-[#ffaa00]/10 border border-[#ffaa00]/20 px-4 py-2 text-sm font-semibold text-[#ffaa00] transition hover:bg-[#ffaa00]/20 cursor-pointer disabled:opacity-50"
+            >
+              {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gift className="h-4 w-4" />}
+              Generate Trading Code
+            </button>
+            <button
+              onClick={() => setIsComposeOpen(true)}
+              className="flex items-center justify-center gap-2 rounded-xl bg-purple px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(123,44,255,0.3)] transition hover:bg-purple-bright hover:shadow-[0_8px_20px_rgba(123,44,255,0.45)] cursor-pointer"
+            >
+              <Send className="h-4 w-4" />
+              Send Notification
+            </button>
+          </div>
         </div>
 
         {/* Category Summary Cards */}
