@@ -52,21 +52,35 @@ class DepositController extends Controller
                 $deposit->user->balance += $deposit->amount;
                 $deposit->user->save();
 
-                // Give 10% to the referrer on every approved deposit
-                if ($deposit->user->referred_by) {
-                    $referrer = \App\Models\User::find($deposit->user->referred_by);
-                    if ($referrer) {
-                        $bonus = $deposit->amount * 0.10;
-                        $referrer->balance += $bonus;
-                        $referrer->save();
-                        
-                        \App\Models\Notification::create([
-                            'user_id' => $referrer->id,
-                            'title' => 'Referral Bonus!',
-                            'message' => 'You received a ' . number_format($bonus, 2) . ' USDT bonus from your referral\'s deposit!',
-                            'type' => 'success',
-                        ]);
+                // Multi-tier referral bonus (Level 1: 10%, Level 2: 5%, Level 3: 2%)
+                $rates = [
+                    1 => 0.10,
+                    2 => 0.05,
+                    3 => 0.02,
+                ];
+
+                $currentUserId = $deposit->user->referred_by;
+                $level = 1;
+
+                while ($currentUserId && $level <= 3) {
+                    $referrer = \App\Models\User::find($currentUserId);
+                    if (!$referrer) {
+                        break;
                     }
+
+                    $bonus = $deposit->amount * $rates[$level];
+                    $referrer->balance += $bonus;
+                    $referrer->save();
+                    
+                    \App\Models\Notification::create([
+                        'user_id' => $referrer->id,
+                        'title' => 'Level ' . $level . ' Referral Bonus!',
+                        'message' => 'You received a ' . number_format($bonus, 2) . ' USDT bonus from your level ' . $level . ' referral\'s deposit!',
+                        'type' => 'success',
+                    ]);
+
+                    $currentUserId = $referrer->referred_by;
+                    $level++;
                 }
             });
         } else {
