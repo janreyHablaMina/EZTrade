@@ -39,22 +39,7 @@ export function DepositSuccessScreen({
       <View style={styles.center}>
         <SuccessMark />
         <Text style={styles.title}>Deposit Successful!</Text>
-        <Text style={styles.subtitle}>Your account has been activated.</Text>
-
-        <View style={styles.card}>
-          <View style={styles.row}>
-            <Text style={styles.label}>Plan</Text>
-            <Text style={styles.value}>{planName}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Amount</Text>
-            <Text style={styles.value}>{amount} USDT</Text>
-          </View>
-          <View style={[styles.row, styles.rowLast]}>
-            <Text style={styles.label}>Status</Text>
-            <Text style={styles.status}>Active</Text>
-          </View>
-        </View>
+        <Text style={styles.subtitle}>Your deposit is pending approval.</Text>
       </View>
 
       <View style={styles.footer}>
