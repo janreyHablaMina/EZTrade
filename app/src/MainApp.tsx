@@ -23,6 +23,7 @@ import { VerifyingDepositScreen } from './screens/VerifyingDepositScreen';
 import { VipPlansScreen } from './screens/VipPlansScreen';
 import { WithdrawScreen } from './screens/WithdrawScreen';
 import { colors } from './theme/colors';
+import { apiClient } from './lib/api';
 
 const LOCAL_API_URL = 'http://192.168.100.6:8000';
 
@@ -144,7 +145,20 @@ export function MainApp({
         amount={depositAmount}
         networkLabel={depositNetwork}
         onBack={() => setWalletStep(null)}
-        onSubmit={() => setWalletStep('verifying')}
+        onSubmit={async (txid) => {
+          try {
+            await apiClient.post('/deposits', {
+              user_id: user?.id,
+              amount: parseFloat(depositAmount.replace(/[^0-9.]/g, '') || '0'),
+              network: depositNetwork,
+              txid: txid,
+            });
+            setWalletStep('verifying');
+          } catch (e) {
+            console.error('Failed to submit deposit', e);
+            Alert.alert('Error', 'Failed to submit deposit.');
+          }
+        }}
       />
     );
   } else if (walletStep === 'verifying') {

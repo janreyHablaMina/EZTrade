@@ -4,16 +4,54 @@ import { useState, useMemo } from "react";
 import { Download, ArrowLeftRight, ArrowDownToLine, ArrowUpFromLine, RefreshCw, Coins } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { initialTransactions } from "@/lib/mock-data/transactionsData";
 import { TransactionsFilters } from "@/components/admin/transactions/TransactionsFilters";
 import { TransactionsTable } from "@/components/admin/transactions/TransactionsTable";
+import { webApi } from "@/lib/api";
+import { useEffect } from "react";
 
 export default function TransactionsPage() {
   const [search, setSearch] = useState("");
   const [type, setType] = useState("all");
   const [status, setStatus] = useState("all");
   const [currency, setCurrency] = useState("all");
+  const [currency, setCurrency] = useState("all");
   const [dateRange, setDateRange] = useState("");
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchDeposits = async () => {
+    setIsLoading(true);
+    try {
+      const data = await webApi.get('/deposits');
+      const mapped = data.map((d: any) => ({
+        id: `TX-${d.id.toString().padStart(6, '0')}`,
+        dbId: d.id,
+        type: 'Deposit',
+        amount: parseFloat(d.amount),
+        currency: 'USDT',
+        network: d.network,
+        status: d.status,
+        userName: d.user ? d.user.name : 'Unknown',
+        userEmail: d.user ? d.user.email : 'Unknown',
+        userId: d.user ? `EZT-${d.user.id.toString().padStart(4, '0')}` : 'N/A',
+        dateTime: new Date(d.created_at).toLocaleString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        }),
+        referenceTxid: d.txid,
+        description: 'Wallet funding'
+      }));
+      setTransactions(mapped);
+    } catch (e) {
+      console.error('Failed to fetch deposits:', e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDeposits();
+  }, []);
 
   // Filter application state
   const [filters, setFilters] = useState({
@@ -28,7 +66,7 @@ export default function TransactionsPage() {
 
   // Apply filters logic
   const filteredTransactions = useMemo(() => {
-    return initialTransactions.filter((tx) => {
+    return transactions.filter((tx) => {
       const matchSearch =
         !filters.search ||
         tx.userName.toLowerCase().includes(filters.search.toLowerCase()) ||
@@ -163,11 +201,12 @@ export default function TransactionsPage() {
       <TransactionsTable
         transactions={filteredTransactions}
         paginatedTransactions={paginatedTransactions}
-        totalCount={5620}
+        totalCount={filteredTransactions.length}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
         pageSize={pageSize}
         setPageSize={setPageSize}
+        onRefresh={fetchDeposits}
         onViewDetails={(tx) => console.log("View details for:", tx.id)}
         onPrint={(tx) => console.log("Print receipt for:", tx.id)}
         onHistory={(tx) => console.log("History log for:", tx.id)}

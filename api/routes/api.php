@@ -22,6 +22,11 @@ Route::get('/users/{id}/stats', [UserController::class, 'stats']);
 // ── VIP Plans ─────────────────────────────────────────────────────────────────
 Route::get('/vip-plans', [VipPlanController::class, 'index']);
 Route::post('/vip-plans', [VipPlanController::class, 'store']);
+
+    // ── Deposits ─────────────────────────────────────────────────────────────────
+    Route::get('/deposits', [\App\Http\Controllers\DepositController::class, 'index']);
+    Route::post('/deposits', [\App\Http\Controllers\DepositController::class, 'store']);
+    Route::patch('/deposits/{id}', [\App\Http\Controllers\DepositController::class, 'update']);
 Route::post('/vip-plans/unlock', [VipPlanController::class, 'unlock']);
 
 // ── Notifications ─────────────────────────────────────────────────────────────

@@ -13,9 +13,12 @@ import {
   ArrowUpFromLine,
   ArrowLeftRight,
   TrendingUp,
+  Check,
+  X,
 } from "lucide-react";
 import type { TransactionRecord } from "@/lib/mock-data/transactionsData";
 import { typeBadgeStyles, statusBadgeStyles } from "@/lib/mock-data/transactionsData";
+import { webApi } from "@/lib/api";
 
 type TransactionsTableProps = {
   transactions: TransactionRecord[];
@@ -28,6 +31,7 @@ type TransactionsTableProps = {
   onViewDetails?: (tx: TransactionRecord) => void;
   onPrint?: (tx: TransactionRecord) => void;
   onHistory?: (tx: TransactionRecord) => void;
+  onRefresh?: () => void;
 };
 
 export function TransactionsTable({
@@ -41,8 +45,18 @@ export function TransactionsTable({
   onViewDetails,
   onPrint,
   onHistory,
+  onRefresh,
 }: TransactionsTableProps) {
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+
+  const handleUpdateStatus = async (tx: any, status: 'Approved' | 'Rejected') => {
+    try {
+      await webApi.patch(`/deposits/${tx.dbId}`, { status });
+      onRefresh?.();
+    } catch (e) {
+      console.error('Failed to update deposit status:', e);
+    }
+  };
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const handleCopyTxid = (id: string, txid: string) => {
@@ -197,6 +211,33 @@ export function TransactionsTable({
                               ? "bottom-full mb-1"
                               : "mt-1"
                           }`}>
+                            {tx.status === 'Pending' && tx.type === 'Deposit' && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveDropdownId(null);
+                                    handleUpdateStatus(tx, 'Approved');
+                                  }}
+                                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-success hover:bg-success/10 transition cursor-pointer text-left font-medium"
+                                >
+                                  <Check className="h-3.5 w-3.5 mr-2 inline" />
+                                  Approve
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveDropdownId(null);
+                                    handleUpdateStatus(tx, 'Rejected');
+                                  }}
+                                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-warning hover:bg-warning/10 transition cursor-pointer text-left font-medium"
+                                >
+                                  <X className="h-3.5 w-3.5 mr-2 inline" />
+                                  Reject
+                                </button>
+                                <div className="my-1 border-t border-border/45" />
+                              </>
+                            )}
                             <button
                               type="button"
                               onClick={() => {
