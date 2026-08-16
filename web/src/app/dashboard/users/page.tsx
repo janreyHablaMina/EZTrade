@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { webApi } from "@/lib/api";
 import {
   Users,
   UserCheck,
@@ -37,10 +38,8 @@ export default function UsersPage() {
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/users");
-        if (res.ok) {
-          const data = await res.json();
-          const mappedUsers: UserRecord[] = data.map((u: any) => ({
+        const data = await webApi.get("/users");
+        const mappedUsers: UserRecord[] = data.map((u: any) => ({
             id: `EZT-${u.id.toString().padStart(4, '0')}`,
             name: u.name,
             email: u.email,

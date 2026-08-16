@@ -1,11 +1,13 @@
-const API_BASE_URL = 'http://192.168.100.6:8000';
+export const API_BASE = 'http://127.0.0.1:8000';
 
 async function fetchJSON(endpoint: string, options: RequestInit = {}): Promise<any> {
-  const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
+  const response = await fetch(`${API_BASE}/api${endpoint}`, {
     ...options,
     headers: {
       Accept: 'application/json',
-      ...(options.method === 'POST' ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.method === 'POST' || options.method === 'PATCH'
+        ? { 'Content-Type': 'application/json' }
+        : {}),
       ...options.headers,
     },
   });
@@ -24,10 +26,12 @@ async function fetchJSON(endpoint: string, options: RequestInit = {}): Promise<a
   return data;
 }
 
-export const apiClient = {
+export const webApi = {
   get: (endpoint: string) => fetchJSON(endpoint),
   post: (endpoint: string, body?: any) =>
     fetchJSON(endpoint, { method: 'POST', body: JSON.stringify(body) }),
+  patch: (endpoint: string, body?: any) =>
+    fetchJSON(endpoint, { method: 'PATCH', body: JSON.stringify(body) }),
+  delete: (endpoint: string) =>
+    fetchJSON(endpoint, { method: 'DELETE' }),
 };
-
-export { API_BASE_URL };

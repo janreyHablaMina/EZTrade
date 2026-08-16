@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   Animated,
   Platform,
@@ -9,14 +9,12 @@ import {
   Text,
   TextInput,
   View,
-  Alert,
-  Clipboard,
 } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
-import { apiClient } from '../lib/api';
-import { Key, Zap, Clock, CheckCircle, Copy } from 'lucide-react-native';
+import { Key, Zap, Clock, CheckCircle } from 'lucide-react-native';
+import { useTradeCode } from '../hooks/useTradeCode';
 
 const useNativeDriver = Platform.OS !== 'web';
 const RING_SIZE = 188;
@@ -46,18 +44,11 @@ function ProgressRing({ progress }: { progress: number }) {
 }
 
 export function TradeScreen({ onBack, user }: TradeScreenProps) {
-  const [code, setCode] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [redeemed, setRedeemed] = useState(false);
-  const [reward, setReward] = useState(0);
-  const [newBalance, setNewBalance] = useState(0);
-  const [errorMsg, setErrorMsg] = useState('');
+  const { code, setCode, submitting, redeemed, reward, newBalance, errorMsg, handleSubmit, handleReset } = useTradeCode(user);
 
   const successScale = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const ringProgress = redeemed ? 1 : 0;
 
-  // Pulse animation for the code input box
   useEffect(() => {
     if (redeemed) return;
     const loop = Animated.loop(
@@ -70,46 +61,13 @@ export function TradeScreen({ onBack, user }: TradeScreenProps) {
     return () => loop.stop();
   }, [redeemed]);
 
-  const handleSubmit = async () => {
-    if (!code.trim()) {
-      setErrorMsg('Please enter a trading code.');
-      return;
+  useEffect(() => {
+    if (redeemed) {
+      Animated.spring(successScale, { toValue: 1, friction: 5, tension: 80, useNativeDriver }).start();
+    } else {
+      successScale.setValue(0);
     }
-    setErrorMsg('');
-    setSubmitting(true);
-
-    try {
-      const endpoint = user?.id
-        ? `/trading-codes/redeem?user_id=${user.id}`
-        : '/trading-codes/redeem';
-
-      const res = await apiClient.post(endpoint, { code: code.trim() });
-
-      setReward(res.reward ?? 0);
-      setNewBalance(res.new_balance ?? 0);
-      setRedeemed(true);
-
-      // Success pop animation
-      Animated.spring(successScale, {
-        toValue: 1,
-        friction: 5,
-        tension: 80,
-        useNativeDriver,
-      }).start();
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Something went wrong. Try again.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleReset = () => {
-    setCode('');
-    setRedeemed(false);
-    setReward(0);
-    setErrorMsg('');
-    successScale.setValue(0);
-  };
+  }, [redeemed]);
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

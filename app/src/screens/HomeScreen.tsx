@@ -11,9 +11,8 @@ import {
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { MarketOverview } from '../components/home/MarketOverview';
 import { colors } from '../theme/colors';
-import { apiClient } from '../lib/api';
-import { useState, useEffect } from 'react';
 import { Bell, MessageCircle } from 'lucide-react-native';
+import { useHomeStats } from '../hooks/useHomeStats';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const ASSETS_CARD_WIDTH = SCREEN_WIDTH - 40; // content horizontal padding
@@ -121,37 +120,12 @@ export function HomeScreen({
   onOpenAssets,
   onOpenTransactions,
 }: HomeScreenProps) {
-  const [userData, setUserData] = useState<any>(user);
-  const [hasUnread, setHasUnread] = useState(false);
-  const [stats, setStats] = useState({ total_profit: 0, today_profit: 0, today_percent: 0, daily_profit: 0, balance: 0 });
-
-  useEffect(() => {
-    if (!user?.id) return;
-    
-    // Fetch user details
-    apiClient.get(`/users/${user.id}`)
-      .then(data => setUserData(data))
-      .catch(console.error);
-
-    // Fetch user stats (total profit, daily profit)
-    apiClient.get(`/users/${user.id}/stats`)
-      .then((res: any) => setStats(res))
-      .catch(console.error);
-
-    // Fetch unread notifications status
-    apiClient.get(`/notifications?user_id=${user.id}`)
-      .then((res: any) => {
-        const unread = res?.some((n: any) => !n.is_read);
-        setHasUnread(unread);
-      })
-      .catch(console.error);
-  }, [user]);
+  const { userData, stats, hasUnread } = useHomeStats(user);
 
   const userName = userData?.name || 'John Doe';
   const balance = Number(stats.balance || userData?.balance || 0);
   const activePlan = userData?.vip_plan;
   const activePlanName = activePlan ? activePlan.level.toUpperCase() : 'None';
-  const dailyProfitPercent = activePlan ? Number(activePlan.daily_profit_percent) : 0;
   const estDailyProfit = stats.daily_profit;
   const totalProfit = stats.total_profit;
 

@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { NETWORKS, type NetworkId, getNetwork } from '../lib/wallet';
 import { colors } from '../theme/colors';
-import { ChevronDown } from './icons/ChevronDown';
+import { ChevronDown } from 'lucide-react-native';
 
 type NetworkPickerProps = {
   value: NetworkId;

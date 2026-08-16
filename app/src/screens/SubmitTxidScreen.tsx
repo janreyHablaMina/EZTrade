@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
-import { CheckIcon } from '../components/icons/CheckIcon';
+import { Check } from 'lucide-react-native';
 import { NoteRow } from '../components/NoteRow';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -100,7 +100,7 @@ export function SubmitTxidScreen({
               style={styles.iconCircle}
             >
               {submitted ? (
-                <CheckIcon size={28} color="#86efac" />
+                <Check size={22} color={colors.white} strokeWidth={2.5} />
               ) : (
                 <HashIcon />
               )}

@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { AmountField } from '../components/AmountField';
-import { ReceiptIcon } from '../components/icons/ReceiptIcon';
+import { Receipt } from 'lucide-react-native';
 import { NetworkPicker } from '../components/NetworkPicker';
 import { NoteRow } from '../components/NoteRow';
 import { PrimaryButton } from '../components/PrimaryButton';

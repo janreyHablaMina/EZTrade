@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { FilterChips } from '../components/FilterChips';
-import { CopyIcon } from '../components/icons/CopyIcon';
+import { Copy } from 'lucide-react-native';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { copyToClipboard } from '../lib/clipboard';
 import { colors } from '../theme/colors';

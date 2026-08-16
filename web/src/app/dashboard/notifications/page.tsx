@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { webApi } from "@/lib/api";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   ArrowDownToLine,
@@ -103,8 +104,7 @@ export default function NotificationsPage() {
   const pageSize = 10;
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/notifications")
-      .then(res => res.json())
+    webApi.get("/notifications")
       .then(data => {
         setNotifications(data.map((n: any) => ({
           id: n.id.toString(),
@@ -161,34 +161,25 @@ export default function NotificationsPage() {
     e.preventDefault();
     setIsSending(true);
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/notifications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: composeTitle,
-          message: composeMessage,
-          type: composeCategory,
-        }),
+      const data = await webApi.post("/notifications", {
+        title: composeTitle,
+        message: composeMessage,
+        type: composeCategory,
       });
-
-      if (res.ok) {
-        const data = await res.json();
-        const n = data.notification;
-        // Add it to local list so we can see it
-        const newNotif: NotificationRecord = {
-          id: n.id.toString(),
-          title: n.title,
-          description: n.message,
-          category: n.type,
-          iconType: n.type.toLowerCase() as any,
-          dateTime: "Just now",
-          isRead: false,
-        };
-        setNotifications([newNotif, ...notifications]);
-        setIsComposeOpen(false);
-        setComposeTitle("");
-        setComposeMessage("");
-      }
+      const n = data.notification;
+      const newNotif: NotificationRecord = {
+        id: n.id.toString(),
+        title: n.title,
+        description: n.message,
+        category: n.type,
+        iconType: n.type.toLowerCase() as any,
+        dateTime: "Just now",
+        isRead: false,
+      };
+      setNotifications([newNotif, ...notifications]);
+      setIsComposeOpen(false);
+      setComposeTitle("");
+      setComposeMessage("");
     } catch (err) {
       console.error(err);
     } finally {
@@ -199,24 +190,19 @@ export default function NotificationsPage() {
   const handleGenerateTradingCode = async () => {
     setIsGenerating(true);
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/trading-codes/generate", {
-        method: "POST",
-      });
-      if (res.ok) {
-        // Refresh notifications to show the newly created one
-        const reloadRes = await fetch("http://127.0.0.1:8000/api/notifications");
-        const data = await reloadRes.json();
-        setNotifications(data.map((n: any) => ({
-          id: n.id.toString(),
-          title: n.title,
-          description: n.message,
-          category: n.type,
-          iconType: n.type.toLowerCase(),
-          dateTime: new Date(n.created_at).toLocaleString(),
-          isRead: n.is_read
-        })));
-        alert("Trading Code generated and broadcasted successfully!");
-      }
+      await webApi.post("/trading-codes/generate");
+      // Refresh notifications to show the newly created one
+      const data = await webApi.get("/notifications");
+      setNotifications(data.map((n: any) => ({
+        id: n.id.toString(),
+        title: n.title,
+        description: n.message,
+        category: n.type,
+        iconType: n.type.toLowerCase(),
+        dateTime: new Date(n.created_at).toLocaleString(),
+        isRead: n.is_read
+      })));
+      alert("Trading Code generated and broadcasted successfully!");
     } catch (err) {
       console.error(err);
     } finally {

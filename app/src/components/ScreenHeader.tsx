@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ArrowLeft } from 'lucide-react-native';
 import { colors } from '../theme/colors';
-import { BackIcon } from './icons/BackIcon';
 
 type ScreenHeaderProps = {
   title: string;
@@ -19,7 +19,7 @@ export function ScreenHeader({
   return (
     <View style={[styles.header, padded && styles.padded]}>
       <Pressable onPress={onBack} hitSlop={12} style={styles.backBtn}>
-        <BackIcon />
+        <ArrowLeft size={22} color="rgba(255,255,255,0.8)" strokeWidth={2} />
       </Pressable>
       <Text style={styles.title}>{title}</Text>
       {right ? <View style={styles.right}>{right}</View> : <View style={styles.spacer} />}

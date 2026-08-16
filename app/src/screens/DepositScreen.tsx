@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
 import { AmountField } from '../components/AmountField';
-import { CopyIcon } from '../components/icons/CopyIcon';
+import { Copy } from 'lucide-react-native';
 import { NetworkPicker } from '../components/NetworkPicker';
 import { NoteRow } from '../components/NoteRow';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -167,7 +167,7 @@ export function DepositScreen({
               {shortenAddress(network.address)}
             </Text>
             <Pressable onPress={copyAddress} hitSlop={10} style={styles.copyBtn}>
-              <CopyIcon />
+              <Copy size={16} color="rgba(255,255,255,0.6)" strokeWidth={2} />
             </Pressable>
           </View>
           {copied ? <Text style={styles.copied}>Address copied</Text> : null}

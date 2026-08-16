@@ -1,8 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState, useEffect } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View, Pressable, Modal } from 'react-native';
-import { LockIcon } from '../components/icons/LockIcon';
-import { CheckIcon } from '../components/icons/CheckIcon';
+import { Lock, Check } from 'lucide-react-native';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 import { apiClient } from '../lib/api';
@@ -170,7 +169,7 @@ export function VipPlansScreen({ user, onBack }: VipPlansScreenProps) {
                   <View style={styles.cardHeader}>
                     <Text style={styles.cardName}>{plan.name}</Text>
                     <View style={styles.lockContainer}>
-                      <LockIcon size={14} color="rgba(255,255,255,0.4)" />
+                      <Lock size={16} color="rgba(255,255,255,0.5)" strokeWidth={2} />
                     </View>
                   </View>
 
@@ -216,7 +215,7 @@ export function VipPlansScreen({ user, onBack }: VipPlansScreenProps) {
             {successMsg ? (
               <View style={{ alignItems: 'center', paddingVertical: 10 }}>
                 <View style={styles.successCircle}>
-                  <CheckIcon size={32} color={colors.green} />
+                  <Check size={32} color={colors.green} />
                 </View>
                 <Text style={styles.modalTitle}>Success!</Text>
                 <Text style={[styles.modalMessage, { textAlign: 'center' }]}>{successMsg}</Text>

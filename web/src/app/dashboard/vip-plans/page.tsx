@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { webApi } from "@/lib/api";
 import {
   Crown,
   Percent,
@@ -31,21 +32,18 @@ export default function VipPlansPage() {
   useEffect(() => {
     async function fetchPlans() {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/vip-plans");
-        if (res.ok) {
-          const data = await res.json();
-          const mappedPlans: VipPlan[] = data.map((p: any) => ({
-            id: `VP${p.id}`,
-            level: p.level,
-            minDeposit: Number(p.min_deposit),
-            dailyProfitPercent: Number(p.daily_profit_percent),
-            dailyProfitUsdtMin: Number(p.min_deposit) * (Number(p.daily_profit_percent) / 100),
-            durationDays: Number(p.duration_days),
-            totalUsers: 0,
-            status: p.status,
-          }));
-          setPlansList(mappedPlans);
-        }
+        const data = await webApi.get("/vip-plans");
+        const mappedPlans: VipPlan[] = data.map((p: any) => ({
+          id: `VP${p.id}`,
+          level: p.level,
+          minDeposit: Number(p.min_deposit),
+          dailyProfitPercent: Number(p.daily_profit_percent),
+          dailyProfitUsdtMin: Number(p.min_deposit) * (Number(p.daily_profit_percent) / 100),
+          durationDays: Number(p.duration_days),
+          totalUsers: 0,
+          status: p.status,
+        }));
+        setPlansList(mappedPlans);
       } catch (err) {
         console.error("Failed to fetch VIP plans:", err);
       } finally {
@@ -133,17 +131,13 @@ export default function VipPlansPage() {
       setToastMessage("Edited successfully");
     } else {
       // Create new plan via API
-      fetch("http://127.0.0.1:8000/api/vip-plans", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          level: data.level || `VIP ${plansList.length + 1}`,
-          min_deposit: Number(data.minDeposit),
-          daily_profit_percent: Number(data.dailyProfitPercent),
-          duration_days: Number(data.durationDays),
-          status: "Active"
-        }),
-      }).then(res => res.json()).then(responseData => {
+      webApi.post("/vip-plans", {
+        level: data.level || `VIP ${plansList.length + 1}`,
+        min_deposit: Number(data.minDeposit),
+        daily_profit_percent: Number(data.dailyProfitPercent),
+        duration_days: Number(data.durationDays),
+        status: "Active"
+      }).then(responseData => {
         const p = responseData.plan;
         const newPlan: VipPlan = {
           id: `VP${p.id}`,
