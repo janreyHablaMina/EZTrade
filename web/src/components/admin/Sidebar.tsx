@@ -31,28 +31,29 @@ type NavItem = {
 };
 
 const management: NavItem[] = [
-  { label: "VIP Plans", href: "/vip-plans", icon: Crown },
-  { label: "Deposits", href: "/deposits", icon: ArrowDownToLine },
-  { label: "Withdrawals", href: "/withdrawals", icon: ArrowUpFromLine },
-  { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
-  { label: "Earnings", href: "/earnings", icon: Coins },
-  { label: "Referrals", href: "/referrals", icon: Share2 },
-  { label: "Assets", href: "/assets", icon: Wallet },
+  { label: "VIP Plans", href: "/dashboard/vip-plans", icon: Crown },
+  { label: "Deposits", href: "/dashboard/deposits", icon: ArrowDownToLine },
+  { label: "Withdrawals", href: "/dashboard/withdrawals", icon: ArrowUpFromLine },
+  { label: "Transactions", href: "/dashboard/transactions", icon: ArrowLeftRight },
+  { label: "Earnings", href: "/dashboard/earnings", icon: Coins },
+  { label: "Referrals", href: "/dashboard/referrals", icon: Share2 },
+  { label: "Assets", href: "/dashboard/assets", icon: Wallet },
 ];
 
 const support: NavItem[] = [
-  { label: "Support Tickets", href: "/support-tickets", icon: LifeBuoy },
-  { label: "Notifications", href: "/notifications", icon: Bell, badge: true },
+  { label: "Support Tickets", href: "/dashboard/support-tickets", icon: LifeBuoy },
+  { label: "Notifications", href: "/dashboard/notifications", icon: Bell, badge: true },
 ];
 
 const settings: NavItem[] = [
-  { label: "System Settings", href: "/settings", icon: Settings },
-  { label: "General Settings", href: "/general-settings", icon: SlidersHorizontal },
+  { label: "App Release", href: "/dashboard/app-release", icon: ArrowDownToLine },
+  { label: "System Settings", href: "/dashboard/settings", icon: Settings },
+  { label: "General Settings", href: "/dashboard/general-settings", icon: SlidersHorizontal },
 ];
 
 const admin: NavItem[] = [
-  { label: "Admin Users", href: "/users", icon: Shield },
-  { label: "Audit Logs", href: "/audit-logs", icon: ScrollText },
+  { label: "Admin Users", href: "/dashboard/users", icon: Shield },
+  { label: "Audit Logs", href: "/dashboard/audit-logs", icon: ScrollText },
 ];
 
 function NavSection({ title, items }: { title: string; items: NavItem[] }) {
@@ -97,14 +98,12 @@ function NavSection({ title, items }: { title: string; items: NavItem[] }) {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const isDashboard = pathname === "/" || pathname === "/admin";
+  const isDashboard = pathname === "/dashboard" || pathname === "/dashboard/";
 
   return (
     <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-border bg-bg-deep/90 px-3 py-4 lg:flex">
-      <div className="mb-6 flex items-center gap-2.5 px-2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple/20 ring-1 ring-purple-bright/40">
-          <Hexagon className="h-5 w-5 text-purple-bright" strokeWidth={2.2} />
-        </div>
+      <div className="mb-6 flex items-center gap-3 px-2">
+        <img src="/mobile-logo.png" alt="EZTrade Logo" className="h-9 w-9 rounded-xl shadow-[0_0_15px_rgba(123,44,255,0.3)]" />
         <div>
           <p className="text-sm font-bold tracking-[0.18em] text-white">EZTRADE</p>
           <p className="text-[10px] tracking-wide text-muted-2">Admin Panel</p>
@@ -113,7 +112,7 @@ export function Sidebar() {
 
       <nav className="flex-1 overflow-y-auto pb-4 pr-4">
         <Link
-          href="/"
+          href="/dashboard"
           className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
             isDashboard
               ? "bg-purple text-white shadow-[0_8px_24px_rgba(123,44,255,0.35)]"

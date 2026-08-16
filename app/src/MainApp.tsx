@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { StyleSheet, View, Alert, Platform } from 'react-native';
 import {
   BottomTabBar,
   type TabKey,
@@ -22,6 +22,9 @@ import { VerifyingDepositScreen } from './screens/VerifyingDepositScreen';
 import { VipPlansScreen } from './screens/VipPlansScreen';
 import { WithdrawScreen } from './screens/WithdrawScreen';
 import { colors } from './theme/colors';
+
+// Change this to your local IP address if testing on a physical device
+const LOCAL_API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
 
 type WalletStep = 'deposit' | 'txid' | 'verifying' | 'success';
 type Overlay =
@@ -61,6 +64,36 @@ export function MainApp({
   const [overlayReturn, setOverlayReturn] = useState<Overlay | null>(null);
   const [withdrawRequest, setWithdrawRequest] =
     useState<WithdrawRequest | null>(null);
+
+  const lastSeenNotifRef = useRef<string | null>(null);
+
+  // Poll for real-time push notifications from Admin
+  useEffect(() => {
+    // Initial fetch to get the current state silently
+    fetch(`${LOCAL_API_URL}/api/notifications`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.id) lastSeenNotifRef.current = data.id;
+      })
+      .catch(() => {}); // Ignore network errors initially
+
+    const intervalId = setInterval(async () => {
+      try {
+        const response = await fetch(`${LOCAL_API_URL}/api/notifications`);
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        if (data && data.id && data.id !== lastSeenNotifRef.current) {
+          lastSeenNotifRef.current = data.id;
+          Alert.alert(data.title, data.message, [{ text: 'Dismiss' }]);
+        }
+      } catch (err) {
+        // Silently fail if server is down or unreachable
+      }
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   const closeOverlay = () => {
     if (overlayReturn) {

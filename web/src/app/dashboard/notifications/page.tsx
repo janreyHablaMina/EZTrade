@@ -16,6 +16,9 @@ import {
   CheckCheck,
   ChevronLeft,
   ChevronRight,
+  Send,
+  X,
+  Loader2,
 } from "lucide-react";
 import {
   initialNotifications,
@@ -99,6 +102,13 @@ export default function NotificationsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
+  // Modal State
+  const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [composeTitle, setComposeTitle] = useState("");
+  const [composeMessage, setComposeMessage] = useState("");
+  const [composeCategory, setComposeCategory] = useState<NotificationCategory>("System");
+
   const unreadCount = notifications.filter((n) => !n.isRead).length;
   const readCount = notifications.filter((n) => n.isRead).length;
 
@@ -129,15 +139,61 @@ export default function NotificationsPage() {
     );
   };
 
+  const handleSendNotification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSending(true);
+    try {
+      const res = await fetch("/api/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: composeTitle,
+          message: composeMessage,
+          category: composeCategory,
+        }),
+      });
+
+      if (res.ok) {
+        // Add it to local list so we can see it
+        const newNotif: NotificationRecord = {
+          id: Date.now().toString(),
+          title: composeTitle,
+          description: composeMessage,
+          category: composeCategory,
+          iconType: "system",
+          dateTime: "Just now",
+          isRead: false,
+        };
+        setNotifications([newNotif, ...notifications]);
+        setIsComposeOpen(false);
+        setComposeTitle("");
+        setComposeMessage("");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   return (
     <AdminShell>
       <div className="w-full">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Notifications</h1>
-          <p className="mt-1.5 text-xs text-muted-2">
-            Dashboard <span className="mx-1">&gt;</span> Notifications
-          </p>
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Notifications</h1>
+            <p className="mt-1.5 text-xs text-muted-2">
+              Dashboard <span className="mx-1">&gt;</span> Notifications
+            </p>
+          </div>
+          <button
+            onClick={() => setIsComposeOpen(true)}
+            className="flex items-center justify-center gap-2 rounded-xl bg-purple px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(123,44,255,0.3)] transition hover:bg-purple-bright hover:shadow-[0_8px_20px_rgba(123,44,255,0.45)] cursor-pointer"
+          >
+            <Send className="h-4 w-4" />
+            Send Notification
+          </button>
         </div>
 
         {/* Category Summary Cards */}
@@ -294,6 +350,89 @@ export default function NotificationsPage() {
           </div>
         </div>
       </div>
+
+      {/* Compose Notification Modal */}
+      {isComposeOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-card p-6 shadow-2xl">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white">Send Push Notification</h2>
+              <button
+                onClick={() => setIsComposeOpen(false)}
+                className="rounded-lg p-1.5 text-muted-2 hover:bg-white/[0.06] hover:text-white transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSendNotification} className="flex flex-col gap-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-2">Title</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="E.g. System Maintenance"
+                  value={composeTitle}
+                  onChange={(e) => setComposeTitle(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-bg-deep/50 px-3 py-2.5 text-sm text-white placeholder-muted-2/50 outline-none transition focus:border-purple-bright/50 focus:ring-1 focus:ring-purple-bright/50"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-2">Category</label>
+                <select
+                  value={composeCategory}
+                  onChange={(e) => setComposeCategory(e.target.value as NotificationCategory)}
+                  className="w-full appearance-none rounded-xl border border-border bg-bg-deep/50 px-3 py-2.5 text-sm text-white outline-none transition focus:border-purple-bright/50 focus:ring-1 focus:ring-purple-bright/50"
+                >
+                  <option value="System">System</option>
+                  <option value="Promotion">Promotion</option>
+                  <option value="Account">Account</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-2">Message</label>
+                <textarea
+                  required
+                  rows={4}
+                  placeholder="Enter your message here..."
+                  value={composeMessage}
+                  onChange={(e) => setComposeMessage(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-bg-deep/50 px-3 py-2.5 text-sm text-white placeholder-muted-2/50 outline-none transition focus:border-purple-bright/50 focus:ring-1 focus:ring-purple-bright/50 resize-none"
+                />
+              </div>
+
+              <div className="mt-4 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsComposeOpen(false)}
+                  className="rounded-xl px-4 py-2 text-sm font-semibold text-muted-2 hover:bg-white/[0.04] hover:text-white transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSending || !composeTitle || !composeMessage}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-purple px-5 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(123,44,255,0.3)] transition hover:bg-purple-bright disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" />
+                      Broadcast
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </AdminShell>
   );
 }
