@@ -35,39 +35,41 @@ export default function UsersPage() {
   const [usersList, setUsersList] = useState<UserRecord[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
 
-  useEffect(() => {
-    async function fetchUsers() {
-      try {
-        const data = await webApi.get("/users");
-        const mappedUsers: UserRecord[] = data.map((u: any) => ({
-            id: `EZT-${u.id.toString().padStart(4, '0')}`,
-            dbId: u.id, // Store real ID for API calls
-            name: u.name,
-            email: u.email,
-            phone: u.phone || "N/A",
-            vipLevel: u.vip_plan ? u.vip_plan.level : "None",
-            role: u.role || "User",
-            deposited: parseFloat(u.balance) || 0,
-            withdrawn: 0,
-            earnings: 0,
-            kycStatus: u.kyc_status || "Not Verified",
-            status: u.status || "Active",
-            teamSize: u.teamSize || 0,
-            referralCode: u.referral_code || null,
-            registeredAt: new Date(u.created_at).toLocaleDateString('en-US', {
-              year: 'numeric', month: 'short', day: 'numeric',
-              hour: '2-digit', minute: '2-digit'
-            }),
-          }));
-          setUsersList(mappedUsers);
-      } catch (err) {
-        console.error("Failed to fetch users:", err);
-      } finally {
-        setIsLoadingUsers(false);
-      }
+  const fetchUsers = useCallback(async () => {
+    try {
+      setIsLoadingUsers(true);
+      const data = await webApi.get("/users");
+      const mappedUsers: UserRecord[] = data.map((u: any) => ({
+          id: `EZT-${u.id.toString().padStart(4, '0')}`,
+          dbId: u.id,
+          name: u.name,
+          email: u.email,
+          phone: u.phone || "N/A",
+          vipLevel: u.vip_plan ? u.vip_plan.level : "None",
+          role: u.role || "User",
+          deposited: parseFloat(u.balance) || 0,
+          withdrawn: 0,
+          earnings: 0,
+          kycStatus: u.kyc_status || "Not Verified",
+          status: u.status || "Active",
+          teamSize: u.teamSize || 0,
+          referralCode: u.referral_code || null,
+          registeredAt: new Date(u.created_at).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+          }),
+        }));
+        setUsersList(mappedUsers);
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+    } finally {
+      setIsLoadingUsers(false);
     }
-    fetchUsers();
   }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
   const [editingUser, setEditingUser] = useState<UserRecord | null>(null);
   const [notifyingUser, setNotifyingUser] = useState<UserRecord | null>(null);
   const [accountAction, setAccountAction] = useState<{ user: UserRecord; action: 'suspend' | 'unsuspend' | 'deactivate' | 'reactivate' | 'delete' } | null>(null);
@@ -182,23 +184,19 @@ export default function UsersPage() {
     setToastMessage("Notification sent successfully");
   };
 
-  const handleSimulateTrade = async (user: UserRecord) => {
+  const handleSimulateDailyTrade = async () => {
     try {
-      const realId = (user as any).dbId || parseInt(user.id.replace('EZT-', ''));
-      const response = await webApi.post('/admin/simulate-trade', { user_id: realId });
+      setIsProcessingAction(true);
+      const response = await webApi.post('/admin/simulate-trade');
       
-      // Update the user's balance in the table
-      setUsersList(usersList.map((u) => {
-        if (u.id === user.id) {
-          const profit = response.data.profit || 10;
-          return { ...u, deposited: u.deposited + profit };
-        }
-        return u;
-      }));
-      setToastMessage(`Simulated trade for ${user.name} (+${response.data.profit || 10} USDT)`);
+      await fetchUsers(); // Refresh the list since many users might have updated
+      
+      setToastMessage(`Simulated daily trade for ${response.data.processed} users. Total Profit: +$${response.data.total_profit.toFixed(2)}`);
     } catch (err) {
-      console.error("Failed to simulate trade:", err);
-      setToastMessage("Failed to simulate trade");
+      console.error("Failed to simulate daily trade:", err);
+      setToastMessage("Failed to simulate daily trade");
+    } finally {
+      setIsProcessingAction(false);
     }
   };
 
@@ -220,40 +218,52 @@ export default function UsersPage() {
       
       setIsProcessingAction(false);
       setAccountAction(null);
-      setToastMessage(`User account ${accountAction.action}d successfully`);
+      setToastMessage(`Successfully ${accountAction.action}d ${accountAction.user.name}`);
     }, 600);
   };
 
   return (
     <AdminShell>
       {/* Top Header section */}
-      <div className="mb-6">
-        <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-white sm:text-2xl">
-          <Users className="h-6 w-6 text-purple-bright" />
-          Admin Users
-        </h1>
-        <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-2">
-          <span>Dashboard</span>
-          <span className="text-[10px] text-muted-2/65">&gt;</span>
-          <span>Admin</span>
-          <span className="text-[10px] text-muted-2/65">&gt;</span>
-          <span className="text-purple-bright">Users</span>
-        </p>
+      <div className="flex h-full flex-col gap-6 relative">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Users Management</h1>
+          <p className="text-sm text-muted-2">View and manage all platform users</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleSimulateDailyTrade}
+            disabled={isProcessingAction}
+            className="flex items-center gap-2 rounded-xl bg-success/20 px-4 py-2 text-sm font-semibold text-success transition hover:bg-success/30 cursor-pointer disabled:opacity-50"
+          >
+            <ArrowUpRight className="h-4 w-4" />
+            {isProcessingAction ? 'Simulating...' : 'Simulate Daily Trade'}
+          </button>
+          <button
+            type="button"
+            className="flex items-center gap-2 rounded-xl bg-purple px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-bright shadow-[0_8px_20px_rgba(123,44,255,0.3)] hover:shadow-[0_8px_20px_rgba(123,44,255,0.45)] cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            Add User
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards Row */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="Total Users"
-          value={usersList.length.toLocaleString()}
+          value={usersList.length.toString()}
           change="+12.5%"
           icon={Users}
         />
         <KpiCard
           label="Active Users"
-          value={usersList.filter(u => u.status === 'Active').length.toLocaleString()}
+          value={usersList.filter((u) => u.status === "Active").length.toString()}
           change="+14.2%"
-          icon={Wallet}
+          icon={UserCheck}
         />
         <KpiCard
           label="Total Deposits"
@@ -284,13 +294,6 @@ export default function UsersPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="flex items-center gap-1.5 rounded-xl bg-purple hover:bg-purple-bright px-4 py-2 text-xs font-semibold text-white transition shadow-[0_8px_20px_rgba(123,44,255,0.3)] hover:shadow-[0_8px_20px_rgba(123,44,255,0.45)] cursor-pointer"
-            >
-              <Plus className="h-4 w-4" />
-              Add User
-            </button>
             <button
               type="button"
               className="flex items-center gap-1.5 rounded-xl border border-border bg-card-elevated px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.04] cursor-pointer"
@@ -333,7 +336,6 @@ export default function UsersPage() {
             onViewUser={setViewingUser}
             onEditUser={setEditingUser}
             onNotifyUser={setNotifyingUser}
-            onSimulateTrade={handleSimulateTrade}
             onSuspendUser={(user) => setAccountAction({ user, action: 'suspend' })}
             onUnsuspendUser={(user) => setAccountAction({ user, action: 'unsuspend' })}
             onDeactivateUser={(user) => setAccountAction({ user, action: 'deactivate' })}
