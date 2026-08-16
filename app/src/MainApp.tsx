@@ -185,7 +185,7 @@ export function MainApp({
     const OverlayScreen = OVERLAY_SCREENS[overlay];
     screen = <OverlayScreen onBack={closeOverlay} />;
   } else if (tab === 'assets') {
-    screen = <AssetsScreen onBack={() => setTab('home')} />;
+    screen = <AssetsScreen user={user} onBack={() => setTab('home')} />;
   } else if (tab === 'profile') {
     screen = (
       <ProfileScreen

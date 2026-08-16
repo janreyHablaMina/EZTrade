@@ -16,6 +16,8 @@ import Svg, {
 } from 'react-native-svg';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
+import { useHomeStats } from '../hooks/useHomeStats';
+import { ActivityIndicator } from 'react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CHART_WIDTH = SCREEN_WIDTH - 72;
@@ -23,15 +25,9 @@ const CHART_HEIGHT = 140;
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
 const GROWTH_POINTS = [28, 36, 42, 55, 62, 78, 92] as const;
 
-const STATS = [
-  { label: 'Daily Profit', value: '2.00 USDT' },
-  { label: 'Total Profit', value: '2.50 USDT' },
-  { label: 'Initial Deposit', value: '10.00 USDT' },
-  { label: 'Available Balance', value: '12.50 USDT' },
-] as const;
-
 type AssetsScreenProps = {
   onBack?: () => void;
+  user?: any;
 };
 
 function VipBadge() {
@@ -170,7 +166,29 @@ function ProfitChart() {
   );
 }
 
-export function AssetsScreen({ onBack }: AssetsScreenProps) {
+export function AssetsScreen({ onBack, user }: AssetsScreenProps) {
+  const { userData, stats, loading } = useHomeStats(user);
+
+  const activePlan = userData?.vip_plan;
+  const activePlanName = activePlan ? activePlan.level.toUpperCase() : 'None';
+  const planMinDeposit = activePlan ? Number(activePlan.min_deposit) : 0;
+  const planDailyPercent = activePlan ? Number(activePlan.daily_profit_percent) : 0;
+
+  const DYNAMIC_STATS = [
+    { label: 'Daily Profit', value: `${stats.daily_profit.toFixed(2)} USDT` },
+    { label: 'Total Profit', value: `${stats.total_profit.toFixed(2)} USDT` },
+    { label: 'Initial Deposit', value: `${planMinDeposit.toFixed(2)} USDT` },
+    { label: 'Available Balance', value: `${stats.balance.toFixed(2)} USDT` },
+  ];
+
+  if (loading) {
+    return (
+      <View style={[styles.content, { flex: 1, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.purpleBright} />
+      </View>
+    );
+  }
+
   return (
     <ScrollView
       contentContainerStyle={styles.content}
@@ -188,26 +206,26 @@ export function AssetsScreen({ onBack }: AssetsScreenProps) {
 
         <View style={styles.planTopRow}>
           <Text style={styles.planLabel}>Active Plan</Text>
-          <View style={styles.activeChip}>
-            <View style={styles.activeDot} />
-            <Text style={styles.activeChipText}>Running</Text>
+          <View style={[styles.activeChip, !activePlan && { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
+            {activePlan && <View style={styles.activeDot} />}
+            <Text style={styles.activeChipText}>{activePlan ? 'Running' : 'Inactive'}</Text>
           </View>
         </View>
 
         <View style={styles.planBody}>
           <VipBadge />
           <View style={styles.planInfo}>
-            <Text style={styles.planName}>VIP 1</Text>
-            <Text style={styles.planAmount}>10 USDT</Text>
+            <Text style={styles.planName}>{activePlanName}</Text>
+            <Text style={styles.planAmount}>{planMinDeposit} USDT</Text>
             <View style={styles.returnChip}>
-              <Text style={styles.returnChipText}>+20% daily return</Text>
+              <Text style={styles.returnChipText}>+{planDailyPercent}% daily return</Text>
             </View>
           </View>
         </View>
       </LinearGradient>
 
       <View style={styles.statsGrid}>
-        {STATS.map((stat) => (
+        {DYNAMIC_STATS.map((stat) => (
           <View key={stat.label} style={styles.statCard}>
             <Text style={styles.statLabel}>{stat.label}</Text>
             <Text style={styles.statValue}>{stat.value}</Text>
@@ -218,7 +236,7 @@ export function AssetsScreen({ onBack }: AssetsScreenProps) {
       <View style={styles.growthCard}>
         <View style={styles.growthHeader}>
           <Text style={styles.growthTitle}>Profit Growth</Text>
-          <Text style={styles.growthPct}>+20.00%</Text>
+          <Text style={styles.growthPct}>+{planDailyPercent.toFixed(2)}%</Text>
         </View>
         <ProfitChart />
       </View>
