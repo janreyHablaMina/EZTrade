@@ -12,13 +12,12 @@ import {
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { initialDepositRequests } from "@/lib/mock-data/depositsData";
-import type { DepositRequest } from "@/lib/mock-data/depositsData";
 import { DepositsFilters } from "@/components/admin/deposits/DepositsFilters";
 import { DepositsTable } from "@/components/admin/deposits/DepositsTable";
 import { GenericFloatingActions } from "@/components/admin/GenericFloatingActions";
 import { usePagination } from "@/hooks/usePagination";
 import { useTableSelection } from "@/hooks/useTableSelection";
+import { webApi } from "@/lib/api";
 
 export default function DepositsPage() {
   const [search, setSearch] = useState("");
@@ -26,6 +25,36 @@ export default function DepositsPage() {
   const [network, setNetwork] = useState("all");
   const [currency, setCurrency] = useState("all");
   const [dateRange, setDateRange] = useState("");
+  const [deposits, setDeposits] = useState<any[]>([]);
+
+  const fetchDeposits = async () => {
+    try {
+      const data = await webApi.get('/deposits');
+      const mapped = data.map((d: any) => ({
+        id: `DEP-${d.id.toString().padStart(6, '0')}`,
+        dbId: d.id,
+        userName: d.user ? d.user.name : 'Unknown',
+        userEmail: d.user ? d.user.email : 'Unknown',
+        userId: d.user ? `EZT-${d.user.id.toString().padStart(4, '0')}` : 'N/A',
+        amount: parseFloat(d.amount),
+        currency: 'USDT',
+        network: d.network,
+        txid: d.txid,
+        status: d.status,
+        submittedAt: new Date(d.created_at).toLocaleString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        }),
+      }));
+      setDeposits(mapped);
+    } catch (e) {
+      console.error('Failed to fetch deposits:', e);
+    }
+  };
+
+  useEffect(() => {
+    fetchDeposits();
+  }, []);
 
   // Applied filters state
   const [filters, setFilters] = useState({
@@ -37,7 +66,7 @@ export default function DepositsPage() {
 
   // Apply filters logic
   const filteredDeposits = useMemo(() => {
-    return initialDepositRequests.filter((deposit) => {
+    return deposits.filter((deposit) => {
       const matchSearch =
         !filters.search ||
         deposit.userName.toLowerCase().includes(filters.search.toLowerCase()) ||
@@ -80,6 +109,24 @@ export default function DepositsPage() {
       currency,
     });
     setCurrentPage(1);
+  };
+
+  const handleVerify = async (deposit: any) => {
+    try {
+      await webApi.patch(`/deposits/${deposit.dbId}`, { status: 'Approved' });
+      fetchDeposits();
+    } catch (e) {
+      console.error('Failed to approve deposit', e);
+    }
+  };
+
+  const handleReject = async (deposit: any) => {
+    try {
+      await webApi.patch(`/deposits/${deposit.dbId}`, { status: 'Rejected' });
+      fetchDeposits();
+    } catch (e) {
+      console.error('Failed to reject deposit', e);
+    }
   };
 
   return (
@@ -180,7 +227,7 @@ export default function DepositsPage() {
       <DepositsTable
         deposits={filteredDeposits}
         paginatedDeposits={paginatedDeposits}
-        totalCount={initialDepositRequests.length}
+        totalCount={filteredDeposits.length}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
         pageSize={pageSize}
@@ -189,8 +236,8 @@ export default function DepositsPage() {
         toggleSelectAll={toggleSelectAll}
         toggleSelectRow={toggleSelectRow}
         onViewDetails={(dep) => console.log("View details for:", dep.id)}
-        onVerify={(dep) => console.log("Verify deposit:", dep.id)}
-        onReject={(dep) => console.log("Reject deposit:", dep.id)}
+        onVerify={handleVerify}
+        onReject={handleReject}
         onAddManual={(dep) => console.log("Add manual deposit:", dep.id)}
         onNotesHistory={(dep) => console.log("Notes / History for:", dep.id)}
       />
