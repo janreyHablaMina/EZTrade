@@ -46,11 +46,33 @@ class DepositController extends Controller
 
         if ($deposit->status === 'Pending' && $request->status === 'Approved') {
             DB::transaction(function () use ($deposit) {
+                // Check if this is the user's first approved deposit
+                $previousApprovedCount = Deposit::where('user_id', $deposit->user_id)
+                    ->where('status', 'Approved')
+                    ->count();
+
                 $deposit->status = 'Approved';
                 $deposit->save();
 
                 $deposit->user->balance += $deposit->amount;
                 $deposit->user->save();
+
+                // If it's the first approved deposit, give 10% to the referrer
+                if ($previousApprovedCount === 0 && $deposit->user->referred_by) {
+                    $referrer = \App\Models\User::find($deposit->user->referred_by);
+                    if ($referrer) {
+                        $bonus = $deposit->amount * 0.10;
+                        $referrer->balance += $bonus;
+                        $referrer->save();
+                        
+                        \App\Models\Notification::create([
+                            'user_id' => $referrer->id,
+                            'title' => 'Referral Bonus!',
+                            'message' => 'You received a ' . number_format($bonus, 2) . ' USDT bonus from your referral\'s first deposit!',
+                            'type' => 'success',
+                        ]);
+                    }
+                }
             });
         } else {
             $deposit->update(['status' => $request->status]);
