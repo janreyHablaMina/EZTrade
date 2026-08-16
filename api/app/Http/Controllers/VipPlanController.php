@@ -55,4 +55,14 @@ class VipPlanController extends Controller
             'user' => $user
         ]);
     }
+
+    public function destroy($id)
+    {
+        $plan = VipPlan::findOrFail($id);
+        $plan->delete();
+
+        return response()->json([
+            'message' => 'VIP Plan deleted successfully'
+        ]);
+    }
 }

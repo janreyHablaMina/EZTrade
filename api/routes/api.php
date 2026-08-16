@@ -23,6 +23,7 @@ Route::post('/users/simulate-trade', [\App\Http\Controllers\Admin\SimulatorContr
 // ── VIP Plans ─────────────────────────────────────────────────────────────────
 Route::get('/vip-plans', [VipPlanController::class, 'index']);
 Route::post('/vip-plans', [VipPlanController::class, 'store']);
+Route::delete('/vip-plans/{id}', [VipPlanController::class, 'destroy']);
 
     // ── Deposits ─────────────────────────────────────────────────────────────────
     Route::get('/deposits', [\App\Http\Controllers\DepositController::class, 'index']);

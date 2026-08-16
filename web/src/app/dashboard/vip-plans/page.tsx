@@ -168,17 +168,23 @@ export default function VipPlansPage() {
     setEditingPlan(plan);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!planToDelete) return;
     setIsDeleting(true);
     
-    // Simulate network delay
-    setTimeout(() => {
+    try {
+      const realId = parseInt(planToDelete.id.replace('VP', ''));
+      await webApi.delete(`/vip-plans/${realId}`);
+      
       setPlansList(plansList.filter(p => p.id !== planToDelete.id));
       setToastMessage("Deleted successfully");
+    } catch (err) {
+      console.error("Failed to delete plan", err);
+      setToastMessage("Failed to delete plan");
+    } finally {
       setIsDeleting(false);
       setPlanToDelete(null);
-    }, 600);
+    }
   };
 
   return (

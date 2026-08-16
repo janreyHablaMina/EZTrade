@@ -10,12 +10,12 @@ class UserController extends Controller
 {
     public function index()
     {
-        return response()->json(User::with('vipPlan')->withCount('referrals as teamSize')->orderBy('created_at', 'desc')->get());
+        return response()->json(User::with('vipPlan')->orderBy('created_at', 'desc')->get());
     }
 
     public function show($id)
     {
-        return User::with('vipPlan')->withCount('referrals as teamSize')->findOrFail($id);
+        return User::with('vipPlan')->findOrFail($id);
     }
 
     public function stats($id)

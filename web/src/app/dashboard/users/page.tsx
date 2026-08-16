@@ -52,7 +52,7 @@ export default function UsersPage() {
           earnings: 0,
           kycStatus: u.kyc_status || "Not Verified",
           status: u.status || "Active",
-          teamSize: u.teamSize || 0,
+          teamSize: u.team_size || 0,
           referralCode: u.referral_code || null,
           registeredAt: new Date(u.created_at).toLocaleDateString('en-US', {
             year: 'numeric', month: 'short', day: 'numeric',
@@ -191,7 +191,7 @@ export default function UsersPage() {
       
       await fetchUsers(); // Refresh the list since many users might have updated
       
-      setToastMessage(`Simulated daily trade for ${response.data.processed} users. Total Profit: +$${response.data.total_profit.toFixed(2)}`);
+      setToastMessage(`Simulated daily trade for ${response.processed} users. Total Profit: +$${Number(response.total_profit).toFixed(2)}`);
     } catch (err) {
       console.error("Failed to simulate daily trade:", err);
       setToastMessage("Failed to simulate daily trade");

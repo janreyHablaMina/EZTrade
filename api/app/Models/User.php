@@ -65,4 +65,26 @@ class User extends Authenticatable
     {
         return $this->hasMany(Deposit::class);
     }
+
+    protected $appends = ['team_size'];
+
+    public function getTeamSizeAttribute()
+    {
+        $size = 1; // Includes self
+        
+        // Eager load up to 3 levels of descendants to avoid N+1 queries during counting
+        $this->loadMissing('referrals.referrals.referrals');
+        
+        foreach ($this->referrals as $level1) {
+            $size += 1;
+            foreach ($level1->referrals as $level2) {
+                $size += 1;
+                foreach ($level2->referrals as $level3) {
+                    $size += 1;
+                }
+            }
+        }
+        
+        return $size;
+    }
 }
