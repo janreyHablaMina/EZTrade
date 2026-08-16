@@ -69,10 +69,10 @@ export default function DepositsPage() {
     return deposits.filter((deposit) => {
       const matchSearch =
         !filters.search ||
-        deposit.userName.toLowerCase().includes(filters.search.toLowerCase()) ||
-        deposit.userEmail.toLowerCase().includes(filters.search.toLowerCase()) ||
-        deposit.id.toLowerCase().includes(filters.search.toLowerCase()) ||
-        deposit.txid.toLowerCase().includes(filters.search.toLowerCase());
+        deposit.userName?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        deposit.userEmail?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        deposit.id?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        deposit.txid?.toLowerCase().includes(filters.search.toLowerCase());
 
       const matchStatus = filters.status === "all" || deposit.status === filters.status;
       const matchNetwork = filters.network === "all" || deposit.network === filters.network;
@@ -80,7 +80,7 @@ export default function DepositsPage() {
 
       return matchSearch && matchStatus && matchNetwork && matchCurrency;
     });
-  }, [filters]);
+  }, [filters, deposits]);
 
   const {
     currentPage,

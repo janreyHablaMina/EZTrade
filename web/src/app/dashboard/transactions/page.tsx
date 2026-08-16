@@ -69,11 +69,11 @@ export default function TransactionsPage() {
     return transactions.filter((tx) => {
       const matchSearch =
         !filters.search ||
-        tx.userName.toLowerCase().includes(filters.search.toLowerCase()) ||
-        tx.userEmail.toLowerCase().includes(filters.search.toLowerCase()) ||
-        tx.id.toLowerCase().includes(filters.search.toLowerCase()) ||
-        tx.referenceTxid.toLowerCase().includes(filters.search.toLowerCase()) ||
-        tx.description.toLowerCase().includes(filters.search.toLowerCase());
+        tx.userName?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        tx.userEmail?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        tx.id?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        tx.referenceTxid?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        tx.description?.toLowerCase().includes(filters.search.toLowerCase());
 
       const matchType = filters.type === "all" || tx.type === filters.type;
       const matchStatus = filters.status === "all" || tx.status === filters.status;
@@ -81,7 +81,7 @@ export default function TransactionsPage() {
 
       return matchSearch && matchType && matchStatus && matchCurrency;
     });
-  }, [filters]);
+  }, [filters, transactions]);
 
   // Paginated transactions
   const paginatedTransactions = useMemo(() => {
