@@ -27,7 +27,6 @@ type HomeScreenProps = {
   onOpenWithdraw?: () => void;
   onOpenAssets?: () => void;
   onOpenTransactions?: () => void;
-  onOpenTrade?: () => void;
 };
 
 function greetingForNow() {
@@ -120,7 +119,6 @@ export function HomeScreen({
   onOpenWithdraw,
   onOpenAssets,
   onOpenTransactions,
-  onOpenTrade,
 }: HomeScreenProps) {
   const { userData, stats, hasUnread, reload } = useHomeStats(user);
 
@@ -232,25 +230,28 @@ export function HomeScreen({
         </Text>
       </LinearGradient>
 
-      {/* Primary Trade Action Button */}
+      {/* Temporary Simulate Trade Button */}
       <Pressable
         style={{
-          backgroundColor: '#9b5cff',
-          padding: 14,
-          borderRadius: 14,
+          backgroundColor: colors.success,
+          padding: 12,
+          borderRadius: 12,
           alignItems: 'center',
           marginTop: 16,
           marginBottom: 8,
-          shadowColor: '#9b5cff',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 5,
         }}
-        onPress={onOpenTrade}
+        onPress={async () => {
+          try {
+            const { apiClient } = require('../lib/api');
+            await apiClient.post('/simulate-trade');
+            reload();
+          } catch (err) {
+            console.error('Simulation failed', err);
+          }
+        }}
       >
-        <Text style={{ color: 'white', fontFamily: 'Outfit_700Bold', fontSize: 16, letterSpacing: 0.5 }}>
-          Start Trading Now
+        <Text style={{ color: 'white', fontFamily: 'Outfit_700Bold', fontSize: 16 }}>
+          Simulate Trade ($10)
         </Text>
       </Pressable>
 

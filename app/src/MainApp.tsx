@@ -124,7 +124,6 @@ export function MainApp({
       onOpenWithdraw={() => setOverlay('withdraw')}
       onOpenAssets={() => setTab('assets')}
       onOpenTransactions={() => openTransactions()}
-      onOpenTrade={() => setTab('trade')}
     />
   );
 
