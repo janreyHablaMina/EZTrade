@@ -47,7 +47,7 @@ export default function UsersPage() {
             phone: u.phone || "N/A",
             vipLevel: u.vip_plan ? u.vip_plan.level : "None",
             role: u.role || "User",
-            deposited: 0,
+            deposited: parseFloat(u.balance) || 0,
             withdrawn: 0,
             earnings: 0,
             kycStatus: u.kyc_status || "Not Verified",
