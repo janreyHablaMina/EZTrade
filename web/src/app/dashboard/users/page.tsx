@@ -52,6 +52,8 @@ export default function UsersPage() {
             earnings: 0,
             kycStatus: u.kyc_status || "Not Verified",
             status: u.status || "Active",
+            teamSize: u.teamSize || 0,
+            referralCode: u.referral_code || null,
             registeredAt: new Date(u.created_at).toLocaleDateString('en-US', {
               year: 'numeric', month: 'short', day: 'numeric',
               hour: '2-digit', minute: '2-digit'

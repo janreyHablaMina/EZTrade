@@ -27,6 +27,8 @@ class User extends Authenticatable
         'role',
         'status',
         'kyc_status',
+        'referral_code',
+        'referred_by',
     ];
     protected $hidden = ['password', 'remember_token', 'otp'];
 
@@ -47,5 +49,15 @@ class User extends Authenticatable
     public function vipPlan()
     {
         return $this->belongsTo(VipPlan::class);
+    }
+
+    public function referrals()
+    {
+        return $this->hasMany(User::class, 'referred_by');
+    }
+
+    public function referrer()
+    {
+        return $this->belongsTo(User::class, 'referred_by');
     }
 }

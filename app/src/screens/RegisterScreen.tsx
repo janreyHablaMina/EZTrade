@@ -42,6 +42,7 @@ export function RegisterScreen({
         name: name.trim(),
         email: email.trim(),
         password: password,
+        referral_code: referralCode.trim() || null,
       });
       // Backend returns requires_otp
       onCreateAccount?.(email.trim());

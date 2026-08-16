@@ -16,9 +16,24 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
+            'referral_code' => 'nullable|string',
         ]);
 
         $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        // Resolve referral
+        $referredBy = null;
+        if ($request->referral_code) {
+            $referrer = User::where('referral_code', strtoupper($request->referral_code))->first();
+            if ($referrer) {
+                $referredBy = $referrer->id;
+            }
+        }
+
+        // Generate a unique referral code for the new user
+        do {
+            $code = strtoupper(substr(str_replace(['+', '/', '='], '', base64_encode(random_bytes(6))), 0, 8));
+        } while (User::where('referral_code', $code)->exists());
 
         $user = User::create([
             'name' => $request->name,
@@ -26,6 +41,8 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
             'otp' => $otp,
             'otp_expires_at' => Carbon::now()->addMinutes(10),
+            'referral_code' => $code,
+            'referred_by' => $referredBy,
         ]);
 
         Mail::raw("Your EZTRADE verification code is: {$otp}", function ($message) use ($user) {
