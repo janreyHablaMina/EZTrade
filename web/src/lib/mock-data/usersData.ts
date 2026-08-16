@@ -7,6 +7,7 @@ export type UserRecord = {
   phone: string;
   email: string;
   vipLevel: string;
+  role: "User" | "Ambassador";
   deposited: number;
   withdrawn: number;
   earnings: number;
@@ -14,6 +15,8 @@ export type UserRecord = {
   status: RowStatus;
   registeredAt: string;
   pendingDeposit?: number;
+  teamSize?: number;
+  referralCode?: string;
 };
 
 export const initialUsers: UserRecord[] = [
@@ -23,12 +26,15 @@ export const initialUsers: UserRecord[] = [
     phone: "+63 912 345 6789",
     email: "johnsmith@gmail.com",
     vipLevel: "VIP 2",
+    role: "Ambassador",
     deposited: 610.00,
     withdrawn: 210.00,
     earnings: 45.20,
     kycStatus: "Verified",
     status: "Active",
     registeredAt: "May 17, 2024 10:45 AM",
+    teamSize: 15,
+    referralCode: "EZT-JOHNS",
   },
   {
     id: "EZT100253",
@@ -36,6 +42,7 @@ export const initialUsers: UserRecord[] = [
     phone: "+63 917 555 1234",
     email: "mariagarcia@gmail.com",
     vipLevel: "VIP 1",
+    role: "User",
     deposited: 10.00,
     withdrawn: 0.00,
     earnings: 0.80,
@@ -50,6 +57,7 @@ export const initialUsers: UserRecord[] = [
     phone: "+63 918 777 8888",
     email: "michael.lee@gmail.com",
     vipLevel: "VIP 3",
+    role: "User",
     deposited: 258.00,
     withdrawn: 120.00,
     earnings: 18.50,
@@ -63,6 +71,7 @@ export const initialUsers: UserRecord[] = [
     phone: "+63 919 333 4444",
     email: "sarahjohnson@gmail.com",
     vipLevel: "VIP 2",
+    role: "User",
     deposited: 136.00,
     withdrawn: 50.00,
     earnings: 7.60,
@@ -77,6 +86,7 @@ export const initialUsers: UserRecord[] = [
     phone: "+63 915 222 1111",
     email: "davidbrown@gmail.com",
     vipLevel: "VIP 1",
+    role: "User",
     deposited: 10.00,
     withdrawn: 0.00,
     earnings: 0.60,
@@ -90,12 +100,15 @@ export const initialUsers: UserRecord[] = [
     phone: "+63 916 888 9999",
     email: "emilydavis@gmail.com",
     vipLevel: "VIP 4",
+    role: "Ambassador",
     deposited: 800.00,
     withdrawn: 300.00,
     earnings: 96.00,
     kycStatus: "Verified",
     status: "Active",
     registeredAt: "May 15, 2024 10:22 AM",
+    teamSize: 32,
+    referralCode: "EZT-EMILY",
   },
   {
     id: "EZT100248",
@@ -103,6 +116,7 @@ export const initialUsers: UserRecord[] = [
     phone: "+63 914 666 7777",
     email: "jameswilson@gmail.com",
     vipLevel: "VIP 3",
+    role: "User",
     deposited: 258.00,
     withdrawn: 80.00,
     earnings: 15.30,
@@ -117,6 +131,7 @@ export const initialUsers: UserRecord[] = [
     phone: "+63 913 444 5555",
     email: "oliviamartinez@gmail.com",
     vipLevel: "VIP 1",
+    role: "User",
     deposited: 10.00,
     withdrawn: 0.00,
     earnings: 5.50,
@@ -130,6 +145,7 @@ export const initialUsers: UserRecord[] = [
     phone: "+63 926 123 4567",
     email: "danielmartinez@gmail.com",
     vipLevel: "VIP 2",
+    role: "User",
     deposited: 75.00,
     withdrawn: 20.00,
     earnings: 5.10,
@@ -143,12 +159,15 @@ export const initialUsers: UserRecord[] = [
     phone: "+63 927 987 6543",
     email: "sophiaanderson@gmail.com",
     vipLevel: "VIP 5",
+    role: "Ambassador",
     deposited: 1200.00,
     withdrawn: 450.00,
     earnings: 150.30,
     kycStatus: "Verified",
     status: "Active",
     registeredAt: "May 13, 2024 05:28 PM",
+    teamSize: 124,
+    referralCode: "EZT-SOPHIA",
   },
   {
     id: "EZT100244",
@@ -156,6 +175,7 @@ export const initialUsers: UserRecord[] = [
     phone: "+63 930 111 2222",
     email: "liam.taylor@gmail.com",
     vipLevel: "VIP 2",
+    role: "User",
     deposited: 340.00,
     withdrawn: 140.00,
     earnings: 24.50,
@@ -169,6 +189,7 @@ export const initialUsers: UserRecord[] = [
     phone: "+63 931 222 3333",
     email: "emma.wilson@gmail.com",
     vipLevel: "VIP 1",
+    role: "User",
     deposited: 50.00,
     withdrawn: 0.00,
     earnings: 2.10,
@@ -182,6 +203,7 @@ export const initialUsers: UserRecord[] = [
     phone: "+63 932 333 4444",
     email: "lucas.jones@gmail.com",
     vipLevel: "VIP 3",
+    role: "User",
     deposited: 450.00,
     withdrawn: 200.00,
     earnings: 33.80,

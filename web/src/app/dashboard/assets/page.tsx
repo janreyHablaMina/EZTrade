@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { Wallet, UserCheck, DollarSign, ArrowLeftRight, Download, ArrowRightLeft } from "lucide-react";
-import { initialAssets, recentActivities } from "@/components/admin/assets/assetsData";
+import { initialAssets, recentActivities } from "@/lib/mock-data/assetsData";
 import { AssetsCharts } from "@/components/admin/assets/AssetsCharts";
 import { AssetsTable } from "@/components/admin/assets/AssetsTable";
 import { RecentActivities } from "@/components/admin/assets/RecentActivities";

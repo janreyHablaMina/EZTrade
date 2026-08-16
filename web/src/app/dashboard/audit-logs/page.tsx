@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { ScrollText, Download } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { initialAuditLogs } from "@/components/admin/audit-logs/auditLogsData";
+import { initialAuditLogs } from "@/lib/mock-data/auditLogsData";
 import { AuditLogsFilters } from "@/components/admin/audit-logs/AuditLogsFilters";
 import { AuditLogsTable } from "@/components/admin/audit-logs/AuditLogsTable";
 

@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Download, ArrowLeftRight, ArrowDownToLine, ArrowUpFromLine, RefreshCw, Coins } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { initialTransactions } from "@/components/admin/transactions/transactionsData";
+import { initialTransactions } from "@/lib/mock-data/transactionsData";
 import { TransactionsFilters } from "@/components/admin/transactions/TransactionsFilters";
 import { TransactionsTable } from "@/components/admin/transactions/TransactionsTable";
 

@@ -12,11 +12,13 @@ import {
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { initialDepositRequests } from "@/components/admin/deposits/depositsData";
-import type { DepositRequest } from "@/components/admin/deposits/depositsData";
+import { initialDepositRequests } from "@/lib/mock-data/depositsData";
+import type { DepositRequest } from "@/lib/mock-data/depositsData";
 import { DepositsFilters } from "@/components/admin/deposits/DepositsFilters";
 import { DepositsTable } from "@/components/admin/deposits/DepositsTable";
-import { FloatingDepositActions } from "@/components/admin/deposits/FloatingDepositActions";
+import { GenericFloatingActions } from "@/components/admin/GenericFloatingActions";
+import { usePagination } from "@/hooks/usePagination";
+import { useTableSelection } from "@/hooks/useTableSelection";
 
 export default function DepositsPage() {
   const [search, setSearch] = useState("");
@@ -32,32 +34,6 @@ export default function DepositsPage() {
     network: "all",
     currency: "all",
   });
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
-  // Selection handlers
-  const toggleSelectAll = () => {
-    if (selectedIds.length === paginatedDeposits.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(paginatedDeposits.map((d) => d.id));
-    }
-  };
-
-  const toggleSelectRow = (id: string) => {
-    if (selectedIds.includes(id)) {
-      setSelectedIds(selectedIds.filter((item) => item !== id));
-    } else {
-      setSelectedIds([...selectedIds, id]);
-    }
-  };
-
-  // Reset selection when parameters change
-  useEffect(() => {
-    setSelectedIds([]);
-  }, [currentPage, pageSize, filters]);
 
   // Apply filters logic
   const filteredDeposits = useMemo(() => {
@@ -77,11 +53,24 @@ export default function DepositsPage() {
     });
   }, [filters]);
 
-  // Paginated deposits
-  const paginatedDeposits = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredDeposits.slice(start, start + pageSize);
-  }, [filteredDeposits, currentPage, pageSize]);
+  const {
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    paginatedItems: paginatedDeposits,
+    totalCount
+  } = usePagination(filteredDeposits, 10);
+
+  const {
+    selectedIds,
+    setSelectedIds,
+    toggleSelectAll,
+    toggleSelectRow,
+    clearSelection
+  } = useTableSelection(paginatedDeposits);
+
+
 
   const handleFilter = () => {
     setFilters({
@@ -206,20 +195,31 @@ export default function DepositsPage() {
         onNotesHistory={(dep) => console.log("Notes / History for:", dep.id)}
       />
 
-      {selectedIds.length > 0 && (
-        <FloatingDepositActions
-          selectedCount={selectedIds.length}
-          onClear={() => setSelectedIds([])}
-          onVerify={() => {
+      <GenericFloatingActions
+        selectedCount={selectedIds.length}
+        onClear={clearSelection}
+      >
+        <button
+          type="button"
+          onClick={() => {
             console.log("Bulk verify deposits:", selectedIds);
-            setSelectedIds([]);
+            clearSelection();
           }}
-          onReject={() => {
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-success/30 bg-success/10 text-success hover:bg-success/20 transition cursor-pointer text-xs font-medium"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" /> Verify Selected
+        </button>
+        <button
+          type="button"
+          onClick={() => {
             console.log("Bulk reject deposits:", selectedIds);
-            setSelectedIds([]);
+            clearSelection();
           }}
-        />
-      )}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-danger/30 bg-danger/10 text-danger hover:bg-danger/20 transition cursor-pointer text-xs font-medium"
+        >
+          <XCircle className="h-3.5 w-3.5" /> Reject Selected
+        </button>
+      </GenericFloatingActions>
     </AdminShell>
   );
 }

@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { Wallet, Users, Coins, Download, Calendar, User } from "lucide-react";
-import { initialEarnings, type EarningRecord } from "@/components/admin/earnings/earningsData";
+import { initialEarnings, type EarningRecord } from "@/lib/mock-data/earningsData";
 import { EarningsFilters } from "@/components/admin/earnings/EarningsFilters";
 import { EarningsTable } from "@/components/admin/earnings/EarningsTable";
 

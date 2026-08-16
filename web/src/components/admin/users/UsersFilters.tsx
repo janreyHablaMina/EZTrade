@@ -12,7 +12,6 @@ type UsersFiltersProps = {
   setStatus: (s: string) => void;
   dateRange: string;
   setDateRange: (d: string) => void;
-  onFilter: () => void;
   onReset: () => void;
 };
 
@@ -23,7 +22,6 @@ export function UsersFilters({
   setVipLevel,
   status,
   setStatus,
-  onFilter,
   onReset,
 }: UsersFiltersProps) {
   return (
@@ -53,6 +51,7 @@ export function UsersFilters({
           containerClassName="sm:w-[130px]"
         >
           <option value="all">All Levels</option>
+          <option value="Ambassador">Ambassador</option>
           <option value="VIP 1">VIP 1</option>
           <option value="VIP 2">VIP 2</option>
           <option value="VIP 3">VIP 3</option>
@@ -65,9 +64,6 @@ export function UsersFilters({
         </Select>
 
         <div className="flex items-center gap-2">
-          <Button onClick={onFilter} icon={<Filter className="h-3.5 w-3.5" />}>
-            Filter
-          </Button>
           <Button variant="ghost" onClick={onReset} title="Reset Filters" icon={<RotateCcw className="h-3.5 w-3.5" />} />
         </div>
       </div>

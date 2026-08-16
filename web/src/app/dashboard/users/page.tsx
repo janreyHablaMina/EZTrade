@@ -13,10 +13,14 @@ import {
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { initialUsers } from "@/components/admin/users/usersData";
+import { initialUsers } from "@/lib/mock-data/usersData";
 import { UsersFilters } from "@/components/admin/users/UsersFilters";
 import { UsersTable } from "@/components/admin/users/UsersTable";
-import { FloatingBulkActions } from "@/components/admin/users/FloatingBulkActions";
+import { GenericFloatingActions } from "@/components/admin/GenericFloatingActions";
+import { ViewUserModal } from "@/components/admin/users/ViewUserModal";
+import type { UserRecord } from "@/lib/mock-data/usersData";
+import { usePagination } from "@/hooks/usePagination";
+import { useTableSelection } from "@/hooks/useTableSelection";
 
 export default function UsersPage() {
   const [search, setSearch] = useState("");
@@ -24,76 +28,59 @@ export default function UsersPage() {
   const [status, setStatus] = useState("all");
   const [dateRange, setDateRange] = useState("");
 
-  // Applied filters state
-  const [filters, setFilters] = useState({
-    search: "",
-    vipLevel: "all",
-    status: "all",
-  });
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
   // Apply filters logic
   const filteredUsers = useMemo(() => {
     return initialUsers.filter((user) => {
       const matchSearch =
-        !filters.search ||
-        user.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-        user.email.toLowerCase().includes(filters.search.toLowerCase()) ||
-        user.phone.includes(filters.search) ||
-        user.id.toLowerCase().includes(filters.search.toLowerCase());
+        !search ||
+        user.name.toLowerCase().includes(search.toLowerCase()) ||
+        user.email.toLowerCase().includes(search.toLowerCase()) ||
+        user.phone.includes(search) ||
+        user.id.toLowerCase().includes(search.toLowerCase());
 
-      const matchVip = filters.vipLevel === "all" || user.vipLevel === filters.vipLevel;
-      const matchStatus = filters.status === "all" || user.status === filters.status;
+      const matchVip = 
+        vipLevel === "all" || 
+        (vipLevel === "Ambassador" ? user.role === "Ambassador" : user.vipLevel === vipLevel);
+      const matchStatus = status === "all" || user.status === status;
 
       return matchSearch && matchVip && matchStatus;
     });
-  }, [filters]);
+  }, [search, vipLevel, status]);
 
-  // Paginated users
-  const paginatedUsers = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredUsers.slice(start, start + pageSize);
-  }, [filteredUsers, currentPage, pageSize]);
+  const {
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    paginatedItems: paginatedUsers,
+    totalCount
+  } = usePagination(filteredUsers, 10);
 
-  const handleFilter = () => {
-    setFilters({
-      search,
-      vipLevel,
-      status,
-    });
+  const {
+    selectedIds,
+    setSelectedIds,
+    toggleSelectAll,
+    toggleSelectRow,
+    clearSelection,
+    hasSelection,
+    isAllSelected
+  } = useTableSelection(paginatedUsers);
+
+  const [viewingUser, setViewingUser] = useState<UserRecord | null>(null);
+
+
+
+  // Reset page when filters change
+  useMemo(() => {
     setCurrentPage(1);
-  };
+  }, [search, vipLevel, status]);
 
   const handleReset = () => {
     setSearch("");
     setVipLevel("all");
     setStatus("all");
     setDateRange("");
-    setFilters({
-      search: "",
-      vipLevel: "all",
-      status: "all",
-    });
     setCurrentPage(1);
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIds.length === paginatedUsers.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(paginatedUsers.map((u) => u.id));
-    }
-  };
-
-  const toggleSelectRow = (id: string) => {
-    if (selectedIds.includes(id)) {
-      setSelectedIds(selectedIds.filter((item) => item !== id));
-    } else {
-      setSelectedIds([...selectedIds, id]);
-    }
   };
 
   return (
@@ -184,7 +171,6 @@ export default function UsersPage() {
             setStatus={setStatus}
             dateRange={dateRange}
             setDateRange={setDateRange}
-            onFilter={handleFilter}
             onReset={handleReset}
           />
 
@@ -201,18 +187,45 @@ export default function UsersPage() {
             setSelectedIds={setSelectedIds}
             toggleSelectAll={toggleSelectAll}
             toggleSelectRow={toggleSelectRow}
+            onViewUser={setViewingUser}
           />
         </div>
       </div>
 
       {/* Floating Bulk Actions Bar */}
-      {selectedIds.length > 0 && (
-        <FloatingBulkActions
-          selectedCount={selectedIds.length}
-          onClear={() => setSelectedIds([])}
-          onActionComplete={() => setSelectedIds([])}
-        />
-      )}
+      <GenericFloatingActions
+        selectedCount={selectedIds.length}
+        onClear={() => setSelectedIds([])}
+      >
+        <button
+          type="button"
+          onClick={() => setSelectedIds([])}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-purple/10 text-purple-bright hover:bg-purple/20 transition cursor-pointer text-xs font-medium"
+        >
+          <span>⏸</span> Suspend
+        </button>
+        <button
+          type="button"
+          onClick={() => setSelectedIds([])}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-danger/10 text-danger hover:bg-danger/20 transition cursor-pointer text-xs font-medium"
+        >
+          <span>🚫</span> Deactivate
+        </button>
+        <button
+          type="button"
+          onClick={() => setSelectedIds([])}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-purple-bright/10 text-purple-bright hover:bg-purple-bright/20 transition cursor-pointer text-xs font-medium"
+        >
+          <span>🗃️</span> Archive
+        </button>
+      </GenericFloatingActions>
+
+      {/* Modals */}
+      <ViewUserModal 
+        isOpen={!!viewingUser} 
+        onClose={() => setViewingUser(null)} 
+        user={viewingUser} 
+      />
     </AdminShell>
   );
 }

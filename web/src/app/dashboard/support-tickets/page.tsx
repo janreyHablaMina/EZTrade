@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { Ticket, MailOpen, Clock, CheckCircle, XCircle, Download, Plus } from "lucide-react";
-import { initialTickets, type TicketRecord } from "@/components/admin/support/supportData";
+import { initialTickets, type TicketRecord } from "@/lib/mock-data/supportData";
 import { SupportFilters } from "@/components/admin/support/SupportFilters";
 import { SupportTable } from "@/components/admin/support/SupportTable";
 import { TicketDetails } from "@/components/admin/support/TicketDetails";

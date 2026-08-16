@@ -39,7 +39,6 @@ export function SupportFilters({
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Search by user, email or ticket ID..."
-        containerClassName="flex-1"
       />
 
       <div className="flex flex-wrap items-center gap-3">
@@ -99,8 +98,7 @@ export function SupportFilters({
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
             placeholder="May 11, 2024 - May 18, 2024"
-            className="cursor-pointer"
-            containerClassName="min-w-[190px]"
+            className="cursor-pointer min-w-[190px]"
           />
         </div>
 

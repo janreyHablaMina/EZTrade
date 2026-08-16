@@ -12,11 +12,13 @@ import {
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { initialWithdrawalRequests } from "@/components/admin/withdrawals/withdrawalsData";
-import type { WithdrawalRequest } from "@/components/admin/withdrawals/withdrawalsData";
+import { initialWithdrawalRequests } from "@/lib/mock-data/withdrawalsData";
+import type { WithdrawalRequest } from "@/lib/mock-data/withdrawalsData";
 import { WithdrawalsFilters } from "@/components/admin/withdrawals/WithdrawalsFilters";
 import { WithdrawalsTable } from "@/components/admin/withdrawals/WithdrawalsTable";
-import { FloatingWithdrawalActions } from "@/components/admin/withdrawals/FloatingWithdrawalActions";
+import { GenericFloatingActions } from "@/components/admin/GenericFloatingActions";
+import { usePagination } from "@/hooks/usePagination";
+import { useTableSelection } from "@/hooks/useTableSelection";
 
 export default function WithdrawalsPage() {
   const [search, setSearch] = useState("");
@@ -32,10 +34,6 @@ export default function WithdrawalsPage() {
     network: "all",
     currency: "all",
   });
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Apply filters logic
   const filteredWithdrawals = useMemo(() => {
@@ -55,33 +53,22 @@ export default function WithdrawalsPage() {
     });
   }, [filters]);
 
-  // Paginated withdrawals
-  const paginatedWithdrawals = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredWithdrawals.slice(start, start + pageSize);
-  }, [filteredWithdrawals, currentPage, pageSize]);
+  const {
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    paginatedItems: paginatedWithdrawals,
+    totalCount
+  } = usePagination(filteredWithdrawals, 10);
 
-  // Selection handlers
-  const toggleSelectAll = () => {
-    if (selectedIds.length === paginatedWithdrawals.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(paginatedWithdrawals.map((w) => w.id));
-    }
-  };
-
-  const toggleSelectRow = (id: string) => {
-    if (selectedIds.includes(id)) {
-      setSelectedIds(selectedIds.filter((item) => item !== id));
-    } else {
-      setSelectedIds([...selectedIds, id]);
-    }
-  };
-
-  // Reset selection when parameters change
-  useEffect(() => {
-    setSelectedIds([]);
-  }, [currentPage, pageSize, filters]);
+  const {
+    selectedIds,
+    setSelectedIds,
+    toggleSelectAll,
+    toggleSelectRow,
+    clearSelection
+  } = useTableSelection(paginatedWithdrawals);
 
   const handleFilter = () => {
     setFilters({
@@ -221,20 +208,31 @@ export default function WithdrawalsPage() {
         onHistory={(w) => console.log("History logs for:", w.id)}
       />
 
-      {selectedIds.length > 0 && (
-        <FloatingWithdrawalActions
-          selectedCount={selectedIds.length}
-          onClear={() => setSelectedIds([])}
-          onApprove={() => {
+      <GenericFloatingActions
+        selectedCount={selectedIds.length}
+        onClear={clearSelection}
+      >
+        <button
+          type="button"
+          onClick={() => {
             console.log("Bulk approve withdrawals:", selectedIds);
-            setSelectedIds([]);
+            clearSelection();
           }}
-          onReject={() => {
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-success/30 bg-success/10 text-success hover:bg-success/20 transition cursor-pointer text-xs font-medium"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" /> Approve Selected
+        </button>
+        <button
+          type="button"
+          onClick={() => {
             console.log("Bulk reject withdrawals:", selectedIds);
-            setSelectedIds([]);
+            clearSelection();
           }}
-        />
-      )}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-danger/30 bg-danger/10 text-danger hover:bg-danger/20 transition cursor-pointer text-xs font-medium"
+        >
+          <XCircle className="h-3.5 w-3.5" /> Reject Selected
+        </button>
+      </GenericFloatingActions>
     </AdminShell>
   );
 }

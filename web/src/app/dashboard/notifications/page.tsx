@@ -25,7 +25,7 @@ import {
   categoryBadgeStyles,
   type NotificationRecord,
   type NotificationCategory,
-} from "@/components/admin/notifications/notificationsData";
+} from "@/lib/mock-data/notificationsData";
 
 // ── Icon helper ──────────────────────────────────────────────────────────────
 function NotifIcon({ type }: { type: NotificationRecord["iconType"] }) {

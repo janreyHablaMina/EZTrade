@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { Users, UserCheck, DollarSign, TrendingUp, BadgePercent, Download, Calendar } from "lucide-react";
-import { initialReferrals, type ReferralRecord } from "@/components/admin/referrals/referralsData";
+import { initialReferrals, type ReferralRecord } from "@/lib/mock-data/referralsData";
 import { ReferralsFilters } from "@/components/admin/referrals/ReferralsFilters";
 import { ReferralsTable } from "@/components/admin/referrals/ReferralsTable";
 

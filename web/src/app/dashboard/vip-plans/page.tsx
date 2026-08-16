@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { initialVipPlans } from "@/components/admin/vip-plans/vipPlansData";
-import type { VipPlan } from "@/components/admin/vip-plans/vipPlansData";
+import { initialVipPlans } from "@/lib/mock-data/vipPlansData";
+import type { VipPlan } from "@/lib/mock-data/vipPlansData";
 import { VipPlansFilters } from "@/components/admin/vip-plans/VipPlansFilters";
 import { VipPlansTable } from "@/components/admin/vip-plans/VipPlansTable";
 import { AddPlanModal } from "@/components/admin/vip-plans/AddPlanModal";

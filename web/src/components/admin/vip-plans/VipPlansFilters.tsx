@@ -26,7 +26,6 @@ export function VipPlansFilters({
           placeholder="Search by plan name or level..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          containerClassName="w-full md:max-w-md"
         />
 
         <div className="flex flex-wrap items-end gap-3">

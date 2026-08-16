@@ -1,19 +1,17 @@
 import { useState } from "react";
 import { PaginationFooter } from "@/components/admin/PaginationFooter";
 import {
-  MoreVertical,
+  TableActionsMenu,
+  TableActionsMenuDivider,
+  TableActionsMenuItem,
+} from "@/components/admin/TableActionsMenu";
+import {
   Copy,
-  Eye,
-  CheckCircle2,
-  XCircle,
-  Plus,
-  FileText,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
 } from "lucide-react";
 import type { DepositRequest } from "@/lib/mock-data/depositsData";
-import { networkBadgeStyles, statusBadgeStyles } from "@/lib/mock-data/depositsData";
+import { networkBadgeStyles } from "@/lib/mock-data/depositsData";
+import { CustomCheckbox } from "@/components/ui/CustomCheckbox";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 type DepositsTableProps = {
   deposits: DepositRequest[];
@@ -68,28 +66,13 @@ export function DepositsTable({
           <thead>
             <tr className="border-b border-border text-muted-2">
               <th className="pb-3.5 pl-1 pr-6 font-medium w-14">
-                <label className="relative flex items-center justify-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={
-                      paginatedDeposits.length > 0 &&
-                      selectedIds.length === paginatedDeposits.length
-                    }
-                    onChange={toggleSelectAll}
-                    className="sr-only"
-                  />
-                  <div className={`h-4.5 w-4.5 rounded-md border flex items-center justify-center transition-all duration-200 ${
-                    paginatedDeposits.length > 0 && selectedIds.length === paginatedDeposits.length
-                      ? "bg-purple border-purple-bright shadow-[0_0_8px_rgba(123,44,255,0.4)]"
-                      : "border-border bg-card-elevated hover:border-purple-bright/50"
-                  }`}>
-                    {paginatedDeposits.length > 0 && selectedIds.length === paginatedDeposits.length && (
-                      <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </div>
-                </label>
+                <CustomCheckbox
+                  checked={
+                    paginatedDeposits.length > 0 &&
+                    selectedIds.length === paginatedDeposits.length
+                  }
+                  onChange={toggleSelectAll}
+                />
               </th>
               <th className="pb-3.5 font-medium w-64">User</th>
               <th className="pb-3.5 font-medium">Amount</th>
@@ -113,25 +96,10 @@ export function DepositsTable({
                     }`}
                   >
                     <td className="py-3.5 pl-1 pr-6">
-                      <label className="relative flex items-center justify-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => toggleSelectRow(deposit.id)}
-                          className="sr-only"
-                        />
-                        <div className={`h-4.5 w-4.5 rounded-md border flex items-center justify-center transition-all duration-200 ${
-                          isChecked
-                            ? "bg-purple border-purple-bright shadow-[0_0_8px_rgba(123,44,255,0.4)]"
-                            : "border-border bg-card-elevated hover:border-purple-bright/50"
-                        }`}>
-                          {isChecked && (
-                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </div>
-                      </label>
+                      <CustomCheckbox
+                        checked={isChecked}
+                        onChange={() => toggleSelectRow(deposit.id)}
+                      />
                     </td>
                     <td className="py-3.5">
                       <div className="flex items-center gap-2.5">
@@ -194,109 +162,20 @@ export function DepositsTable({
                     </td>
                     <td className="py-3.5">
                       <div>
-                        <span
-                          className={`inline-flex rounded-md px-2 py-0.5 text-[10px] font-semibold ${
-                            statusBadgeStyles[deposit.status] || ""
-                          }`}
-                        >
-                          {deposit.status}
-                        </span>
+                        <StatusBadge status={deposit.status} />
                         <p className="text-[9px] text-muted-2 mt-1">{deposit.statusTime}</p>
                       </div>
                     </td>
                     <td className="py-3.5 text-muted-2">{deposit.submittedAt}</td>
-                    <td className="py-3.5 text-right pr-1 relative">
-                      <div className="inline-flex items-center gap-1.5 justify-end">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveDropdownId(
-                              activeDropdownId === deposit.id ? null : deposit.id
-                            );
-                          }}
-                          className={`flex h-7 w-7 items-center justify-center rounded-lg border bg-card-elevated transition cursor-pointer ${
-                            activeDropdownId === deposit.id
-                              ? "border-purple-bright/50 text-white bg-purple/10"
-                              : "border-border text-muted hover:text-white"
-                          }`}
-                          aria-label="More options"
-                        >
-                          <MoreVertical className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-
-                      {activeDropdownId === deposit.id && (
-                        <>
-                          {/* Close backdrop */}
-                          <div 
-                            className="fixed inset-0 z-20 cursor-default" 
-                            onClick={() => setActiveDropdownId(null)}
-                          />
-                          <div className={`absolute right-1.5 w-48 rounded-xl bg-card-elevated border border-border py-1.5 shadow-[0_10px_35px_rgba(0,0,0,0.55)] z-30 text-left ${
-                            index >= paginatedDeposits.length - 4 && paginatedDeposits.length > 4
-                              ? "bottom-full mb-1"
-                              : "mt-1"
-                          }`}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActiveDropdownId(null);
-                                onViewDetails?.(deposit);
-                              }}
-                              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
-                            >
-                              <Eye className="h-3.5 w-3.5 text-muted-2 mr-2 inline" />
-                              View Details
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActiveDropdownId(null);
-                                onVerify?.(deposit);
-                              }}
-                              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
-                            >
-                              <CheckCircle2 className="h-3.5 w-3.5 text-success mr-2 inline" />
-                              Verify Deposit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActiveDropdownId(null);
-                                onReject?.(deposit);
-                              }}
-                              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
-                            >
-                              <XCircle className="h-3.5 w-3.5 text-danger mr-2 inline" />
-                              Reject Deposit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActiveDropdownId(null);
-                                onAddManual?.(deposit);
-                              }}
-                              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
-                            >
-                              <Plus className="h-3.5 w-3.5 text-purple-bright mr-2 inline" />
-                              Add Manual Deposit
-                            </button>
-                            <div className="my-1 border-t border-border/45" />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActiveDropdownId(null);
-                                onNotesHistory?.(deposit);
-                              }}
-                              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
-                            >
-                              <FileText className="h-3.5 w-3.5 text-muted-2 mr-2 inline" />
-                              Notes / History
-                            </button>
-                          </div>
-                        </>
-                      )}
+                    <td className="py-3.5 text-right pr-1">
+                      <TableActionsMenu estimatedHeight={220}>
+                        <TableActionsMenuItem icon="👁" label="View Details" onClick={() => onViewDetails?.(deposit)} />
+                        <TableActionsMenuItem icon="✅" label="Verify Deposit" onClick={() => onVerify?.(deposit)} className="text-success" />
+                        <TableActionsMenuItem icon="❌" label="Reject Deposit" onClick={() => onReject?.(deposit)} className="text-danger" />
+                        <TableActionsMenuItem icon="➕" label="Add Manual Deposit" onClick={() => onAddManual?.(deposit)} className="text-purple-bright" />
+                        <TableActionsMenuDivider />
+                        <TableActionsMenuItem icon="📝" label="Notes / History" onClick={() => onNotesHistory?.(deposit)} />
+                      </TableActionsMenu>
                     </td>
                   </tr>
                 );
