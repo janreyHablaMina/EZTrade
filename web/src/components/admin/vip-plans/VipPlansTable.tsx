@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import {
   Edit2,
-  Copy,
+  Eye,
   Trash2,
   MoreVertical,
 } from "lucide-react";
@@ -18,22 +18,23 @@ type VipPlansTableProps = {
   pageSize: number;
   setPageSize: (s: number) => void;
   onEdit?: (plan: VipPlan) => void;
-  onDuplicate?: (plan: VipPlan) => void;
+  onView?: (plan: VipPlan) => void;
   onDelete?: (plan: VipPlan) => void;
 };
 
 function RowActions({ 
   plan, 
   onEdit, 
-  onDuplicate, 
+  onView, 
   onDelete 
 }: { 
   plan: VipPlan; 
   onEdit?: (plan: VipPlan) => void; 
-  onDuplicate?: (plan: VipPlan) => void; 
+  onView?: (plan: VipPlan) => void; 
   onDelete?: (plan: VipPlan) => void; 
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [position, setPosition] = useState({ top: 0, right: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,15 +43,42 @@ function RowActions({
         setIsOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    
+    function handleScroll(event: Event) {
+      // Don't close if the scroll was inside the dropdown itself
+      if (dropdownRef.current && dropdownRef.current.contains(event.target as Node)) {
+        return;
+      }
+      setIsOpen(false);
+    }
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      window.addEventListener("scroll", handleScroll, true); // Use capture to catch all scroll events
+    }
+    
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [isOpen]);
+
+  const toggleOpen = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!isOpen) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + 4,
+        right: window.innerWidth - rect.right,
+      });
+    }
+    setIsOpen(!isOpen);
+  };
 
   return (
-    <div className="relative inline-block text-left" ref={dropdownRef}>
+    <div className="inline-block text-left" ref={dropdownRef}>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleOpen}
         className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-2 hover:bg-white/[0.06] hover:text-white transition cursor-pointer"
         aria-label="More options"
       >
@@ -58,7 +86,10 @@ function RowActions({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-1 w-40 origin-top-right rounded-xl border border-border bg-card-elevated shadow-[0_10px_30px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in-95 duration-150">
+        <div 
+          className="fixed z-[100] w-40 origin-top-right rounded-xl border border-border bg-card-elevated shadow-[0_10px_30px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in-95 duration-150"
+          style={{ top: position.top, right: position.right }}
+        >
           <div className="p-1.5 flex flex-col gap-0.5">
             <button
               onClick={() => {
@@ -73,12 +104,12 @@ function RowActions({
             <button
               onClick={() => {
                 setIsOpen(false);
-                onDuplicate?.(plan);
+                onView?.(plan);
               }}
               className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium text-white transition hover:bg-white/[0.06] cursor-pointer"
             >
-              <Copy className="h-3.5 w-3.5 text-muted-2" />
-              Duplicate Plan
+              <Eye className="h-3.5 w-3.5 text-blue-400" />
+              View Plan
             </button>
             <div className="my-0.5 h-px bg-border/50" />
             <button
@@ -107,7 +138,7 @@ export function VipPlansTable({
   pageSize,
   setPageSize,
   onEdit,
-  onDuplicate,
+  onView,
   onDelete,
 }: VipPlansTableProps) {
   return (
@@ -181,7 +212,7 @@ export function VipPlansTable({
                       <RowActions
                         plan={plan}
                         onEdit={onEdit}
-                        onDuplicate={onDuplicate}
+                        onView={onView}
                         onDelete={onDelete}
                       />
                     </td>

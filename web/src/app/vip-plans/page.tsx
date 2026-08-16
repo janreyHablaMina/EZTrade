@@ -20,6 +20,7 @@ import { VipPlansFilters } from "@/components/admin/vip-plans/VipPlansFilters";
 import { VipPlansTable } from "@/components/admin/vip-plans/VipPlansTable";
 import { AddPlanModal } from "@/components/admin/vip-plans/AddPlanModal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { ViewPlanModal } from "@/components/admin/vip-plans/ViewPlanModal";
 
 export default function VipPlansPage() {
   const [plansList, setPlansList] = useState<VipPlan[]>(initialVipPlans);
@@ -29,6 +30,9 @@ export default function VipPlansPage() {
   const [toastMessage, setToastMessage] = useState("");
   const [editingPlan, setEditingPlan] = useState<VipPlan | null>(null);
   
+  // View state
+  const [viewingPlan, setViewingPlan] = useState<VipPlan | null>(null);
+
   // Deletion states
   const [planToDelete, setPlanToDelete] = useState<VipPlan | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -226,7 +230,7 @@ export default function VipPlansPage() {
         pageSize={pageSize}
         setPageSize={setPageSize}
         onEdit={handleOpenEdit}
-        onDuplicate={(plan) => console.log("Duplicate plan:", plan.id)}
+        onView={(plan) => setViewingPlan(plan)}
         onDelete={(plan) => setPlanToDelete(plan)}
       />
 
@@ -238,6 +242,12 @@ export default function VipPlansPage() {
         }} 
         onSave={handleSavePlan}
         initialData={editingPlan}
+      />
+      
+      <ViewPlanModal
+        isOpen={!!viewingPlan}
+        onClose={() => setViewingPlan(null)}
+        plan={viewingPlan}
       />
       
       <ConfirmModal 
