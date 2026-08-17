@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState, useEffect } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View, Pressable, Modal } from 'react-native';
-import { Lock, Check } from 'lucide-react-native';
+import { Lock, Check } from '../components/Icons';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 import { apiClient } from '../lib/api';
@@ -301,13 +301,13 @@ const styles = StyleSheet.create({
     aspectRatio: 1.586, // Standard credit card aspect ratio
   },
   creditCardGlow: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: 22,
     opacity: 0.5,
     transform: [{ scale: 1.02 }],
   },
   creditCard: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
   unlockButtonText: {
     fontFamily: 'Outfit_700Bold',
     fontSize: 15,
-    color: colors.black,
+    color: '#000000',
   },
   modalOverlay: {
     flex: 1,

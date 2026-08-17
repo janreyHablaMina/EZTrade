@@ -32,6 +32,7 @@ type NavItem = {
 };
 
 const management: NavItem[] = [
+  { label: "Users", href: "/dashboard/users", icon: Users },
   { label: "VIP Plans", href: "/dashboard/vip-plans", icon: Crown },
   { label: "Deposits", href: "/dashboard/deposits", icon: ArrowDownToLine },
   { label: "Withdrawals", href: "/dashboard/withdrawals", icon: ArrowUpFromLine },
@@ -54,7 +55,6 @@ const settings: NavItem[] = [
 ];
 
 const admin: NavItem[] = [
-  { label: "Admin Users", href: "/dashboard/users", icon: Shield },
   { label: "Audit Logs", href: "/dashboard/audit-logs", icon: ScrollText },
 ];
 

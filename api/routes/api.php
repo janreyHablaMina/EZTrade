@@ -17,10 +17,12 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/users', [UserController::class, 'index']);
 Route::get('/users/{id}', [UserController::class, 'show']);
 Route::patch('/users/{id}', [UserController::class, 'update']);
+Route::delete('/users/{id}', [UserController::class, 'destroy']);
 Route::get('/users/{id}/stats', [UserController::class, 'stats']);
 Route::post('/users/simulate-trade', [\App\Http\Controllers\Admin\SimulatorController::class, 'simulateTrade']);
 
 // ── VIP Plans ─────────────────────────────────────────────────────────────────
+Route::get('/vip-plans/stats', [VipPlanController::class, 'stats']);
 Route::get('/vip-plans', [VipPlanController::class, 'index']);
 Route::post('/vip-plans', [VipPlanController::class, 'store']);
 Route::delete('/vip-plans/{id}', [VipPlanController::class, 'destroy']);

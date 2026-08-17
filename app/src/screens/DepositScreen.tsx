@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
 import { AmountField } from '../components/AmountField';
-import { Copy } from 'lucide-react-native';
+import { Copy } from '../components/Icons';
 import { NetworkPicker } from '../components/NetworkPicker';
 import { NoteRow } from '../components/NoteRow';
 import { PrimaryButton } from '../components/PrimaryButton';

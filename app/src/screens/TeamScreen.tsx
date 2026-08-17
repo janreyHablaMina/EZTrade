@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { FilterChips } from '../components/FilterChips';
-import { Copy } from 'lucide-react-native';
+import { Copy } from '../components/Icons';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { copyToClipboard } from '../lib/clipboard';
 import { colors } from '../theme/colors';
@@ -125,7 +125,7 @@ export function TeamScreen({ onBack }: TeamScreenProps) {
               onPress={() => handleCopy('code', REFERRAL_CODE)}
               hitSlop={10}
             >
-              <CopyIcon />
+              <Copy color={colors.white} size={18} />
             </Pressable>
           </View>
 
@@ -138,7 +138,7 @@ export function TeamScreen({ onBack }: TeamScreenProps) {
               onPress={() => handleCopy('link', REFERRAL_LINK)}
               hitSlop={10}
             >
-              <CopyIcon />
+              <Copy color={colors.white} size={18} />
             </Pressable>
           </View>
           {copied ? (

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, SafeAreaView, Dimensions, RefreshControl, ActivityIndicator, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Bell, Gift, CreditCard, ShieldCheck, Settings } from 'lucide-react-native';
+import { ArrowLeft, Bell, Gift, CreditCard, ShieldCheck, Settings } from '../components/Icons';
 import { colors } from '../theme/colors';
 import { apiClient } from '../lib/api';
 
@@ -149,7 +149,7 @@ export function NotificationsScreen({ user, onBack }: NotificationsScreenProps) 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.bg,
   },
   header: {
     flexDirection: 'row',

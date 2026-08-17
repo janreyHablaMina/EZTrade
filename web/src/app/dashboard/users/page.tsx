@@ -125,22 +125,39 @@ export default function UsersPage() {
 
   const [viewingUser, setViewingUser] = useState<UserRecord | null>(null);
 
-  const handleBulkAction = () => {
+  const handleBulkAction = async () => {
     if (!bulkAction || selectedIds.length === 0) return;
     setIsProcessingAction(true);
     
-    setTimeout(() => {
+    try {
+      const promises = selectedIds.map(id => {
+        const user = usersList.find(u => u.id === id);
+        const realId = user ? ((user as any).dbId || parseInt(user.id.replace('EZT-', ''))) : parseInt(id.replace('EZT-', ''));
+        if (bulkAction === 'delete') {
+          return webApi.delete(`/users/${realId}`);
+        } else {
+          const newStatus: RowStatus = bulkAction === 'suspend' ? 'Suspended' : 'Inactive';
+          return webApi.patch(`/users/${realId}`, { status: newStatus });
+        }
+      });
+      
+      await Promise.all(promises);
+
       if (bulkAction === 'delete') {
         setUsersList((prev) => prev.filter((u) => !selectedIds.includes(u.id)));
       } else {
         const newStatus: RowStatus = bulkAction === 'suspend' ? 'Suspended' : 'Inactive';
         setUsersList((prev) => prev.map((u) => (selectedIds.includes(u.id) ? { ...u, status: newStatus } : u)));
       }
+      setToastMessage(`Successfully ${bulkAction}d ${selectedIds.length} users`);
+    } catch (err) {
+      console.error("Failed to perform bulk action:", err);
+      setToastMessage(`Failed to perform bulk action`);
+    } finally {
       setIsProcessingAction(false);
       setBulkAction(null);
       setSelectedIds([]);
-      setToastMessage(`Successfully ${bulkAction}d ${selectedIds.length} users`);
-    }, 600);
+    }
   };
 
   // Reset page when filters change
@@ -200,12 +217,15 @@ export default function UsersPage() {
     }
   };
 
-  const handleAccountAction = () => {
+  const handleAccountAction = async () => {
     if (!accountAction) return;
     setIsProcessingAction(true);
     
-    setTimeout(() => {
+    try {
+      const realId = (accountAction.user as any).dbId || parseInt(accountAction.user.id.replace('EZT-', ''));
+      
       if (accountAction.action === 'delete') {
+        await webApi.delete(`/users/${realId}`);
         setUsersList((prev) => prev.filter((u) => u.id !== accountAction.user.id));
       } else {
         let newStatus: RowStatus = 'Active';
@@ -213,13 +233,18 @@ export default function UsersPage() {
         else if (accountAction.action === 'deactivate') newStatus = 'Inactive';
         else if (accountAction.action === 'unsuspend' || accountAction.action === 'reactivate') newStatus = 'Active';
 
+        await webApi.patch(`/users/${realId}`, { status: newStatus });
         setUsersList((prev) => prev.map((u) => (u.id === accountAction.user.id ? { ...u, status: newStatus } : u)));
       }
       
+      setToastMessage(`Successfully ${accountAction.action}d ${accountAction.user.name}`);
+    } catch (err) {
+      console.error("Failed to perform account action:", err);
+      setToastMessage(`Failed to ${accountAction.action} user`);
+    } finally {
       setIsProcessingAction(false);
       setAccountAction(null);
-      setToastMessage(`Successfully ${accountAction.action}d ${accountAction.user.name}`);
-    }, 600);
+    }
   };
 
   return (

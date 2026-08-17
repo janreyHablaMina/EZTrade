@@ -15,8 +15,8 @@ export function AddPlanModal({ isOpen, onClose, onSave, initialData }: AddPlanMo
   const [formData, setFormData] = useState({
     level: "",
     minDeposit: "",
-    dailyProfitPercent: "",
-    durationDays: "",
+    dailyProfitPercent: "10",
+    durationDays: "30",
   });
 
   useEffect(() => {
@@ -31,8 +31,8 @@ export function AddPlanModal({ isOpen, onClose, onSave, initialData }: AddPlanMo
       setFormData({
         level: "",
         minDeposit: "",
-        dailyProfitPercent: "",
-        durationDays: "",
+        dailyProfitPercent: "10",
+        durationDays: "30",
       });
     }
   }, [initialData, isOpen]);

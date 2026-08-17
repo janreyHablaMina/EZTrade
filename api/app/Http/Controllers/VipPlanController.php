@@ -13,6 +13,18 @@ class VipPlanController extends Controller
         return response()->json(VipPlan::orderBy('created_at', 'desc')->get());
     }
 
+    public function stats()
+    {
+        $totalInvestors = \App\Models\User::whereNotNull('vip_plan_id')->count();
+        $totalDeposited = \App\Models\Deposit::where('status', 'approved')->sum('amount');
+        
+        return response()->json([
+            'total_investors' => $totalInvestors,
+            'total_deposited' => (float)$totalDeposited,
+            'total_earnings_paid' => 0, // Placeholder as no earnings table exists yet
+        ]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([

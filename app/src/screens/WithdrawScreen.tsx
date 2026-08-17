@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { AmountField } from '../components/AmountField';
-import { Receipt } from 'lucide-react-native';
+import { Receipt } from '../components/Icons';
 import { NetworkPicker } from '../components/NetworkPicker';
 import { NoteRow } from '../components/NoteRow';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -97,7 +97,7 @@ export function WithdrawScreen({
             accessibilityLabel="View withdraw status"
             style={styles.receiptBtn}
           >
-            <ReceiptIcon />
+            <Receipt size={22} color="rgba(255,255,255,0.8)" />
             {submitted ? <View style={styles.receiptDot} /> : null}
           </Pressable>
         }

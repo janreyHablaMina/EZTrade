@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { colors } from '../theme/colors';
 
-export type TabKey = 'home' | 'plans' | 'trade' | 'assets' | 'profile';
+export type TabKey = 'home' | 'plans' | 'trade' | 'assets' | 'profile' | 'notifications';
 
 type BottomTabBarProps = {
   active: TabKey;

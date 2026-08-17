@@ -25,7 +25,7 @@ import { WithdrawScreen } from './screens/WithdrawScreen';
 import { colors } from './theme/colors';
 import { apiClient } from './lib/api';
 
-const LOCAL_API_URL = 'http://192.168.100.6:8000';
+const LOCAL_API_URL = 'http://192.168.254.104:8000';
 
 type WalletStep = 'deposit' | 'txid' | 'verifying' | 'success';
 type Overlay =

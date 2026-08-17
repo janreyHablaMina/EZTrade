@@ -27,12 +27,17 @@ import { EditPlanModal } from "@/components/admin/vip-plans/EditPlanModal";
 export default function VipPlansPage() {
   const [plansList, setPlansList] = useState<VipPlan[]>([]);
   const [isLoadingPlans, setIsLoadingPlans] = useState(true);
+  const [stats, setStats] = useState({ investors: 0, deposited: 0, earnings: 0 });
 
   // Fetch plans on mount
   useEffect(() => {
-    async function fetchPlans() {
+    async function fetchData() {
       try {
-        const data = await webApi.get("/vip-plans");
+        const [data, statsData] = await Promise.all([
+          webApi.get("/vip-plans"),
+          webApi.get("/vip-plans/stats")
+        ]);
+        
         const mappedPlans: VipPlan[] = data.map((p: any) => ({
           id: `VP${p.id}`,
           level: p.level,
@@ -44,13 +49,19 @@ export default function VipPlansPage() {
           status: p.status,
         }));
         setPlansList(mappedPlans);
+        
+        setStats({
+          investors: statsData.total_investors || 0,
+          deposited: statsData.total_deposited || 0,
+          earnings: statsData.total_earnings_paid || 0
+        });
       } catch (err) {
-        console.error("Failed to fetch VIP plans:", err);
+        console.error("Failed to fetch VIP plans and stats:", err);
       } finally {
         setIsLoadingPlans(false);
       }
     }
-    fetchPlans();
+    fetchData();
   }, []);
 
   const [search, setSearch] = useState("");
@@ -238,19 +249,19 @@ export default function VipPlansPage() {
         />
         <KpiCard
           label="Total Investors"
-          value="12,364"
+          value={stats.investors.toLocaleString()}
           subtext="Across all VIP plans"
           icon={Users}
         />
         <KpiCard
           label="Total Deposited"
-          value="$1,234,567.89"
+          value={`$${stats.deposited.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           subtext="From all VIP plans"
           icon={Wallet}
         />
         <KpiCard
           label="Total Earnings Paid"
-          value="$345,678.90"
+          value={`$${stats.earnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           subtext="Across all VIP plans"
           icon={Coins}
         />

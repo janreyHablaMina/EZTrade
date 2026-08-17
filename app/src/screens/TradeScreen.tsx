@@ -13,7 +13,7 @@ import {
 import Svg, { Circle } from 'react-native-svg';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
-import { Key, Zap, Clock, CheckCircle } from 'lucide-react-native';
+import { Key, Zap, Clock, CheckCircle } from '../components/Icons';
 import { useTradeCode } from '../hooks/useTradeCode';
 
 const useNativeDriver = Platform.OS !== 'web';
@@ -119,7 +119,7 @@ export function TradeScreen({ onBack, user }: TradeScreenProps) {
             <TextInput
               style={styles.textInput}
               value={code}
-              onChangeText={(t) => { setCode(t.toUpperCase()); setErrorMsg(''); }}
+              onChangeText={(t) => { setCode(t.toUpperCase()); }}
               placeholder="e.g. EZ9X2P4A"
               placeholderTextColor="rgba(255,255,255,0.2)"
               autoCapitalize="characters"

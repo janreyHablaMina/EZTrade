@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft } from './Icons';
 import { colors } from '../theme/colors';
 
 type ScreenHeaderProps = {

@@ -11,7 +11,7 @@ import {
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { MarketOverview } from '../components/home/MarketOverview';
 import { colors } from '../theme/colors';
-import { Bell, MessageCircle } from 'lucide-react-native';
+import { Bell, MessageCircle } from '../components/Icons';
 import { useHomeStats } from '../hooks/useHomeStats';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -132,7 +132,7 @@ export function HomeScreen({
   const greeting = useMemo(() => greetingForNow(), []);
   const initials = userName
     .split(' ')
-    .map((part) => part[0])
+    .map((part: string) => part[0])
     .join('')
     .slice(0, 2)
     .toUpperCase();
