@@ -13,6 +13,7 @@ import { colors } from '../theme/colors';
 type TextFieldProps = TextInputProps & {
   label: string;
   isPassword?: boolean;
+  error?: string;
 };
 
 function EyeIcon({ open }: { open: boolean }) {
@@ -45,6 +46,7 @@ function EyeIcon({ open }: { open: boolean }) {
 export function TextField({
   label,
   isPassword = false,
+  error,
   style,
   ...props
 }: TextFieldProps) {
@@ -54,7 +56,7 @@ export function TextField({
   return (
     <View style={styles.wrap}>
       <Text style={styles.label}>{label}</Text>
-      <View style={[styles.field, focused && styles.fieldFocused]}>
+      <View style={[styles.field, focused && styles.fieldFocused, error ? styles.fieldError : undefined]}>
         <TextInput
           {...props}
           style={[styles.input, style]}
@@ -79,6 +81,7 @@ export function TextField({
           </Pressable>
         ) : null}
       </View>
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
   );
 }
@@ -105,6 +108,9 @@ const styles = StyleSheet.create({
   fieldFocused: {
     borderColor: colors.purpleBright,
   },
+  fieldError: {
+    borderColor: '#f87171',
+  },
   input: {
     flex: 1,
     fontFamily: 'Outfit_400Regular',
@@ -114,5 +120,12 @@ const styles = StyleSheet.create({
   },
   eyeButton: {
     paddingLeft: 8,
+  },
+  errorText: {
+    fontFamily: 'Outfit_400Regular',
+    fontSize: 12,
+    color: '#f87171',
+    marginTop: -4,
+    marginLeft: 4,
   },
 });

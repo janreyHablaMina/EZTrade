@@ -25,6 +25,7 @@ export function RegisterScreen({
   const [agreed, setAgreed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [referralError, setReferralError] = useState('');
   const passwordsMatch =
     password.length >= 6 && password === confirmPassword;
   const canCreate =
@@ -37,6 +38,7 @@ export function RegisterScreen({
     if (!canCreate) return;
     setIsLoading(true);
     setErrorMsg('');
+    setReferralError('');
     try {
       const response = await apiClient.post('/register', {
         name: name.trim(),
@@ -47,7 +49,11 @@ export function RegisterScreen({
       // Backend returns requires_otp
       onCreateAccount?.(email.trim());
     } catch (err: any) {
-      setErrorMsg(err.message || 'Registration failed');
+      if (err.message === 'Invalid referral code') {
+        setReferralError(err.message);
+      } else {
+        setErrorMsg(err.message || 'Registration failed');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -98,8 +104,12 @@ export function RegisterScreen({
         placeholder="EZTRADE12"
         autoCapitalize="characters"
         autoCorrect={false}
+        error={referralError}
         value={referralCode}
-        onChangeText={(value) => setReferralCode(value.toUpperCase())}
+        onChangeText={(value) => {
+          setReferralCode(value.toUpperCase());
+          if (referralError) setReferralError('');
+        }}
       />
       <CheckBox checked={agreed} onToggle={() => setAgreed((value) => !value)}>
         <Text style={styles.agreeText}>

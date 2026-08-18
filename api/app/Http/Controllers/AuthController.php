@@ -27,6 +27,8 @@ class AuthController extends Controller
             $referrer = User::where('referral_code', strtoupper($request->referral_code))->first();
             if ($referrer) {
                 $referredBy = $referrer->id;
+            } else {
+                return response()->json(['message' => 'Invalid referral code'], 400);
             }
         }
 
