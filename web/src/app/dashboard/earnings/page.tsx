@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { Wallet, Users, Coins, Download, Calendar, User } from "lucide-react";
+import { Wallet, Users, Coins, Download, Calendar, User, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react";
 import type { EarningRecord } from "@/types/admin";
 import { EarningsFilters } from "@/components/admin/earnings/EarningsFilters";
 import { EarningsTable } from "@/components/admin/earnings/EarningsTable";
@@ -11,6 +11,7 @@ import { webApi } from "@/lib/api";
 
 export default function EarningsPage() {
   const [earnings, setEarnings] = useState<EarningRecord[]>([]);
+  const [financials, setFinancials] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [type, setType] = useState("all");
@@ -21,14 +22,16 @@ export default function EarningsPage() {
   const fetchEarnings = async () => {
     setIsLoading(true);
     try {
-      const data = await webApi.get('/earnings');
-      const mapped = data.map((e: any) => ({
-        id: `ER-${e.id.toString().padStart(5, '0')}`,
+      const res = await webApi.get('/earnings');
+      setFinancials(res.financials);
+      
+      const mapped = res.earnings.map((e: any) => ({
+        id: `AE-${e.id.toString().padStart(5, '0')}`,
         userName: e.user ? e.user.name : 'Unknown',
         userEmail: e.user ? e.user.email : 'Unknown',
         vipLevel: e.user ? e.user.vip_plan_id : 1,
-        type: 'Trading Profit',
-        source: 'Daily Trading',
+        type: e.type,
+        source: `Deposit ($${e.deposit_amount})`,
         amount: parseFloat(e.amount_earned) || 0,
         currency: 'USDT',
         network: 'N/A',
@@ -37,7 +40,7 @@ export default function EarningsPage() {
           year: 'numeric', month: 'short', day: 'numeric',
           hour: '2-digit', minute: '2-digit'
         }),
-        description: e.trading_code ? `Trading Code: ${e.trading_code.code}` : 'Trading Profit'
+        description: e.deduction > 0 ? `Gross $${e.gross_cut} - $${e.deduction} Bonus Deduction` : `Gross $${e.gross_cut} (No Deduction)`
       }));
       setEarnings(mapped);
     } catch (e) {
@@ -125,80 +128,39 @@ export default function EarningsPage() {
         {/* KPI Row */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <KpiCard
-            label="Total Earnings"
-            value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalEarnings)}
-            change=""
-            positive={true}
+            label="Total Platform Deposits"
+            value={`$${(financials?.totalPlatformDeposits || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+            subtext="Global deposit volume"
             icon={Wallet}
+          />
+          <KpiCard
+            label="Global Active Trade Capital"
+            value={`$${(financials?.activeTradeCapital || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+            subtext="Platform-wide VIP plan capital"
+            icon={TrendingUp}
+            iconClassName="text-white"
+          />
+          <KpiCard
+            label="Gross Assets (Earnings)"
+            value={`+$${(financials?.grossAssets || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+            subtext="Total before bonus deductions"
+            icon={TrendingUp}
+            iconClassName="text-white"
+          />
+          <KpiCard
+            label="Minus Bonuses"
+            value={`-$${(financials?.minusBonuses || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+            subtext="Deductions for referral payouts"
+            icon={AlertCircle}
+            iconClassName="text-danger"
+          />
+          <KpiCard
+            label="Net Balance"
+            value={`$${(financials?.netBalance || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+            subtext="Admin's available wallet balance"
+            icon={CheckCircle2}
             iconClassName="text-purple-bright"
-            subtext=""
           />
-          <KpiCard
-            label="Total Users Earned"
-            value={uniqueUsers.toLocaleString()}
-            change=""
-            positive={true}
-            icon={Users}
-            iconClassName="text-emerald-400"
-            subtext=""
-          />
-          <KpiCard
-            label="Average Earnings per User"
-            value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(avgEarnings)}
-            change=""
-            positive={true}
-            icon={Coins}
-            iconClassName="text-amber-400"
-            subtext=""
-          />
-
-          {/* Custom Card: Top Earner */}
-          <div className="rounded-2xl border border-border bg-card p-3.5 shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex flex-col justify-between">
-            <div className="flex items-start gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/15 ring-1 ring-sky-500/25">
-                <User className="h-4 w-4 text-sky-400" />
-              </div>
-              <div className="flex-1">
-                <p className="text-[11px] text-muted">Top Earner</p>
-                <p className="mt-0.5 text-base font-semibold tracking-tight text-white">{topEarner.name}</p>
-              </div>
-            </div>
-            <div className="mt-3">
-              <p className="text-lg font-bold text-white">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(topEarner.total)}</p>
-              <p className="text-[11px] text-muted-2">Total Earnings</p>
-            </div>
-          </div>
-
-          {/* Custom Card: Profit Distribution */}
-          <div className="rounded-2xl border border-border bg-card p-3.5 shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex flex-col">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple/15 ring-1 ring-purple-bright/25">
-                <div className="h-4 w-4 rounded-full border-2 border-purple-bright border-t-transparent animate-spin-slow"></div>
-              </div>
-              <p className="text-[11px] text-muted">Profit Distribution</p>
-            </div>
-            
-            <div className="flex flex-col gap-2 mt-auto">
-              <div>
-                <div className="flex justify-between text-[11px] mb-1">
-                  <span className="text-muted-2">Trading Profit</span>
-                  <span className="text-white font-medium">100%</span>
-                </div>
-                <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-400 rounded-full" style={{ width: "100%" }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-[11px] mb-1">
-                  <span className="text-muted-2">Referral Bonus</span>
-                  <span className="text-white font-medium">0%</span>
-                </div>
-                <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
-                  <div className="h-full bg-purple-bright rounded-full" style={{ width: "0%" }}></div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Filters */}

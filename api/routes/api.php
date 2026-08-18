@@ -50,6 +50,8 @@ Route::get('/admin/referrals', [\App\Http\Controllers\Admin\ReferralController::
 Route::get('/admin/ambassadors', [\App\Http\Controllers\Admin\AmbassadorController::class, 'index']);
 Route::get('/admin/ambassadors/{id}', [\App\Http\Controllers\Admin\AmbassadorController::class, 'show']);
 Route::get('/admin/ambassadors/{id}/downline', [\App\Http\Controllers\Admin\AmbassadorController::class, 'downline']);
+Route::get('/admin/ambassadors/{id}/earnings', [\App\Http\Controllers\Admin\AmbassadorController::class, 'earnings']);
+Route::post('/admin/ambassadors/{id}/simulate', [\App\Http\Controllers\Admin\AmbassadorController::class, 'simulateDay']);
 Route::get('/admin/assets', [\App\Http\Controllers\Admin\AssetController::class, 'index']);
 Route::get('/settings/trade', [\App\Http\Controllers\TradeSettingsController::class, 'getSettings']);
 Route::post('/settings/trade', [\App\Http\Controllers\TradeSettingsController::class, 'updateSettings']);
