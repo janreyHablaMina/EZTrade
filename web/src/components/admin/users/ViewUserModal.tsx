@@ -1,7 +1,5 @@
 import { X, User, Mail, Phone, Calendar, CheckCircle2, ShieldAlert, CreditCard, Wallet, TrendingUp, Clock, AlertCircle, Users } from "lucide-react";
-import type { UserRecord } from "@/lib/mock-data/usersData";
-import { vipBadgeStyles } from "@/lib/mock-data/usersData";
-import { initialVipPlans } from "@/lib/mock-data/vipPlansData";
+import { type UserRecord, vipBadgeStyles } from "@/types/admin";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
 type ViewUserModalProps = {
@@ -62,17 +60,6 @@ export function ViewUserModal({ isOpen, onClose, user }: ViewUserModalProps) {
               <StatusBadge status={user.status} />
               <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold tracking-wider gap-1.5 ${vipBadgeStyles[user.vipLevel] || ""}`}>
                 {user.vipLevel}
-                {(() => {
-                  const userVipPlan = initialVipPlans.find(p => p.level === user.vipLevel);
-                  if (userVipPlan) {
-                    return (
-                      <span className="opacity-80 border-l border-current pl-1.5">
-                        {userVipPlan.dailyProfitPercent.toFixed(1)}% Daily
-                      </span>
-                    );
-                  }
-                  return null;
-                })()}
               </span>
             </div>
           </div>

@@ -22,11 +22,10 @@ import {
   Loader2,
 } from "lucide-react";
 import {
-  initialNotifications,
   categoryBadgeStyles,
   type NotificationRecord,
   type NotificationCategory,
-} from "@/lib/mock-data/notificationsData";
+} from "@/types/admin";
 
 // ── Icon helper ──────────────────────────────────────────────────────────────
 function NotifIcon({ type }: { type: NotificationRecord["iconType"] }) {

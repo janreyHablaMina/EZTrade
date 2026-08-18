@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { initialUsers } from "@/lib/mock-data/usersData";
 import { UsersFilters } from "@/components/admin/users/UsersFilters";
 import { UsersTable } from "@/components/admin/users/UsersTable";
 import { GenericFloatingActions } from "@/components/admin/GenericFloatingActions";
@@ -23,7 +22,7 @@ import { ViewUserModal } from "@/components/admin/users/ViewUserModal";
 import { EditUserModal } from "@/components/admin/users/EditUserModal";
 import { SendNotificationModal } from "@/components/admin/users/SendNotificationModal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
-import type { UserRecord, RowStatus } from "@/lib/mock-data/usersData";
+import type { UserRecord, RowStatus } from "@/types/admin";
 import { usePagination } from "@/hooks/usePagination";
 import { useTableSelection } from "@/hooks/useTableSelection";
 

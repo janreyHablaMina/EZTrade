@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import type { VipPlan } from "@/lib/mock-data/vipPlansData";
+import type { VipPlan } from "@/types/admin";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
@@ -31,10 +31,11 @@ export function EditPlanModal({ isOpen, onClose, plan, onSave }: EditPlanModalPr
     const numValue = parseFloat(value) || 0;
     setFormData((prev) => {
       if (!prev) return prev;
+      const currentBonus = prev.referralBonus || { level1: 0, level2: 0, level3: 0 };
       return {
         ...prev,
         referralBonus: {
-          ...prev.referralBonus,
+          ...currentBonus,
           [level]: numValue,
         },
       };

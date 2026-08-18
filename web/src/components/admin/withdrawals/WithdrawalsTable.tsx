@@ -8,8 +8,12 @@ import {
 import {
   Copy,
 } from "lucide-react";
-import type { WithdrawalRequest } from "@/lib/mock-data/withdrawalsData";
-import { networkBadgeStyles } from "@/lib/mock-data/withdrawalsData";
+import type { WithdrawalRequest } from "@/types/admin";
+const networkBadgeStyles: Record<string, string> = {
+  "TRC20": "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25",
+  "ERC20": "bg-blue-500/15 text-blue-400 border border-blue-500/25",
+  "BEP20": "bg-amber-500/15 text-amber-400 border border-amber-500/25",
+};
 import { CustomCheckbox } from "@/components/ui/CustomCheckbox";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 

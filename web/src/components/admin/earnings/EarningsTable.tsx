@@ -3,8 +3,22 @@
 import { useState } from "react";
 import { PaginationFooter } from "@/components/admin/PaginationFooter";
 import { TrendingUp, Share2, Eye } from "lucide-react";
-import type { EarningRecord } from "@/lib/mock-data/earningsData";
-import { vipLevelBadgeStyles, statusBadgeStyles } from "@/lib/mock-data/earningsData";
+import type { EarningRecord } from "@/types/admin";
+import { vipBadgeStyles } from "@/types/admin";
+
+const statusBadgeStyles: Record<string, string> = {
+  "Completed": "bg-success/15 text-success",
+  "Paid": "bg-success/15 text-success",
+  "Pending": "bg-warning/15 text-warning",
+};
+
+const typeBadgeStyles: Record<string, string> = {
+  "Daily Yield": "bg-purple-bright/15 text-purple-bright border border-purple-bright/25",
+  "Referral Level 1": "bg-sky-500/15 text-sky-400 border border-sky-500/25",
+  "Referral Level 2": "bg-teal-500/15 text-teal-400 border border-teal-500/25",
+  "Referral Level 3": "bg-indigo-500/15 text-indigo-400 border border-indigo-500/25",
+  "Bonus": "bg-amber-500/15 text-amber-400 border border-amber-500/25",
+};
 
 type EarningsTableProps = {
   earnings: EarningRecord[];
@@ -41,7 +55,7 @@ export function EarningsTable({ earnings }: EarningsTableProps) {
   const paginated = earnings.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
-    <div className="rounded-2xl border border-border bg-card shadow-[0_10px_30px_rgba(0,0,0,0.25)] overflow-hidden">
+    <div className="mt-5 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex flex-col">
       {/* Table Scroll Wrapper */}
       <div className="overflow-x-auto">
         <table className="w-full text-xs" style={{ minWidth: "980px" }}>
@@ -80,7 +94,7 @@ export function EarningsTable({ earnings }: EarningsTableProps) {
                   {/* VIP Level */}
                   <td className="py-3.5">
                     <span
-                      className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold ${vipLevelBadgeStyles[er.vipLevel]}`}
+                      className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold ${vipBadgeStyles[er.vipLevel]}`}
                     >
                       VIP {er.vipLevel}
                     </span>
@@ -124,7 +138,7 @@ export function EarningsTable({ earnings }: EarningsTableProps) {
                   {/* Status */}
                   <td className="py-3.5">
                     <span
-                      className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold ${statusBadgeStyles[er.status]}`}
+                      className={`inline-flex rounded-md px-2 py-0.5 text-[9px] font-semibold tracking-wider ${statusBadgeStyles[er.status] || ""}`}
                     >
                       {er.status}
                     </span>

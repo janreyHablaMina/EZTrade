@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, User, Mail, Phone, Crown, ShieldCheck, CreditCard, Activity, Pencil } from "lucide-react";
-import type { UserRecord, RowStatus, KycStatus } from "@/lib/mock-data/usersData";
-import { initialVipPlans } from "@/lib/mock-data/vipPlansData";
+import type { UserRecord, RowStatus, KycStatus } from "@/types/admin";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
@@ -123,8 +122,10 @@ export function EditUserModal({ isOpen, onClose, user, onSave }: EditUserModalPr
                     onChange={(e) => handleChange("vipLevel", e.target.value)}
                   >
                     <option value="None">None</option>
-                    {initialVipPlans.map(plan => (
-                      <option key={plan.id} value={plan.level}>{plan.level} - {plan.planName}</option>
+                    {["VIP 1", "VIP 2", "VIP 3", "VIP 4", "VIP 5", "VIP 6"].map((level) => (
+                      <option key={level} value={level}>
+                        {level}
+                      </option>
                     ))}
                   </Select>
                 </div>

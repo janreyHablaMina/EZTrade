@@ -3,8 +3,24 @@
 import { useState } from "react";
 import { PaginationFooter } from "@/components/admin/PaginationFooter";
 import { Eye, MoreHorizontal } from "lucide-react";
-import type { ReferralRecord } from "@/lib/mock-data/referralsData";
-import { vipLevelBadgeStyles, statusBadgeStyles, commissionStatusBadgeStyles } from "@/lib/mock-data/referralsData";
+import { type ReferralRecord, vipBadgeStyles } from "@/types/admin";
+
+const levelBadgeStyles: Record<string, string> = {
+  "1": "bg-purple-bright/15 text-purple-bright border border-purple-bright/25",
+  "2": "bg-sky-500/15 text-sky-400 border border-sky-500/25",
+  "3": "bg-indigo-500/15 text-indigo-400 border border-indigo-500/25",
+};
+
+const statusBadgeStyles: Record<string, string> = {
+  "Active": "bg-success/15 text-success",
+  "Inactive": "bg-white/10 text-muted-2",
+  "Suspended": "bg-danger/15 text-danger",
+};
+
+const commissionStatusBadgeStyles: Record<string, string> = {
+  "Paid": "bg-success/15 text-success",
+  "Pending": "bg-warning/15 text-warning",
+};
 
 type ReferralsTableProps = {
   referrals: ReferralRecord[];
@@ -42,7 +58,7 @@ export function ReferralsTable({ referrals }: ReferralsTableProps) {
   const paginated = referrals.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
-    <div className="rounded-2xl border border-border bg-card shadow-[0_10px_30px_rgba(0,0,0,0.25)] overflow-hidden">
+    <div className="mt-5 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex flex-col">
       {/* Table Scroll Wrapper */}
       <div className="overflow-x-auto">
         <table className="w-full text-xs" style={{ minWidth: "1150px" }}>
@@ -87,9 +103,7 @@ export function ReferralsTable({ referrals }: ReferralsTableProps) {
 
                     {/* VIP Level */}
                     <td className="py-3.5">
-                      <span
-                        className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold ${vipLevelBadgeStyles[ref.vipLevel]}`}
-                      >
+                      <span className={`inline-flex rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider ${vipBadgeStyles[ref.vipLevel] || ""}`}>
                         VIP {ref.vipLevel}
                       </span>
                     </td>

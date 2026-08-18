@@ -6,8 +6,7 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { PaginationFooter } from "@/components/admin/PaginationFooter";
-import type { VipPlan } from "@/lib/mock-data/vipPlansData";
-import { vipPlanBadgeStyles } from "@/lib/mock-data/vipPlansData";
+import { type VipPlan, vipBadgeStyles } from "@/types/admin";
 
 const randomBadgeStyles = [
   "bg-blue-400/10 text-blue-400 border border-blue-400/20",
@@ -21,8 +20,8 @@ const randomBadgeStyles = [
 ];
 
 function getBadgeStyleForLevel(level: string) {
-  if (vipPlanBadgeStyles[level]) {
-    return vipPlanBadgeStyles[level];
+  if (vipBadgeStyles[level]) {
+    return vipBadgeStyles[level];
   }
   let hash = 0;
   for (let i = 0; i < level.length; i++) {
@@ -190,11 +189,11 @@ export function VipPlansTable({
                   >
                     <td className="py-3.5 pl-1">
                       <span
-                        className={`inline-flex rounded-md px-2 py-0.5 text-[9px] font-semibold tracking-wider uppercase ${
-                          getBadgeStyleForLevel(plan.level)
+                        className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold tracking-wider ${
+                          getBadgeStyleForLevel(plan.level.toString())
                         }`}
                       >
-                        {plan.level}
+                        {plan.level.toString()}
                       </span>
                     </td>
                     <td className="py-3.5 text-muted-2">

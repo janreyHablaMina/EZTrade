@@ -15,8 +15,7 @@ import {
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { initialVipPlans } from "@/lib/mock-data/vipPlansData";
-import type { VipPlan } from "@/lib/mock-data/vipPlansData";
+import type { VipPlan } from "@/types/admin";
 import { VipPlansFilters } from "@/components/admin/vip-plans/VipPlansFilters";
 import { VipPlansTable } from "@/components/admin/vip-plans/VipPlansTable";
 import { AddPlanModal } from "@/components/admin/vip-plans/AddPlanModal";
@@ -99,7 +98,7 @@ export default function VipPlansPage() {
     return plansList.filter((plan) => {
       const matchSearch =
         !filters.search ||
-        plan.level.toLowerCase().includes(filters.search.toLowerCase());
+        plan.level.toString().toLowerCase().includes(filters.search.toLowerCase());
 
       const matchStatus = filters.status === "all" || plan.status === filters.status;
 

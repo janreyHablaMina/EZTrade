@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { Users, UserCheck, DollarSign, TrendingUp, Download, Calendar, UserPlus } from "lucide-react";
-import type { AmbassadorRecord } from "@/lib/mock-data/ambassadorsData";
+import type { UserRecord as AmbassadorRecord } from "@/types/admin";
 import { AmbassadorsTable } from "@/components/admin/ambassadors/AmbassadorsTable";
 import { webApi } from "@/lib/api";
 

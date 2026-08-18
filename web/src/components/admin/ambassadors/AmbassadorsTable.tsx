@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { type AmbassadorRecord } from "@/lib/mock-data/ambassadorsData";
+import type { UserRecord as AmbassadorRecord } from "@/types/admin";
 import { Search, ChevronDown, CheckCircle2, XCircle } from "lucide-react";
 import { PaginationFooter } from "@/components/admin/PaginationFooter";
 
@@ -19,8 +19,8 @@ export function AmbassadorsTable({
   const currentItems = ambassadors.slice(startIndex, endIndex);
 
   return (
-    <div className="rounded-xl border border-border bg-card-elevated shadow-sm">
-      <div className="flex flex-col gap-4 border-b border-white/[0.05] p-5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mt-5 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex flex-col">
+      <div className="flex flex-col gap-4 border-b border-border/50 pb-5 mb-2 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-sm font-semibold text-white">Ambassador List</h3>
       </div>
       <div className="overflow-x-auto">

@@ -8,14 +8,18 @@ import {
 import {
   Copy,
 } from "lucide-react";
-import type { DepositRequest } from "@/lib/mock-data/depositsData";
-import { networkBadgeStyles } from "@/lib/mock-data/depositsData";
+import type { DepositRecord } from "@/types/admin";
+const networkBadgeStyles: Record<string, string> = {
+  "TRC20": "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25",
+  "ERC20": "bg-blue-500/15 text-blue-400 border border-blue-500/25",
+  "BEP20": "bg-amber-500/15 text-amber-400 border border-amber-500/25",
+};
 import { CustomCheckbox } from "@/components/ui/CustomCheckbox";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
 type DepositsTableProps = {
-  deposits: DepositRequest[];
-  paginatedDeposits: DepositRequest[];
+  deposits: DepositRecord[];
+  paginatedDeposits: DepositRecord[];
   totalCount: number;
   currentPage: number;
   setCurrentPage: (p: number) => void;
@@ -24,11 +28,11 @@ type DepositsTableProps = {
   selectedIds: string[];
   toggleSelectAll: () => void;
   toggleSelectRow: (id: string) => void;
-  onViewDetails?: (deposit: DepositRequest) => void;
-  onVerify?: (deposit: DepositRequest) => void;
-  onReject?: (deposit: DepositRequest) => void;
-  onAddManual?: (deposit: DepositRequest) => void;
-  onNotesHistory?: (deposit: DepositRequest) => void;
+  onViewDetails?: (deposit: DepositRecord) => void;
+  onVerify?: (deposit: DepositRecord) => void;
+  onReject?: (deposit: DepositRecord) => void;
+  onAddManual?: (deposit: DepositRecord) => void;
+  onNotesHistory?: (deposit: DepositRecord) => void;
 };
 
 export function DepositsTable({

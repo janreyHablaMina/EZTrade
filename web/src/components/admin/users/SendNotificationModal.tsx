@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { X, Send, Bell } from "lucide-react";
-import type { UserRecord } from "@/lib/mock-data/usersData";
-import { Input } from "@/components/ui/Input";
+import type { UserRecord } from "@/types/admin";import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 

@@ -1,6 +1,5 @@
 import { X, Crown, Users, TrendingUp, Calendar, ShieldCheck } from "lucide-react";
-import type { VipPlan } from "@/lib/mock-data/vipPlansData";
-import { vipPlanBadgeStyles } from "@/lib/mock-data/vipPlansData";
+import type { VipPlan } from "@/types/admin";
 
 type ViewPlanModalProps = {
   isOpen: boolean;
@@ -23,9 +22,7 @@ export function ViewPlanModal({ isOpen, onClose, plan }: ViewPlanModalProps) {
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-white">Plan Details</h2>
             <span
-              className={`inline-flex rounded-md px-2 py-0.5 text-[10px] font-semibold tracking-wider ${
-                vipPlanBadgeStyles[plan.level] || "bg-white/10 text-muted border border-white/10"
-              }`}
+              className="inline-flex rounded-md px-2 py-0.5 text-[10px] font-semibold tracking-wider bg-purple/20 text-purple-bright border border-purple-bright/30"
             >
               {plan.level}
             </span>

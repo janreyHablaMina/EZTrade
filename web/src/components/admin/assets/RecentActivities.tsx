@@ -1,5 +1,23 @@
 import { ArrowDown, ArrowUp, ArrowLeftRight } from "lucide-react";
-import type { AssetActivity } from "@/lib/mock-data/assetsData";
+
+type AssetActivity = {
+  id: string;
+  type: "Deposit" | "Withdrawal" | "Trade" | "Transfer" | "Earning";
+  amount: number;
+  amountText?: string;
+  currency: string;
+  status: "Completed" | "Pending" | "Failed";
+  date: string;
+  dateTime?: string;
+  txHash?: string;
+  network?: string;
+  user?: {
+    name: string;
+    email: string;
+    avatarInitials: string;
+  };
+  userName?: string;
+};
 
 type RecentActivitiesProps = {
   activities: AssetActivity[];
@@ -41,8 +59,7 @@ export function RecentActivities({ activities }: RecentActivitiesProps) {
                   <Icon className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-[11px] font-medium text-white mb-0.5">{act.type}</p>
-                  <p className="text-[10px] text-muted-2">{act.user}</p>
+                  <p className="text-[11px] font-medium text-white mb-0.5">{act.user?.name || act.userName}</p>
                 </div>
               </div>
               <div className="text-right">

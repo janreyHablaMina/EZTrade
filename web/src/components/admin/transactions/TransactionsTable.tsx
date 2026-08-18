@@ -16,8 +16,22 @@ import {
   Check,
   X,
 } from "lucide-react";
-import type { TransactionRecord } from "@/lib/mock-data/transactionsData";
-import { typeBadgeStyles, statusBadgeStyles } from "@/lib/mock-data/transactionsData";
+import type { TransactionRecord } from "@/types/admin";
+
+const typeBadgeStyles: Record<string, string> = {
+  Deposit: "bg-blue-500/15 text-blue-400 border border-blue-500/25",
+  Withdrawal: "bg-amber-500/15 text-amber-400 border border-amber-500/25",
+  Transfer: "bg-indigo-500/15 text-indigo-400 border border-indigo-500/25",
+  Earning: "bg-success/15 text-success border border-success/25",
+  Bonus: "bg-purple-bright/15 text-purple-bright border border-purple-bright/25",
+};
+
+const statusBadgeStyles: Record<string, string> = {
+  Completed: "bg-success/15 text-success",
+  Pending: "bg-warning/15 text-warning",
+  Failed: "bg-danger/15 text-danger",
+  Rejected: "bg-danger/15 text-danger",
+};
 import { webApi } from "@/lib/api";
 
 type TransactionsTableProps = {

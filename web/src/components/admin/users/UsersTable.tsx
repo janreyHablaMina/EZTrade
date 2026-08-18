@@ -4,8 +4,8 @@ import {
   TableActionsMenuDivider,
   TableActionsMenuItem,
 } from "@/components/admin/TableActionsMenu";
-import type { UserRecord } from "@/lib/mock-data/usersData";
-import { vipBadgeStyles } from "@/lib/mock-data/usersData";
+import type { UserRecord } from "@/types/admin";
+import { vipBadgeStyles } from "@/types/admin";
 import { CustomCheckbox } from "@/components/ui/CustomCheckbox";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
@@ -54,7 +54,7 @@ export function UsersTable({
   onDeleteUser,
 }: UsersTableProps) {
   return (
-    <div className="flex flex-col">
+    <div className="mt-5 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex flex-col">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1100px] text-left text-xs">
           <thead>
