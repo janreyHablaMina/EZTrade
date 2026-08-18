@@ -22,6 +22,7 @@ import {
   ScrollText,
   ExternalLink,
   Hexagon,
+  Activity,
 } from "lucide-react";
 
 type NavItem = {
@@ -49,6 +50,7 @@ const support: NavItem[] = [
 ];
 
 const settings: NavItem[] = [
+  { label: "Trade Automation", href: "/dashboard/trade-signals", icon: Activity },
   { label: "App Release", href: "/dashboard/app-release", icon: ArrowDownToLine },
   { label: "System Settings", href: "/dashboard/settings", icon: Settings },
   { label: "General Settings", href: "/dashboard/general-settings", icon: SlidersHorizontal },

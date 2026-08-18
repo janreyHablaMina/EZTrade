@@ -122,7 +122,11 @@ export default function NotificationsPage() {
   // Modal State
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isGenerateCodeOpen, setIsGenerateCodeOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [tradeSplit, setTradeSplit] = useState("50"); // 50% for 2 trades
+  const [tradeExpiry, setTradeExpiry] = useState("30");
+
   const [composeTitle, setComposeTitle] = useState("");
   const [composeMessage, setComposeMessage] = useState("");
   const [composeCategory, setComposeCategory] = useState<NotificationCategory>("System");
@@ -187,10 +191,14 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleGenerateTradingCode = async () => {
+  const handleGenerateTradingCode = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsGenerating(true);
     try {
-      await webApi.post("/trading-codes/generate");
+      await webApi.post("/trading-codes/generate", {
+        profit_percentage: Number(tradeSplit),
+        expires_in_minutes: Number(tradeExpiry)
+      });
       // Refresh notifications to show the newly created one
       const data = await webApi.get("/notifications");
       setNotifications(data.map((n: any) => ({
@@ -202,7 +210,8 @@ export default function NotificationsPage() {
         dateTime: new Date(n.created_at).toLocaleString(),
         isRead: n.is_read
       })));
-      alert("Trading Code generated and broadcasted successfully!");
+      setIsGenerateCodeOpen(false);
+      alert(`Trade Signal generated successfully! It yields ${tradeSplit}% of the user's daily limit and expires in ${tradeExpiry} mins.`);
     } catch (err) {
       console.error(err);
     } finally {
@@ -223,7 +232,7 @@ export default function NotificationsPage() {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={handleGenerateTradingCode}
+              onClick={() => setIsGenerateCodeOpen(true)}
               disabled={isGenerating}
               className="flex items-center justify-center gap-2 rounded-xl bg-[#ffaa00]/10 border border-[#ffaa00]/20 px-4 py-2 text-sm font-semibold text-[#ffaa00] transition hover:bg-[#ffaa00]/20 cursor-pointer disabled:opacity-50"
             >
@@ -469,6 +478,83 @@ export default function NotificationsPage() {
                     <>
                       <Send className="h-4 w-4" />
                       Broadcast
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Generate Trading Code Modal */}
+      {isGenerateCodeOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-card p-6 shadow-2xl">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white">Create Trade Signal</h2>
+              <button
+                onClick={() => setIsGenerateCodeOpen(false)}
+                className="rounded-lg p-1.5 text-muted-2 hover:bg-white/[0.06] hover:text-white transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleGenerateTradingCode} className="flex flex-col gap-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-2">How many trades today?</label>
+                <p className="text-[10px] text-muted-2 mb-2">This automatically divides the VIP plan's daily profit evenly.</p>
+                <select
+                  value={tradeSplit}
+                  onChange={(e) => setTradeSplit(e.target.value)}
+                  className="w-full appearance-none rounded-xl border border-border bg-bg-deep/50 px-3 py-2.5 text-sm text-white outline-none transition focus:border-[#ffaa00]/50 focus:ring-1 focus:ring-[#ffaa00]/50"
+                >
+                  <option value="100">1 Trade Today (100% of daily yield)</option>
+                  <option value="50">2 Trades Today (50% of daily yield each)</option>
+                  <option value="25">4 Trades Today (25% of daily yield each)</option>
+                  <option value="20">5 Trades Today (20% of daily yield each)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-2">Validity Duration (Minutes)</label>
+                <p className="text-[10px] text-muted-2 mb-2">How long before this trading code expires?</p>
+                <select
+                  value={tradeExpiry}
+                  onChange={(e) => setTradeExpiry(e.target.value)}
+                  className="w-full appearance-none rounded-xl border border-border bg-bg-deep/50 px-3 py-2.5 text-sm text-white outline-none transition focus:border-[#ffaa00]/50 focus:ring-1 focus:ring-[#ffaa00]/50"
+                >
+                  <option value="15">15 Minutes</option>
+                  <option value="30">30 Minutes</option>
+                  <option value="60">1 Hour</option>
+                  <option value="120">2 Hours</option>
+                  <option value="360">6 Hours</option>
+                  <option value="1440">24 Hours</option>
+                </select>
+              </div>
+
+              <div className="mt-4 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsGenerateCodeOpen(false)}
+                  className="rounded-xl px-4 py-2 text-sm font-semibold text-muted-2 hover:bg-white/[0.04] hover:text-white transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isGenerating || !tradeSplit}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-[#ffaa00]/10 border border-[#ffaa00]/20 px-5 py-2 text-sm font-semibold text-[#ffaa00] transition hover:bg-[#ffaa00]/20 disabled:opacity-50"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Gift className="h-4 w-4" />
+                      Create Signal
                     </>
                   )}
                 </button>

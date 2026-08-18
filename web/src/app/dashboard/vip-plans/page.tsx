@@ -47,7 +47,7 @@ export default function VipPlansPage() {
           durationDays: Number(p.duration_days),
           totalUsers: 0,
           status: p.status,
-        }));
+        })).sort((a: VipPlan, b: VipPlan) => a.minDeposit - b.minDeposit);
         setPlansList(mappedPlans);
         
         setStats({

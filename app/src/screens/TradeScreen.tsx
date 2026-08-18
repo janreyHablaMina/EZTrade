@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Platform,
@@ -10,44 +10,92 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 import { Key, Zap, Clock, CheckCircle } from '../components/Icons';
 import { useTradeCode } from '../hooks/useTradeCode';
 
 const useNativeDriver = Platform.OS !== 'web';
-const RING_SIZE = 188;
-const RING_R = 82;
-const RING_C = 2 * Math.PI * RING_R;
 
 type TradeScreenProps = {
   onBack?: () => void;
   user?: any;
 };
 
-function ProgressRing({ progress }: { progress: number }) {
-  const offset = RING_C * (1 - progress);
-  return (
-    <Svg width={RING_SIZE} height={RING_SIZE} style={StyleSheet.absoluteFill}>
-      <Circle cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R} stroke="rgba(167, 139, 250, 0.18)" strokeWidth={8} fill="none" />
-      <Circle
-        cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
-        stroke={colors.purpleBright} strokeWidth={8} fill="none"
-        strokeDasharray={`${RING_C} ${RING_C}`}
-        strokeDashoffset={offset}
-        strokeLinecap="round"
-        transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
-      />
-    </Svg>
-  );
+import { apiClient } from '../lib/api';
+
+function useCountdown() {
+  const [timeLeft, setTimeLeft] = useState({ h: '00', m: '00', s: '00' });
+  const [schedules, setSchedules] = useState<string[]>([]);
+  const [duration, setDuration] = useState(30);
+
+  useEffect(() => {
+    apiClient.get('/settings/trade')
+      .then(res => {
+        setSchedules(res.schedules || []);
+        setDuration(res.duration_minutes || 30);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      let diff = 0;
+
+      if (!schedules || schedules.length === 0) {
+        // Fallback to midnight
+        const tomorrow = new Date(now);
+        tomorrow.setHours(24, 0, 0, 0);
+        diff = tomorrow.getTime() - now.getTime();
+      } else {
+        const sorted = [...schedules].sort();
+        let nextTime = null;
+
+        for (const t of sorted) {
+          const [hour, minute] = t.split(':').map(Number);
+          const target = new Date(now);
+          target.setHours(hour, minute, 0, 0);
+          if (target.getTime() > now.getTime()) {
+            nextTime = target;
+            break;
+          }
+        }
+
+        if (!nextTime) {
+          const [hour, minute] = sorted[0].split(':').map(Number);
+          nextTime = new Date(now);
+          nextTime.setDate(now.getDate() + 1);
+          nextTime.setHours(hour, minute, 0, 0);
+        }
+
+        diff = nextTime.getTime() - now.getTime();
+      }
+
+      const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const m = Math.floor((diff / 1000 / 60) % 60);
+      const s = Math.floor((diff / 1000) % 60);
+
+      setTimeLeft({
+        h: h.toString().padStart(2, '0'),
+        m: m.toString().padStart(2, '0'),
+        s: s.toString().padStart(2, '0')
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [schedules]);
+
+  return { timeLeft, duration };
 }
 
 export function TradeScreen({ onBack, user }: TradeScreenProps) {
   const { code, setCode, submitting, redeemed, reward, newBalance, errorMsg, handleSubmit, handleReset } = useTradeCode(user);
+  const { timeLeft: countdown, duration } = useCountdown();
 
   const successScale = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const blinkAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (redeemed) return;
@@ -57,8 +105,18 @@ export function TradeScreen({ onBack, user }: TradeScreenProps) {
         Animated.timing(pulseAnim, { toValue: 1, duration: 1200, useNativeDriver }),
       ])
     );
+    const blinkLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(blinkAnim, { toValue: 0.2, duration: 500, useNativeDriver }),
+        Animated.timing(blinkAnim, { toValue: 1, duration: 500, useNativeDriver }),
+      ])
+    );
     loop.start();
-    return () => loop.stop();
+    blinkLoop.start();
+    return () => {
+      loop.stop();
+      blinkLoop.stop();
+    };
   }, [redeemed]);
 
   useEffect(() => {
@@ -74,24 +132,36 @@ export function TradeScreen({ onBack, user }: TradeScreenProps) {
       <ScreenHeader title="Trade" onBack={onBack} padded={false} />
       <Text style={styles.subtitle}>Enter your trading code to quantify today's yield</Text>
 
-      {/* Hero orb */}
+      {/* Hero section */}
       <View style={styles.hero}>
-        <View style={styles.orbWrap}>
-          <ProgressRing progress={redeemed ? 1 : 0} />
-          {redeemed ? (
-            <Animated.View style={[styles.orbSuccess, { transform: [{ scale: successScale }] }]}>
-              <CheckCircle size={32} color="#4ade80" />
-              <Text style={styles.orbSuccessLabel}>Quantified!</Text>
-              <Text style={styles.orbSuccessReward}>+${Number(reward).toFixed(2)}</Text>
-            </Animated.View>
-          ) : (
-            <Animated.View style={[styles.orbIdle, { transform: [{ scale: pulseAnim }] }]}>
-              <Zap size={32} color="rgba(167,139,250,0.8)" />
-              <Text style={styles.orbIdleLabel}>Awaiting</Text>
-              <Text style={styles.orbIdleSub}>Code</Text>
-            </Animated.View>
-          )}
-        </View>
+        {redeemed ? (
+          <Animated.View style={[styles.heroSuccessState, { transform: [{ scale: successScale }] }]}>
+            <CheckCircle size={56} color="#4ade80" />
+            <Text style={styles.heroSuccessTitle}>Quantified!</Text>
+            <Text style={styles.heroSuccessReward}>+${Number(reward).toFixed(2)}</Text>
+          </Animated.View>
+        ) : (
+          <Animated.View style={[styles.heroIdleState, { transform: [{ scale: pulseAnim }] }]}>
+            <Text style={styles.heroIdleSub}>Next Trade In</Text>
+            
+            <View style={styles.timerRow}>
+              <View style={styles.timeBox}>
+                <Text style={styles.timeDigit}>{countdown.h}</Text>
+                <Text style={styles.timeLabel}>HRS</Text>
+              </View>
+              <Animated.Text style={[styles.timeColon, { opacity: blinkAnim }]}>:</Animated.Text>
+              <View style={styles.timeBox}>
+                <Text style={styles.timeDigit}>{countdown.m}</Text>
+                <Text style={styles.timeLabel}>MIN</Text>
+              </View>
+              <Animated.Text style={[styles.timeColon, { opacity: blinkAnim }]}>:</Animated.Text>
+              <View style={styles.timeBox}>
+                <Text style={styles.timeDigit}>{countdown.s}</Text>
+                <Text style={styles.timeLabel}>SEC</Text>
+              </View>
+            </View>
+          </Animated.View>
+        )}
 
         {redeemed ? (
           <Text style={styles.heroHintSuccess}>
@@ -108,7 +178,7 @@ export function TradeScreen({ onBack, user }: TradeScreenProps) {
       {!redeemed ? (
         <View style={styles.inputSection}>
           <LinearGradient
-            colors={['rgba(255,255,255,0.07)', 'rgba(255,255,255,0.03)']}
+            colors={['rgba(18, 16, 31, 0.8)', 'rgba(18, 16, 31, 0.5)']}
             style={styles.inputCard}
           >
             <View style={styles.inputHeader}>
@@ -117,11 +187,14 @@ export function TradeScreen({ onBack, user }: TradeScreenProps) {
             </View>
 
             <TextInput
-              style={styles.textInput}
+              style={[
+                styles.textInput,
+                code.length === 0 && { fontSize: 15, letterSpacing: 1, fontFamily: 'Outfit_500Medium' }
+              ]}
               value={code}
               onChangeText={(t) => { setCode(t.toUpperCase()); }}
-              placeholder="e.g. EZ9X2P4A"
-              placeholderTextColor="rgba(255,255,255,0.2)"
+              placeholder="Enter Code"
+              placeholderTextColor="rgba(255,255,255,0.3)"
               autoCapitalize="characters"
               autoCorrect={false}
               editable={!submitting}
@@ -141,23 +214,22 @@ export function TradeScreen({ onBack, user }: TradeScreenProps) {
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                 style={styles.submitBtnGradient}
               >
-                <Zap size={18} color={colors.white} />
                 <Text style={styles.submitBtnText}>
-                  {submitting ? 'Quantifying...' : 'Quantify Yield'}
+                  {submitting ? 'Trading...' : 'Trade'}
                 </Text>
               </LinearGradient>
             </Pressable>
 
             <View style={styles.expiryRow}>
               <Clock size={12} color="rgba(255,255,255,0.35)" />
-              <Text style={styles.expiryText}>Codes expire 30 minutes after broadcast</Text>
+              <Text style={styles.expiryText}>Codes expire {duration} minutes after broadcast</Text>
             </View>
           </LinearGradient>
         </View>
       ) : (
         <View style={styles.inputSection}>
           <LinearGradient
-            colors={['rgba(74,222,128,0.08)', 'rgba(74,222,128,0.03)']}
+            colors={['rgba(18, 16, 31, 0.8)', 'rgba(18, 16, 31, 0.5)']}
             style={[styles.inputCard, styles.successCard]}
           >
             <Text style={styles.successTitle}>Reward Summary</Text>
@@ -185,11 +257,14 @@ export function TradeScreen({ onBack, user }: TradeScreenProps) {
       )}
 
       {/* Info Card */}
-      <View style={styles.infoCard}>
+      <LinearGradient
+        colors={['rgba(18, 16, 31, 0.8)', 'rgba(18, 16, 31, 0.5)']}
+        style={styles.infoCard}
+      >
         <Text style={styles.infoTitle}>How it works</Text>
         {[
           'Admin broadcasts a unique trading code via notifications.',
-          'You have 30 minutes to enter the code in the Trade tab.',
+          `You have ${duration} minutes to enter the code in the Trade tab.`,
           'A valid code instantly earns your active VIP plan\'s daily yield.',
           'Each code can only be used once per user.',
         ].map((step, index) => (
@@ -200,7 +275,7 @@ export function TradeScreen({ onBack, user }: TradeScreenProps) {
             <Text style={styles.infoText}>{step}</Text>
           </View>
         ))}
-      </View>
+      </LinearGradient>
     </ScrollView>
   );
 }
@@ -223,52 +298,67 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 16,
   },
-  orbWrap: {
-    width: RING_SIZE,
-    height: RING_SIZE,
+  heroIdleState: {
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 32,
   },
-  orbIdle: {
-    width: 148,
-    height: 148,
-    borderRadius: 74,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(124,58,237,0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(167,139,250,0.3)',
-  },
-  orbIdleLabel: {
-    fontFamily: 'Outfit_700Bold',
+  heroIdleSub: {
+    fontFamily: 'Outfit_600SemiBold',
     fontSize: 16,
-    color: 'rgba(255,255,255,0.7)',
+    color: colors.purpleBright,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    marginBottom: 4,
   },
-  orbIdleSub: {
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.4)',
+  timerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    gap: 8,
   },
-  orbSuccess: {
-    width: 148,
-    height: 148,
-    borderRadius: 74,
+  timeBox: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 16,
+    paddingVertical: 12,
+    width: 72,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(74,222,128,0.4)',
   },
-  orbSuccessLabel: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 15,
+  timeDigit: {
+    fontFamily: 'Outfit_800ExtraBold',
+    fontSize: 32,
+    color: colors.white,
+    letterSpacing: 2,
+  },
+  timeLabel: {
+    fontFamily: 'Outfit_600SemiBold',
+    fontSize: 10,
+    color: colors.purpleBright,
+    marginTop: 2,
+    letterSpacing: 1,
+  },
+  timeColon: {
+    fontFamily: 'Outfit_800ExtraBold',
+    fontSize: 32,
+    color: 'rgba(255,255,255,0.4)',
+    paddingTop: 8,
+  },
+  heroSuccessState: {
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 32,
+  },
+  heroSuccessTitle: {
+    fontFamily: 'Outfit_800ExtraBold',
+    fontSize: 40,
     color: '#bbf7d0',
   },
-  orbSuccessReward: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 16,
+  heroSuccessReward: {
+    fontFamily: 'Outfit_800ExtraBold',
+    fontSize: 24,
     color: '#4ade80',
   },
   heroHint: {
@@ -292,11 +382,16 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   inputCard: {
-    padding: 20,
-    borderRadius: 20,
+    padding: 24,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    gap: 14,
+    borderColor: colors.cardBorder,
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
   },
   successCard: {
     borderColor: 'rgba(74,222,128,0.2)',
@@ -404,12 +499,16 @@ const styles = StyleSheet.create({
   },
   // Info card
   infoCard: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(167, 139, 250, 0.15)',
     borderRadius: 20,
-    padding: 16,
-    gap: 12,
+    padding: 24,
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
   },
   infoTitle: {
     fontFamily: 'Outfit_700Bold',

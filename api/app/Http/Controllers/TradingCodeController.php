@@ -14,21 +14,30 @@ class TradingCodeController extends Controller
 {
     public function generate(Request $request)
     {
+        $request->validate([
+            'profit_percentage' => 'nullable|numeric|min:0.01|max:100',
+            'expires_in_minutes' => 'nullable|integer|min:1',
+        ]);
+
+        $profitPercentage = $request->input('profit_percentage', 10.00);
+        $expiresInMinutes = $request->input('expires_in_minutes', 30);
+
         // 1. Generate an 8-character uppercase code
         $code = strtoupper(Str::random(8));
 
-        // 2. Save it to the DB with 30-min expiration
+        // 2. Save it to the DB with provided or default expiration
         $tradingCode = TradingCode::create([
             'code' => $code,
             'reward_type' => 'vip_yield',
-            'expires_at' => Carbon::now()->addMinutes(30),
+            'profit_percentage' => $profitPercentage,
+            'expires_at' => Carbon::now()->addMinutes($expiresInMinutes),
         ]);
 
         // 3. Create a broadcast notification
         Notification::create([
             'user_id' => null,
             'title' => 'New Trading Code Available!',
-            'message' => "Hurry! Paste this code in the Trade tab to earn your VIP yield. Code: {$code} (Expires in 30 mins)",
+            'message' => "Hurry! Paste this code in the Trade tab to earn {$profitPercentage}% of your VIP plan limit. Code: {$code} (Expires in {$expiresInMinutes} mins)",
             'type' => 'Promotion',
             'is_read' => false,
         ]);
@@ -80,10 +89,11 @@ class TradingCodeController extends Controller
             return response()->json(['message' => 'You have already redeemed this code.'], 400);
         }
 
-        // Calculate reward: (min_deposit * daily_profit_percent / 100)
+        // Calculate reward: (min_deposit * (daily_profit_percent / 100) * (tradingCode->profit_percentage / 100))
         $rewardAmount = 0.00;
         if ($user->vipPlan && !is_null($user->vipPlan->daily_profit_percent)) {
-            $rewardAmount = round(floatval($user->vipPlan->min_deposit) * floatval($user->vipPlan->daily_profit_percent) / 100, 2);
+            $dailyProfit = floatval($user->vipPlan->min_deposit) * (floatval($user->vipPlan->daily_profit_percent) / 100);
+            $rewardAmount = round($dailyProfit * (floatval($tradingCode->profit_percentage) / 100), 2);
         }
 
         // Credit balance

@@ -14,7 +14,6 @@ export default function TransactionsPage() {
   const [type, setType] = useState("all");
   const [status, setStatus] = useState("all");
   const [currency, setCurrency] = useState("all");
-  const [currency, setCurrency] = useState("all");
   const [dateRange, setDateRange] = useState("");
   const [transactions, setTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);

@@ -38,8 +38,10 @@ Route::get('/notifications', [NotificationController::class, 'index']);
 Route::post('/notifications', [NotificationController::class, 'store']);
 Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 
-// ── Trading Codes ─────────────────────────────────────────────────────────────
-Route::post('/trading-codes/generate', [TradingCodeController::class, 'generate']);
+// ── Trading Codes ─────────────────────────────────────────────────────────────    // Admin Endpoints
+    Route::get('/settings/trade', [\App\Http\Controllers\TradeSettingsController::class, 'getSettings']);
+    Route::post('/settings/trade', [\App\Http\Controllers\TradeSettingsController::class, 'updateSettings']);
+    Route::post('/trading-codes/generate', [\App\Http\Controllers\TradingCodeController::class, 'generate']);
 Route::post('/trading-codes/redeem', [TradingCodeController::class, 'redeem']);
 
 // ── Authenticated ─────────────────────────────────────────────────────────────
