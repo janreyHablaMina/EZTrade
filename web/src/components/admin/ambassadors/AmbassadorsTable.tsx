@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import type { UserRecord as AmbassadorRecord } from "@/types/admin";
-import { Search, ChevronDown, CheckCircle2, XCircle } from "lucide-react";
+import Link from "next/link";
+import { Search, ChevronDown, CheckCircle2, XCircle, Eye } from "lucide-react";
 import { PaginationFooter } from "@/components/admin/PaginationFooter";
 
 export function AmbassadorsTable({
@@ -33,6 +34,7 @@ export function AmbassadorsTable({
               <th className="px-5 py-3 font-medium text-right">Total Assets</th>
               <th className="px-5 py-3 font-medium text-right">Daily Admin Earn (5%)</th>
               <th className="px-5 py-3 font-medium text-center">Status</th>
+              <th className="px-5 py-3 font-medium text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/[0.05]">
@@ -88,11 +90,20 @@ export function AmbassadorsTable({
                     {ambassador.status}
                   </span>
                 </td>
+                <td className="px-5 py-4 text-right">
+                  <Link
+                    href={`/dashboard/ambassadors/${ambassador.id}`}
+                    className="inline-flex items-center justify-center h-7 w-7 rounded-lg border border-border bg-white/[0.04] hover:bg-white/[0.08] text-muted-2 hover:text-white transition cursor-pointer"
+                    title="View Ambassador Details"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                  </Link>
+                </td>
               </tr>
             ))}
             {currentItems.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-5 py-8 text-center text-muted-2">
+                <td colSpan={7} className="px-5 py-8 text-center text-muted-2">
                   No ambassadors found matching the filters.
                 </td>
               </tr>

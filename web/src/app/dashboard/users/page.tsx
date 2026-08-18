@@ -25,8 +25,10 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import type { UserRecord, RowStatus } from "@/types/admin";
 import { usePagination } from "@/hooks/usePagination";
 import { useTableSelection } from "@/hooks/useTableSelection";
+import { useRouter } from "next/navigation";
 
 export default function UsersPage() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [vipLevel, setVipLevel] = useState("all");
   const [status, setStatus] = useState("all");
@@ -357,7 +359,13 @@ export default function UsersPage() {
             setSelectedIds={setSelectedIds}
             toggleSelectAll={toggleSelectAll}
             toggleSelectRow={toggleSelectRow}
-            onViewUser={setViewingUser}
+            onViewUser={(user) => {
+              if (user.role === "Ambassador") {
+                router.push(`/dashboard/ambassadors/${user.id}`);
+              } else {
+                setViewingUser(user);
+              }
+            }}
             onEditUser={setEditingUser}
             onNotifyUser={setNotifyingUser}
             onSuspendUser={(user) => setAccountAction({ user, action: 'suspend' })}

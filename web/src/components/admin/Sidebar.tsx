@@ -40,7 +40,6 @@ const management: NavItem[] = [
   { label: "Transactions", href: "/dashboard/transactions", icon: ArrowLeftRight },
   { label: "Earnings", href: "/dashboard/earnings", icon: Coins },
   { label: "Referrals", href: "/dashboard/referrals", icon: Share2 },
-  { label: "Ambassadors", href: "/dashboard/ambassadors", icon: Users },
   { label: "Assets", href: "/dashboard/assets", icon: Wallet },
   { label: "Notifications", href: "/dashboard/notifications", icon: Bell, badge: true },
 ];
