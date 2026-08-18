@@ -31,6 +31,12 @@ Route::delete('/vip-plans/{id}', [VipPlanController::class, 'destroy']);
     Route::get('/deposits', [\App\Http\Controllers\DepositController::class, 'index']);
     Route::post('/deposits', [\App\Http\Controllers\DepositController::class, 'store']);
     Route::patch('/deposits/{id}', [\App\Http\Controllers\DepositController::class, 'update']);
+    
+    // ── Withdrawals ─────────────────────────────────────────────────────────────────
+    Route::get('/withdrawals', [\App\Http\Controllers\WithdrawalController::class, 'index']);
+    Route::post('/withdrawals', [\App\Http\Controllers\WithdrawalController::class, 'store']);
+    Route::patch('/withdrawals/{id}', [\App\Http\Controllers\WithdrawalController::class, 'update']);
+
 Route::post('/vip-plans/unlock', [VipPlanController::class, 'unlock']);
 
 // ── Notifications ─────────────────────────────────────────────────────────────
@@ -38,11 +44,16 @@ Route::get('/notifications', [NotificationController::class, 'index']);
 Route::post('/notifications', [NotificationController::class, 'store']);
 Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 
-// ── Trading Codes ─────────────────────────────────────────────────────────────    // Admin Endpoints
-    Route::get('/settings/trade', [\App\Http\Controllers\TradeSettingsController::class, 'getSettings']);
-    Route::post('/settings/trade', [\App\Http\Controllers\TradeSettingsController::class, 'updateSettings']);
-    Route::post('/trading-codes/generate', [\App\Http\Controllers\TradingCodeController::class, 'generate']);
+// ── Admin Endpoints ─────────────────────────────────────────────────────────────
+Route::get('/admin/dashboard-stats', [\App\Http\Controllers\Admin\DashboardController::class, 'getStats']);
+Route::get('/admin/referrals', [\App\Http\Controllers\Admin\ReferralController::class, 'index']);
+Route::get('/admin/ambassadors', [\App\Http\Controllers\Admin\AmbassadorController::class, 'index']);
+Route::get('/admin/assets', [\App\Http\Controllers\Admin\AssetController::class, 'index']);
+Route::get('/settings/trade', [\App\Http\Controllers\TradeSettingsController::class, 'getSettings']);
+Route::post('/settings/trade', [\App\Http\Controllers\TradeSettingsController::class, 'updateSettings']);
+Route::post('/trading-codes/generate', [\App\Http\Controllers\TradingCodeController::class, 'generate']);
 Route::post('/trading-codes/redeem', [TradingCodeController::class, 'redeem']);
+Route::get('/earnings', [\App\Http\Controllers\EarningController::class, 'index']);
 
 // ── Authenticated ─────────────────────────────────────────────────────────────
 Route::get('/user', function (Request $request) {

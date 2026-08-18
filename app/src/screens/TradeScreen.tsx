@@ -14,6 +14,8 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 import { Key, Zap, Clock, CheckCircle } from '../components/Icons';
 import { useTradeCode } from '../hooks/useTradeCode';
+import { useHomeStats } from '../hooks/useHomeStats';
+import { AnimatedLoading } from '../components/AnimatedLoading';
 
 const useNativeDriver = Platform.OS !== 'web';
 
@@ -90,6 +92,7 @@ function useCountdown() {
 }
 
 export function TradeScreen({ onBack, user }: TradeScreenProps) {
+  const { loading } = useHomeStats(user);
   const { code, setCode, submitting, redeemed, reward, newBalance, errorMsg, handleSubmit, handleReset } = useTradeCode(user);
   const { timeLeft: countdown, duration } = useCountdown();
 
@@ -126,6 +129,15 @@ export function TradeScreen({ onBack, user }: TradeScreenProps) {
       successScale.setValue(0);
     }
   }, [redeemed]);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <ScreenHeader title="Trade" onBack={onBack} padded={false} />
+        <AnimatedLoading text="Loading Trading Data..." />
+      </View>
+    );
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

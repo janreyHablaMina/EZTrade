@@ -166,43 +166,49 @@ export default function DepositsPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <KpiCard
           label="Total Deposits"
-          value="1,248"
-          change="+18.7%"
+          value={deposits.length.toLocaleString()}
+          change=""
           icon={Download}
         />
         <KpiCard
           label="Total Amount"
-          value="$123,456.78"
-          change="+16.3%"
+          value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+            deposits.filter(d => d.status === 'Approved').reduce((sum, d) => sum + (d.amount || 0), 0)
+          )}
+          change=""
           icon={Coins}
         />
         <KpiCard
           label="Completed"
-          value="1,102"
-          change="+20.5%"
+          value={deposits.filter(d => d.status === 'Approved').length.toLocaleString()}
+          change=""
           icon={CheckCircle2}
           iconClassName="text-success"
         />
         <KpiCard
           label="Pending"
-          value="98"
-          change="-5.2%"
+          value={deposits.filter(d => d.status === 'Pending').length.toLocaleString()}
+          change=""
           positive={false}
           icon={Clock}
           iconClassName="text-warning"
         />
         <KpiCard
           label="Failed"
-          value="48"
-          change="-12.8%"
-          positive={true} // Going down in failures is positive!
+          value={deposits.filter(d => d.status === 'Rejected').length.toLocaleString()}
+          change=""
+          positive={true}
           icon={XCircle}
           iconClassName="text-danger"
         />
         <KpiCard
           label="Success Rate"
-          value="88.30%"
-          change="+6.4%"
+          value={
+            deposits.length > 0 
+              ? ((deposits.filter(d => d.status === 'Approved').length / deposits.length) * 100).toFixed(2) + '%'
+              : '0.00%'
+          }
+          change=""
           icon={TrendingUp}
           iconClassName="text-success"
         />

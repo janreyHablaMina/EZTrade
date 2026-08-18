@@ -8,7 +8,6 @@ import { ProfileAccountCard } from "@/components/admin/settings/ProfileAccountCa
 import { PreferencesCard } from "@/components/admin/settings/PreferencesCard";
 import { AccountSummaryCard } from "@/components/admin/settings/AccountSummaryCard";
 import { SecuritySettingsCard } from "@/components/admin/settings/SecuritySettingsCard";
-import { HelpCard } from "@/components/admin/settings/HelpCard";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("Profile & Account");
@@ -48,7 +47,6 @@ export default function SettingsPage() {
           <div className="space-y-5">
             <AccountSummaryCard />
             <SecuritySettingsCard />
-            <HelpCard />
           </div>
         </div>
       </div>

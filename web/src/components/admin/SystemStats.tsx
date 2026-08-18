@@ -1,13 +1,13 @@
 import { Activity, Database, Server, Zap } from "lucide-react";
 
-const STATS = [
-  { label: "Server Uptime", value: "99.9%", icon: Server },
-  { label: "Total Trades", value: "245,678", icon: Activity },
-  { label: "DB Size", value: "128.4 GB", icon: Database },
-  { label: "API Calls (Today)", value: "1.2M", icon: Zap },
-];
+export function SystemStats({ totalTrades = 0 }: { totalTrades?: number }) {
+  const STATS = [
+    { label: "Server Uptime", value: "99.9%", icon: Server },
+    { label: "Total Trades", value: totalTrades.toLocaleString(), icon: Activity },
+    { label: "DB Size", value: "128.4 MB", icon: Database },
+    { label: "API Calls (Today)", value: "1.2K", icon: Zap },
+  ];
 
-export function SystemStats() {
   return (
     <section className="flex h-full flex-col rounded-2xl border border-border bg-card p-4 sm:p-5">
       <h3 className="mb-4 text-sm font-semibold text-white">System Statistics</h3>

@@ -12,13 +12,12 @@ import {
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { initialWithdrawalRequests } from "@/lib/mock-data/withdrawalsData";
-import type { WithdrawalRequest } from "@/lib/mock-data/withdrawalsData";
 import { WithdrawalsFilters } from "@/components/admin/withdrawals/WithdrawalsFilters";
 import { WithdrawalsTable } from "@/components/admin/withdrawals/WithdrawalsTable";
 import { GenericFloatingActions } from "@/components/admin/GenericFloatingActions";
 import { usePagination } from "@/hooks/usePagination";
 import { useTableSelection } from "@/hooks/useTableSelection";
+import { webApi } from "@/lib/api";
 
 export default function WithdrawalsPage() {
   const [search, setSearch] = useState("");
@@ -26,6 +25,36 @@ export default function WithdrawalsPage() {
   const [network, setNetwork] = useState("all");
   const [currency, setCurrency] = useState("all");
   const [dateRange, setDateRange] = useState("");
+  const [withdrawals, setWithdrawals] = useState<any[]>([]);
+
+  const fetchWithdrawals = async () => {
+    try {
+      const data = await webApi.get('/withdrawals');
+      const mapped = data.map((w: any) => ({
+        id: `WDL-${w.id.toString().padStart(6, '0')}`,
+        dbId: w.id,
+        userName: w.user ? w.user.name : 'Unknown',
+        userEmail: w.user ? w.user.email : 'Unknown',
+        userId: w.user ? `EZT-${w.user.id.toString().padStart(4, '0')}` : 'N/A',
+        amount: parseFloat(w.amount),
+        currency: 'USDT',
+        network: w.network,
+        walletAddress: w.txid || 'Pending',
+        status: w.status,
+        submittedAt: new Date(w.created_at).toLocaleString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        }),
+      }));
+      setWithdrawals(mapped);
+    } catch (e) {
+      console.error('Failed to fetch withdrawals:', e);
+    }
+  };
+
+  useEffect(() => {
+    fetchWithdrawals();
+  }, []);
 
   // Applied filters state
   const [filters, setFilters] = useState({
@@ -37,7 +66,7 @@ export default function WithdrawalsPage() {
 
   // Apply filters logic
   const filteredWithdrawals = useMemo(() => {
-    return initialWithdrawalRequests.filter((withdrawal) => {
+    return withdrawals.filter((withdrawal) => {
       const matchSearch =
         !filters.search ||
         withdrawal.userName.toLowerCase().includes(filters.search.toLowerCase()) ||
@@ -51,7 +80,7 @@ export default function WithdrawalsPage() {
 
       return matchSearch && matchStatus && matchNetwork && matchCurrency;
     });
-  }, [filters]);
+  }, [filters, withdrawals]);
 
   const {
     currentPage,
@@ -95,6 +124,24 @@ export default function WithdrawalsPage() {
     setCurrentPage(1);
   };
 
+  const handleApprove = async (withdrawal: any) => {
+    try {
+      await webApi.patch(`/withdrawals/${withdrawal.dbId}`, { status: 'Completed' });
+      fetchWithdrawals();
+    } catch (e) {
+      console.error('Failed to approve withdrawal', e);
+    }
+  };
+
+  const handleReject = async (withdrawal: any) => {
+    try {
+      await webApi.patch(`/withdrawals/${withdrawal.dbId}`, { status: 'Rejected' });
+      fetchWithdrawals();
+    } catch (e) {
+      console.error('Failed to reject withdrawal', e);
+    }
+  };
+
   return (
     <AdminShell>
       {/* Top Header section */}
@@ -132,43 +179,49 @@ export default function WithdrawalsPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <KpiCard
           label="Total Withdrawals"
-          value="956"
-          change="+16.4%"
+          value={withdrawals.length.toLocaleString()}
+          change=""
           icon={Download}
         />
         <KpiCard
           label="Total Amount"
-          value="$98,765.43"
-          change="+14.8%"
+          value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+            withdrawals.filter(w => w.status === 'Completed').reduce((sum, w) => sum + (w.amount || 0), 0)
+          )}
+          change=""
           icon={Coins}
         />
         <KpiCard
           label="Completed"
-          value="662"
-          change="+15.7%"
+          value={withdrawals.filter(w => w.status === 'Completed').length.toLocaleString()}
+          change=""
           icon={CheckCircle2}
           iconClassName="text-success"
         />
         <KpiCard
           label="Pending"
-          value="164"
-          change="+8.3%"
+          value={withdrawals.filter(w => w.status === 'Pending').length.toLocaleString()}
+          change=""
           positive={true}
           icon={Clock}
           iconClassName="text-warning"
         />
         <KpiCard
           label="Rejected"
-          value="78"
-          change="-12.6%"
-          positive={true} // Going down in rejections is positive!
+          value={withdrawals.filter(w => w.status === 'Rejected').length.toLocaleString()}
+          change=""
+          positive={true}
           icon={XCircle}
           iconClassName="text-danger"
         />
         <KpiCard
           label="Success Rate"
-          value="84.7%"
-          change="+5.1%"
+          value={
+            withdrawals.length > 0 
+              ? ((withdrawals.filter(w => w.status === 'Completed').length / withdrawals.length) * 100).toFixed(2) + '%'
+              : '0.00%'
+          }
+          change=""
           icon={TrendingUp}
           iconClassName="text-success"
         />
@@ -194,7 +247,7 @@ export default function WithdrawalsPage() {
       <WithdrawalsTable
         withdrawals={filteredWithdrawals}
         paginatedWithdrawals={paginatedWithdrawals}
-        totalCount={initialWithdrawalRequests.length}
+        totalCount={filteredWithdrawals.length}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
         pageSize={pageSize}
@@ -203,8 +256,8 @@ export default function WithdrawalsPage() {
         toggleSelectAll={toggleSelectAll}
         toggleSelectRow={toggleSelectRow}
         onViewDetails={(w) => console.log("View details for:", w.id)}
-        onApprove={(w) => console.log("Approve withdrawal:", w.id)}
-        onReject={(w) => console.log("Reject withdrawal:", w.id)}
+        onApprove={handleApprove}
+        onReject={handleReject}
         onHistory={(w) => console.log("History logs for:", w.id)}
       />
 

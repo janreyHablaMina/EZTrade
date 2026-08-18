@@ -42,10 +42,6 @@ const management: NavItem[] = [
   { label: "Referrals", href: "/dashboard/referrals", icon: Share2 },
   { label: "Ambassadors", href: "/dashboard/ambassadors", icon: Users },
   { label: "Assets", href: "/dashboard/assets", icon: Wallet },
-];
-
-const support: NavItem[] = [
-  { label: "Support Tickets", href: "/dashboard/support-tickets", icon: LifeBuoy },
   { label: "Notifications", href: "/dashboard/notifications", icon: Bell, badge: true },
 ];
 
@@ -128,7 +124,6 @@ export function Sidebar() {
         </Link>
 
         <NavSection title="Management" items={management} />
-        <NavSection title="Support" items={support} />
         <NavSection title="Settings" items={settings} />
         <NavSection title="Admin" items={admin} />
       </nav>

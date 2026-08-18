@@ -18,18 +18,22 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchDeposits = async () => {
+  const fetchTransactions = async () => {
     setIsLoading(true);
     try {
-      const data = await webApi.get('/deposits');
-      const mapped = data.map((d: any) => ({
-        id: `TX-${d.id.toString().padStart(6, '0')}`,
+      const [depositsData, withdrawalsData] = await Promise.all([
+        webApi.get('/deposits'),
+        webApi.get('/withdrawals')
+      ]);
+
+      const mappedDeposits = depositsData.map((d: any) => ({
+        id: `TX-D${d.id.toString().padStart(5, '0')}`,
         dbId: d.id,
         type: 'Deposit',
         amount: parseFloat(d.amount),
         currency: 'USDT',
         network: d.network,
-        status: d.status,
+        status: d.status === 'Approved' ? 'Completed' : d.status, // Normalize status
         userName: d.user ? d.user.name : 'Unknown',
         userEmail: d.user ? d.user.email : 'Unknown',
         userId: d.user ? `EZT-${d.user.id.toString().padStart(4, '0')}` : 'N/A',
@@ -37,19 +41,42 @@ export default function TransactionsPage() {
           year: 'numeric', month: 'short', day: 'numeric',
           hour: '2-digit', minute: '2-digit'
         }),
-        referenceTxid: d.txid,
+        timestamp: new Date(d.created_at).getTime(),
+        referenceTxid: d.txid || 'N/A',
         description: 'Wallet funding'
       }));
-      setTransactions(mapped);
+
+      const mappedWithdrawals = withdrawalsData.map((w: any) => ({
+        id: `TX-W${w.id.toString().padStart(5, '0')}`,
+        dbId: w.id,
+        type: 'Withdrawal',
+        amount: parseFloat(w.amount),
+        currency: 'USDT',
+        network: w.network,
+        status: w.status,
+        userName: w.user ? w.user.name : 'Unknown',
+        userEmail: w.user ? w.user.email : 'Unknown',
+        userId: w.user ? `EZT-${w.user.id.toString().padStart(4, '0')}` : 'N/A',
+        dateTime: new Date(w.created_at).toLocaleString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        }),
+        timestamp: new Date(w.created_at).getTime(),
+        referenceTxid: w.txid || 'N/A',
+        description: 'Funds withdrawal'
+      }));
+
+      const allTransactions = [...mappedDeposits, ...mappedWithdrawals].sort((a, b) => b.timestamp - a.timestamp);
+      setTransactions(allTransactions);
     } catch (e) {
-      console.error('Failed to fetch deposits:', e);
+      console.error('Failed to fetch transactions:', e);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDeposits();
+    fetchTransactions();
   }, []);
 
   // Filter application state
@@ -75,7 +102,7 @@ export default function TransactionsPage() {
         tx.description?.toLowerCase().includes(filters.search.toLowerCase());
 
       const matchType = filters.type === "all" || tx.type === filters.type;
-      const matchStatus = filters.status === "all" || tx.status === filters.status;
+      const matchStatus = filters.status === "all" || tx.status.toLowerCase() === filters.status.toLowerCase();
       const matchCurrency = filters.currency === "all" || tx.currency === filters.currency;
 
       return matchSearch && matchType && matchStatus && matchCurrency;
@@ -143,38 +170,40 @@ export default function TransactionsPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <KpiCard
           label="Total Transactions"
-          value="5,620"
-          change="+18.2%"
+          value={transactions.length.toLocaleString()}
+          change=""
           icon={ArrowLeftRight}
         />
         <KpiCard
           label="Total Deposits"
-          value="2,468"
-          change="+15.6%"
+          value={transactions.filter(t => t.type === 'Deposit').length.toLocaleString()}
+          change=""
           icon={ArrowDownToLine}
         />
         <KpiCard
           label="Total Withdrawals"
-          value="1,824"
-          change="+17.4%"
+          value={transactions.filter(t => t.type === 'Withdrawal').length.toLocaleString()}
+          change=""
           icon={ArrowUpFromLine}
         />
         <KpiCard
           label="Total Transfers"
-          value="1,128"
-          change="+21.3%"
+          value="0"
+          change=""
           icon={RefreshCw}
         />
         <KpiCard
           label="Total Amount"
-          value="$1,234,567.89"
-          change="+16.8%"
+          value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+            transactions.filter(t => t.status === 'Completed').reduce((sum, t) => sum + (t.amount || 0), 0)
+          )}
+          change=""
           icon={Coins}
         />
         <KpiCard
           label="Total Fees"
-          value="$12,345.67"
-          change="+11.7%"
+          value="$0.00"
+          change=""
           icon={Coins}
           iconClassName="text-warning"
         />
@@ -205,7 +234,7 @@ export default function TransactionsPage() {
         setCurrentPage={setCurrentPage}
         pageSize={pageSize}
         setPageSize={setPageSize}
-        onRefresh={fetchDeposits}
+        onRefresh={fetchTransactions}
         onViewDetails={(tx) => console.log("View details for:", tx.id)}
         onPrint={(tx) => console.log("Print receipt for:", tx.id)}
         onHistory={(tx) => console.log("History log for:", tx.id)}

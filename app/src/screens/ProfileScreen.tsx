@@ -5,6 +5,8 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
+import { useHomeStats } from '../hooks/useHomeStats';
+import { AnimatedLoading } from '../components/AnimatedLoading';
 
 type MenuKey =
   | 'assets'
@@ -188,7 +190,7 @@ function LogoutIcon() {
   );
 }
 
-function AvatarPortrait() {
+function AvatarPortrait({ initials }: { initials: string }) {
   return (
     <LinearGradient
       colors={['#7c3aed', '#4c1d95']}
@@ -196,34 +198,39 @@ function AvatarPortrait() {
       end={{ x: 0.8, y: 1 }}
       style={styles.avatar}
     >
-      <Svg width={78} height={78} viewBox="0 0 78 78">
-        <Circle cx="39" cy="30" r="14" fill="rgba(255,255,255,0.92)" />
-        <Path
-          d="M16 68c3.5-14 11.5-21 23-21s19.5 7 23 21"
-          fill="rgba(255,255,255,0.92)"
-        />
-        <Rect
-          x="28"
-          y="20"
-          width="22"
-          height="8"
-          rx="4"
-          fill="rgba(76,29,149,0.55)"
-        />
-      </Svg>
+      <Text style={styles.avatarText}>{initials}</Text>
     </LinearGradient>
   );
 }
 
 export function ProfileScreen({
-  userName = 'John Doe',
-  email = 'john.doe@email.com',
-  planName = 'VIP 1',
+  user,
   onBack,
   onLogout,
   onOpenMenu,
 }: ProfileScreenProps) {
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const { userData, loading } = useHomeStats(user);
+
+  if (loading) {
+    return (
+      <View style={[styles.root, { backgroundColor: colors.bg }]}>
+        <ScreenHeader title="Profile" onBack={onBack} padded={false} />
+        <AnimatedLoading text="Loading Profile..." />
+      </View>
+    );
+  }
+
+  const userName = userData?.name || 'John Doe';
+  const email = userData?.email || 'user@example.com';
+  const activePlan = userData?.vip_plan;
+  const planName = activePlan ? activePlan.level.toUpperCase() : 'NO VIP';
+  const initials = userName
+    .split(' ')
+    .map((part: string) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <View style={styles.root}>
@@ -234,16 +241,16 @@ export function ProfileScreen({
       <ScreenHeader title="Profile" onBack={onBack} padded={false} />
 
       <View style={styles.identity}>
-        <AvatarPortrait />
+        <AvatarPortrait initials={initials} />
         <Text style={styles.name}>{userName}</Text>
         <Text style={styles.email}>{email}</Text>
 
         <View style={styles.statusBadge}>
           <Text style={styles.statusPlan}>{planName}</Text>
           <View style={styles.statusDivider} />
-          <View style={styles.statusActive}>
-            <View style={styles.statusDot} />
-            <Text style={styles.statusActiveText}>Active</Text>
+          <View style={[styles.statusActive, !activePlan && { opacity: 0.5 }]}>
+            <View style={[styles.statusDot, !activePlan && { backgroundColor: '#ef4444' }]} />
+            <Text style={styles.statusActiveText}>{activePlan ? 'Active' : 'Inactive'}</Text>
           </View>
         </View>
       </View>
@@ -317,6 +324,11 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(192, 132, 252, 0.55)',
     overflow: 'hidden',
     marginBottom: 6,
+  },
+  avatarText: {
+    fontFamily: 'Outfit_800ExtraBold',
+    color: colors.white,
+    fontSize: 34,
   },
   name: {
     fontFamily: 'Outfit_800ExtraBold',

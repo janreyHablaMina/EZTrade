@@ -1,20 +1,55 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { Wallet, Users, Coins, Download, Calendar, User } from "lucide-react";
-import { initialEarnings, type EarningRecord } from "@/lib/mock-data/earningsData";
+import type { EarningRecord } from "@/lib/mock-data/earningsData";
 import { EarningsFilters } from "@/components/admin/earnings/EarningsFilters";
 import { EarningsTable } from "@/components/admin/earnings/EarningsTable";
+import { webApi } from "@/lib/api";
 
 export default function EarningsPage() {
-  const [earnings] = useState<EarningRecord[]>(initialEarnings);
+  const [earnings, setEarnings] = useState<EarningRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [type, setType] = useState("all");
   const [vipLevel, setVipLevel] = useState("all");
   const [status, setStatus] = useState("all");
   const [dateRange, setDateRange] = useState("");
+
+  const fetchEarnings = async () => {
+    setIsLoading(true);
+    try {
+      const data = await webApi.get('/earnings');
+      const mapped = data.map((e: any) => ({
+        id: `ER-${e.id.toString().padStart(5, '0')}`,
+        userName: e.user ? e.user.name : 'Unknown',
+        userEmail: e.user ? e.user.email : 'Unknown',
+        vipLevel: e.user ? e.user.vip_plan_id : 1,
+        type: 'Trading Profit',
+        source: 'Daily Trading',
+        amount: parseFloat(e.amount_earned) || 0,
+        currency: 'USDT',
+        network: 'N/A',
+        status: 'Completed',
+        dateTime: new Date(e.created_at).toLocaleString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        }),
+        description: e.trading_code ? `Trading Code: ${e.trading_code.code}` : 'Trading Profit'
+      }));
+      setEarnings(mapped);
+    } catch (e) {
+      console.error('Failed to fetch earnings:', e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEarnings();
+  }, []);
 
   const filteredEarnings = useMemo(() => {
     return earnings.filter((er) => {
@@ -26,7 +61,7 @@ export default function EarningsPage() {
 
       const matchesType = type === "all" || er.type === type;
       const matchesVip = vipLevel === "all" || er.vipLevel.toString() === vipLevel;
-      const matchesStatus = status === "all" || er.status === status;
+      const matchesStatus = status === "all" || er.status.toLowerCase() === status.toLowerCase();
 
       return matchesSearch && matchesType && matchesVip && matchesStatus;
     });
@@ -39,6 +74,24 @@ export default function EarningsPage() {
     setStatus("all");
     setDateRange("");
   };
+
+  const totalEarnings = earnings.reduce((sum, e) => sum + e.amount, 0);
+  const uniqueUsers = new Set(earnings.map(e => e.userEmail)).size;
+  const avgEarnings = uniqueUsers > 0 ? totalEarnings / uniqueUsers : 0;
+
+  // Find top earner
+  const userEarningsMap = new Map<string, {name: string, total: number}>();
+  earnings.forEach(e => {
+    const current = userEarningsMap.get(e.userEmail) || {name: e.userName, total: 0};
+    current.total += e.amount;
+    userEarningsMap.set(e.userEmail, current);
+  });
+  let topEarner = { name: "N/A", total: 0 };
+  userEarningsMap.forEach((val) => {
+    if (val.total > topEarner.total) {
+      topEarner = val;
+    }
+  });
 
   return (
     <AdminShell>
@@ -73,8 +126,8 @@ export default function EarningsPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <KpiCard
             label="Total Earnings"
-            value="$123,456.78"
-            change="+18.6%"
+            value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalEarnings)}
+            change=""
             positive={true}
             icon={Wallet}
             iconClassName="text-purple-bright"
@@ -82,17 +135,17 @@ export default function EarningsPage() {
           />
           <KpiCard
             label="Total Users Earned"
-            value="4,562"
-            change="+15.2%"
+            value={uniqueUsers.toLocaleString()}
+            change=""
             positive={true}
             icon={Users}
             iconClassName="text-emerald-400"
             subtext=""
           />
           <KpiCard
-            label="Average Daily Earnings"
-            value="$17,636.68"
-            change="+12.7%"
+            label="Average Earnings per User"
+            value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(avgEarnings)}
+            change=""
             positive={true}
             icon={Coins}
             iconClassName="text-amber-400"
@@ -107,11 +160,11 @@ export default function EarningsPage() {
               </div>
               <div className="flex-1">
                 <p className="text-[11px] text-muted">Top Earner</p>
-                <p className="mt-0.5 text-base font-semibold tracking-tight text-white">John Smith</p>
+                <p className="mt-0.5 text-base font-semibold tracking-tight text-white">{topEarner.name}</p>
               </div>
             </div>
             <div className="mt-3">
-              <p className="text-lg font-bold text-white">$2,456.78</p>
+              <p className="text-lg font-bold text-white">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(topEarner.total)}</p>
               <p className="text-[11px] text-muted-2">Total Earnings</p>
             </div>
           </div>
@@ -129,19 +182,19 @@ export default function EarningsPage() {
               <div>
                 <div className="flex justify-between text-[11px] mb-1">
                   <span className="text-muted-2">Trading Profit</span>
-                  <span className="text-white font-medium">85.4%</span>
+                  <span className="text-white font-medium">100%</span>
                 </div>
                 <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-400 rounded-full" style={{ width: "85.4%" }}></div>
+                  <div className="h-full bg-emerald-400 rounded-full" style={{ width: "100%" }}></div>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between text-[11px] mb-1">
                   <span className="text-muted-2">Referral Bonus</span>
-                  <span className="text-white font-medium">14.6%</span>
+                  <span className="text-white font-medium">0%</span>
                 </div>
                 <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
-                  <div className="h-full bg-purple-bright rounded-full" style={{ width: "14.6%" }}></div>
+                  <div className="h-full bg-purple-bright rounded-full" style={{ width: "0%" }}></div>
                 </div>
               </div>
             </div>

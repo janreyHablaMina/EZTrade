@@ -111,6 +111,8 @@ function ActionIcon({
   );
 }
 
+import { AnimatedLoading } from '../components/AnimatedLoading';
+
 export function HomeScreen({
   user,
   onOpenPlans,
@@ -120,7 +122,7 @@ export function HomeScreen({
   onOpenAssets,
   onOpenTransactions,
 }: HomeScreenProps) {
-  const { userData, stats, hasUnread } = useHomeStats(user);
+  const { userData, stats, hasUnread, loading } = useHomeStats(user);
 
   const userName = userData?.name || 'John Doe';
   const balance = Number(stats.balance || userData?.balance || 0);
@@ -143,6 +145,10 @@ export function HomeScreen({
     { key: 'assets', label: 'My Assets' },
     { key: 'transactions', label: 'Transactions' },
   ] as const;
+
+  if (loading) {
+    return <AnimatedLoading text="Loading Dashboard..." />;
+  }
 
   return (
     <ScrollView

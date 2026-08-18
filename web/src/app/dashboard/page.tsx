@@ -1,3 +1,5 @@
+"use client";
+
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -13,86 +15,53 @@ import { RecentTable } from "@/components/admin/RecentTable";
 import { StatusDonut } from "@/components/admin/StatusDonut";
 import { SystemStats } from "@/components/admin/SystemStats";
 import { VipLevels } from "@/components/admin/VipLevels";
+import { useAdminStats } from "@/hooks/useAdminStats";
 
-const depositRows = [
-  {
-    name: "Alex Rivera",
-    id: "USR-10421",
-    amount: "100 USDT",
-    network: "TRC20",
-    txid: "0x8f2a…91c4",
-    status: "Completed" as const,
-    date: "May 17, 09:24",
-  },
-  {
-    name: "Mia Chen",
-    id: "USR-10288",
-    amount: "500 USDT",
-    network: "ERC20",
-    txid: "0x3bc1…77ae",
-    status: "Pending" as const,
-    date: "May 17, 08:51",
-  },
-  {
-    name: "Noah Park",
-    id: "USR-10014",
-    amount: "250 USDT",
-    network: "BEP20",
-    txid: "0xad91…2f10",
-    status: "Failed" as const,
-    date: "May 16, 22:13",
-  },
-  {
-    name: "Sara Kim",
-    id: "USR-10903",
-    amount: "1,000 USDT",
-    network: "TRC20",
-    txid: "0x71ee…c8b2",
-    status: "Completed" as const,
-    date: "May 16, 19:40",
-  },
-];
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(amount);
+}
 
-const withdrawalRows = [
-  {
-    name: "Jordan Lee",
-    id: "USR-10811",
-    amount: "200 USDT",
-    network: "TRC20",
-    txid: "0x9aa2…44d1",
-    status: "Completed" as const,
-    date: "May 17, 10:02",
-  },
-  {
-    name: "Emily Ross",
-    id: "USR-10644",
-    amount: "75 USDT",
-    network: "ERC20",
-    txid: "0x12cd…90ff",
-    status: "Pending" as const,
-    date: "May 17, 07:18",
-  },
-  {
-    name: "Chris Wong",
-    id: "USR-10155",
-    amount: "320 USDT",
-    network: "BEP20",
-    txid: "0x55b0…a1e9",
-    status: "Rejected" as const,
-    date: "May 16, 21:05",
-  },
-  {
-    name: "Ava Torres",
-    id: "USR-10772",
-    amount: "150 USDT",
-    network: "TRC20",
-    txid: "0xee41…6c33",
-    status: "Completed" as const,
-    date: "May 16, 18:27",
-  },
-];
+function formatDate(dateString: string) {
+  const d = new Date(dateString);
+  return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
 
 export default function Home() {
+  const { stats, isLoading } = useAdminStats();
+
+  if (isLoading || !stats) {
+    return (
+      <AdminShell>
+        <div className="flex h-64 items-center justify-center">
+          <p className="text-white">Loading dashboard stats...</p>
+        </div>
+      </AdminShell>
+    );
+  }
+
+  const depositRows = stats.recent_deposits.map((d: any) => ({
+    name: d.user?.name || "Unknown",
+    id: `USR-${d.user_id}`,
+    amount: `${d.amount} USDT`,
+    network: d.network,
+    txid: d.txid ? `${d.txid.slice(0, 6)}…${d.txid.slice(-4)}` : "Pending",
+    status: d.status,
+    date: formatDate(d.created_at),
+  }));
+
+  const withdrawalRows = stats.recent_withdrawals.map((w: any) => ({
+    name: w.user?.name || "Unknown",
+    id: `USR-${w.user_id}`,
+    amount: `${w.amount} USDT`,
+    network: w.network,
+    txid: w.txid ? `${w.txid.slice(0, 6)}…${w.txid.slice(-4)}` : "Pending",
+    status: w.status,
+    date: formatDate(w.created_at),
+  }));
+
   return (
     <AdminShell>
       <div className="mb-5">
@@ -107,38 +76,38 @@ export default function Home() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <KpiCard
           label="Total Users"
-          value="100,254"
-          change="+12.5%"
+          value={stats.total_users.toLocaleString()}
+          change=""
           icon={Users}
         />
         <KpiCard
           label="Total Deposits"
-          value="$1,234,567.89"
-          change="+18.7%"
+          value={formatCurrency(stats.total_deposits)}
+          change=""
           icon={ArrowDownToLine}
         />
         <KpiCard
           label="Total Withdrawals"
-          value="$657,890.20"
-          change="+8.3%"
+          value={formatCurrency(stats.total_withdrawals)}
+          change=""
           icon={ArrowUpFromLine}
         />
         <KpiCard
           label="Total Earnings Paid"
-          value="$345,678.90"
-          change="+15.2%"
+          value={formatCurrency(stats.total_earnings)}
+          change=""
           icon={Coins}
         />
         <KpiCard
           label="Active VIP Users"
-          value="12,364"
-          change="+11.4%"
+          value={stats.active_vips.toLocaleString()}
+          change=""
           icon={Crown}
         />
         <KpiCard
           label="Pending Deposits"
-          value="234"
-          change="-4.3%"
+          value={stats.pending_deposits.toLocaleString()}
+          change=""
           positive={false}
           icon={Hourglass}
           iconClassName="text-warning"
@@ -152,20 +121,20 @@ export default function Home() {
         <div className="grid h-full gap-4 sm:grid-cols-2 xl:col-span-5 xl:grid-cols-1 xl:grid-rows-2">
           <StatusDonut
             title="Deposits by Status"
-            total="1,234"
+            total={Object.values(stats.deposits_by_status).reduce((a, b) => a + b, 0).toLocaleString()}
             slices={[
-              { label: "Completed", value: 890, color: "#22c55e" },
-              { label: "Pending", value: 234, color: "#f59e0b" },
-              { label: "Failed", value: 110, color: "#ef4444" },
+              { label: "Completed", value: stats.deposits_by_status.Completed, color: "#22c55e" },
+              { label: "Pending", value: stats.deposits_by_status.Pending, color: "#f59e0b" },
+              { label: "Failed", value: stats.deposits_by_status.Failed, color: "#ef4444" },
             ]}
           />
           <StatusDonut
             title="Withdrawals by Status"
-            total="980"
+            total={Object.values(stats.withdrawals_by_status).reduce((a, b) => a + b, 0).toLocaleString()}
             slices={[
-              { label: "Completed", value: 720, color: "#22c55e" },
-              { label: "Pending", value: 180, color: "#f59e0b" },
-              { label: "Rejected", value: 80, color: "#ef4444" },
+              { label: "Completed", value: stats.withdrawals_by_status.Completed, color: "#22c55e" },
+              { label: "Pending", value: stats.withdrawals_by_status.Pending, color: "#f59e0b" },
+              { label: "Rejected", value: stats.withdrawals_by_status.Rejected, color: "#ef4444" },
             ]}
           />
         </div>
@@ -174,8 +143,8 @@ export default function Home() {
       <div className="mt-4 grid items-stretch gap-4 md:grid-cols-2">
         <RecentTable title="Recent Deposits" rows={depositRows} />
         <RecentTable title="Recent Withdrawals" rows={withdrawalRows} />
-        <VipLevels />
-        <SystemStats />
+        <VipLevels levels={stats.vip_levels} />
+        <SystemStats totalTrades={stats.system_stats.total_trades} />
       </div>
     </AdminShell>
   );

@@ -6,7 +6,6 @@ const TABS = [
   "Preferences",
   "Notifications",
   "API & Integrations",
-  "Support",
 ];
 
 type SettingsTabsProps = {

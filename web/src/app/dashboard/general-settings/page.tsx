@@ -4,7 +4,6 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { GeneralSettingsForm } from "@/components/admin/general-settings/GeneralSettingsForm";
 import { AboutCard } from "@/components/admin/general-settings/AboutCard";
 import { SecurityTipsCard } from "@/components/admin/general-settings/SecurityTipsCard";
-import { HelpCard } from "@/components/admin/settings/HelpCard";
 
 export default function GeneralSettingsPage() {
   return (
@@ -30,7 +29,6 @@ export default function GeneralSettingsPage() {
           {/* Right: Summary Cards (1 col) */}
           <div className="space-y-6">
             <AboutCard />
-            <HelpCard />
             <SecurityTipsCard />
           </div>
         </div>

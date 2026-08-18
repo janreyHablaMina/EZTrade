@@ -1,14 +1,39 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { Users, UserCheck, DollarSign, TrendingUp, BadgePercent, Download, Calendar, UserPlus } from "lucide-react";
-import { initialAmbassadors, type AmbassadorRecord } from "@/lib/mock-data/ambassadorsData";
+import { Users, UserCheck, DollarSign, TrendingUp, Download, Calendar, UserPlus } from "lucide-react";
+import type { AmbassadorRecord } from "@/lib/mock-data/ambassadorsData";
 import { AmbassadorsTable } from "@/components/admin/ambassadors/AmbassadorsTable";
+import { webApi } from "@/lib/api";
 
 export default function AmbassadorsPage() {
-  const [ambassadors] = useState<AmbassadorRecord[]>(initialAmbassadors);
+  const [ambassadors, setAmbassadors] = useState<AmbassadorRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchAmbassadors = async () => {
+    setIsLoading(true);
+    try {
+      const data = await webApi.get('/admin/ambassadors');
+      const mapped = data.map((a: any) => ({
+        ...a,
+        registeredAt: new Date(a.registeredAt).toLocaleString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        }),
+      }));
+      setAmbassadors(mapped);
+    } catch (e) {
+      console.error('Failed to fetch ambassadors:', e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAmbassadors();
+  }, []);
 
   const totalDownlineSize = ambassadors.reduce((acc, curr) => acc + curr.downlineCount, 0);
   const totalAssets = ambassadors.reduce((acc, curr) => acc + curr.totalDownlineAssets, 0);
@@ -48,7 +73,7 @@ export default function AmbassadorsPage() {
           <KpiCard
             label="Total Ambassadors"
             value={ambassadors.length.toString()}
-            change="+2.4%"
+            change=""
             positive={true}
             icon={Users}
             iconClassName="text-purple-bright"
@@ -56,24 +81,24 @@ export default function AmbassadorsPage() {
           />
           <KpiCard
             label="Total Downline Users"
-            value={totalDownlineSize.toString()}
-            change="+12.5%"
+            value={totalDownlineSize.toLocaleString()}
+            change=""
             positive={true}
             icon={UserCheck}
             iconClassName="text-sky-400"
           />
           <KpiCard
             label="Total Downline Assets"
-            value={`$${totalAssets.toLocaleString()}`}
-            change="+8.3%"
+            value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalAssets)}
+            change=""
             positive={true}
             icon={DollarSign}
             iconClassName="text-emerald-400"
           />
           <KpiCard
             label="Daily Admin Earnings (5%)"
-            value={`$${totalAdminEarnings.toLocaleString()}`}
-            change="+4.1%"
+            value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalAdminEarnings)}
+            change=""
             positive={true}
             icon={TrendingUp}
             iconClassName="text-amber-400"

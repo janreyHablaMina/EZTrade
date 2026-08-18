@@ -1,19 +1,44 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { Users, UserCheck, DollarSign, TrendingUp, BadgePercent, Download, Calendar } from "lucide-react";
-import { initialReferrals, type ReferralRecord } from "@/lib/mock-data/referralsData";
+import type { ReferralRecord } from "@/lib/mock-data/referralsData";
 import { ReferralsFilters } from "@/components/admin/referrals/ReferralsFilters";
 import { ReferralsTable } from "@/components/admin/referrals/ReferralsTable";
+import { webApi } from "@/lib/api";
 
 export default function ReferralsPage() {
-  const [referrals] = useState<ReferralRecord[]>(initialReferrals);
+  const [referrals, setReferrals] = useState<ReferralRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [vipLevel, setVipLevel] = useState("all");
   const [status, setStatus] = useState("all");
   const [dateRange, setDateRange] = useState("");
+
+  const fetchReferrals = async () => {
+    setIsLoading(true);
+    try {
+      const data = await webApi.get('/admin/referrals');
+      const mapped = data.map((r: any) => ({
+        ...r,
+        registeredAt: new Date(r.registeredAt).toLocaleString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        }),
+      }));
+      setReferrals(mapped);
+    } catch (e) {
+      console.error('Failed to fetch referrals:', e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReferrals();
+  }, []);
 
   const filteredReferrals = useMemo(() => {
     return referrals.filter((ref) => {
@@ -24,7 +49,7 @@ export default function ReferralsPage() {
         ref.id.toLowerCase().includes(search.toLowerCase());
 
       const matchesVip = vipLevel === "all" || ref.vipLevel.toString() === vipLevel;
-      const matchesStatus = status === "all" || ref.status === status;
+      const matchesStatus = status === "all" || ref.status.toLowerCase() === status.toLowerCase();
 
       return matchesSearch && matchesVip && matchesStatus;
     });
@@ -36,6 +61,10 @@ export default function ReferralsPage() {
     setStatus("all");
     setDateRange("");
   };
+
+  const totalReferrals = referrals.length;
+  const activeReferrals = referrals.filter(r => r.status === 'Active').length;
+  const totalCommission = referrals.reduce((sum, r) => sum + r.yourCommission, 0);
 
   return (
     <AdminShell>
@@ -70,8 +99,8 @@ export default function ReferralsPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <KpiCard
             label="Total Referrals"
-            value="1,248"
-            change="+18.6%"
+            value={totalReferrals.toLocaleString()}
+            change=""
             positive={true}
             icon={Users}
             iconClassName="text-purple-bright"
@@ -79,24 +108,24 @@ export default function ReferralsPage() {
           />
           <KpiCard
             label="Active Referrals"
-            value="968"
-            change="+14.2%"
+            value={activeReferrals.toLocaleString()}
+            change=""
             positive={true}
             icon={UserCheck}
             iconClassName="text-sky-400"
           />
           <KpiCard
             label="Total Commission Earned"
-            value="$12,456.78"
-            change="+16.8%"
+            value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalCommission)}
+            change=""
             positive={true}
             icon={DollarSign}
             iconClassName="text-emerald-400"
           />
           <KpiCard
             label="Pending Commission"
-            value="$2,345.67"
-            change="+12.5%"
+            value="$0.00"
+            change=""
             positive={true}
             icon={TrendingUp}
             iconClassName="text-amber-400"
@@ -106,7 +135,7 @@ export default function ReferralsPage() {
             value="10%"
             icon={BadgePercent}
             iconClassName="text-purple-bright"
-            subtext="Your referral rate"
+            subtext="Level 1 Rate"
           />
         </div>
 

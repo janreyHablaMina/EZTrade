@@ -203,7 +203,7 @@ export function MainApp({
   } else if (tab === 'profile') {
     screen = (
       <ProfileScreen
-        userName={userName}
+        user={user}
         onBack={() => setTab('home')}
         onLogout={onLogout}
         onOpenMenu={(key) => {

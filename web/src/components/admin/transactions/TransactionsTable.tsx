@@ -293,7 +293,7 @@ export function TransactionsTable({
       <PaginationFooter
         currentPage={currentPage}
         pageSize={pageSize}
-        totalItems={transactions.length}
+        totalItems={totalCount}
         onPageChange={setCurrentPage}
         onPageSizeChange={setPageSize}
         itemName="transactions"
