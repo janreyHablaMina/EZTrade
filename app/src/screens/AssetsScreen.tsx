@@ -18,6 +18,7 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 import { useHomeStats } from '../hooks/useHomeStats';
 import { ActivityIndicator } from 'react-native';
+import { AnimatedLoading } from '../components/AnimatedLoading';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CHART_WIDTH = SCREEN_WIDTH - 72;
@@ -182,11 +183,7 @@ export function AssetsScreen({ onBack, user }: AssetsScreenProps) {
   ];
 
   if (loading) {
-    return (
-      <View style={[styles.content, { flex: 1, justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.purpleBright} />
-      </View>
-    );
+    return <AnimatedLoading text="Loading Assets..." />;
   }
 
   return (

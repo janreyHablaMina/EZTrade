@@ -1,7 +1,7 @@
 const API_BASE_URL = 'http://192.168.254.104:8000';
 
 async function fetchJSON(endpoint: string, options: RequestInit = {}): Promise<any> {
-  const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
+  const fetchPromise = fetch(`${API_BASE_URL}/api${endpoint}`, {
     ...options,
     headers: {
       Accept: 'application/json',
@@ -10,18 +10,28 @@ async function fetchJSON(endpoint: string, options: RequestInit = {}): Promise<a
     },
   });
 
-  let data: any;
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Request timed out. Please check your connection.')), 10000);
+  });
+
   try {
-    data = await response.json();
-  } catch {
-    throw new Error('Invalid response from server');
-  }
+    const response = (await Promise.race([fetchPromise, timeoutPromise])) as Response;
 
-  if (!response.ok) {
-    throw new Error(data?.message || 'Something went wrong');
-  }
+    let data: any;
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error('Invalid response from server');
+    }
 
-  return data;
+    if (!response.ok) {
+      throw new Error(data?.message || 'Something went wrong');
+    }
+
+    return data;
+  } catch (error: any) {
+    throw error;
+  }
 }
 
 export const apiClient = {

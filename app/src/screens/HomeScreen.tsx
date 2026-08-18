@@ -177,9 +177,6 @@ export function HomeScreen({
         </View>
 
         <View style={styles.headerRight}>
-          <Pressable style={styles.iconButton}>
-            <MessageCircle size={22} color="rgba(255,255,255,0.8)" strokeWidth={2} />
-          </Pressable>
           <Pressable style={styles.iconButton} onPress={onOpenNotifications}>
             {hasUnread && <View style={styles.notificationDot} />}
             <Bell size={22} color="rgba(255,255,255,0.8)" strokeWidth={2} />

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View, Pressable, Modal } from 'react-native';
 import { Lock, Check } from '../components/Icons';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { AnimatedLoading } from '../components/AnimatedLoading';
 import { colors } from '../theme/colors';
 import { apiClient } from '../lib/api';
 
@@ -72,11 +73,7 @@ export function VipPlansScreen({ user, onBack }: VipPlansScreenProps) {
   };
 
   if (isLoading) {
-    return (
-      <View style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator color={colors.purpleBright} size="large" />
-      </View>
-    );
+    return <AnimatedLoading text="Loading Plans..." />;
   }
 
   if (plans.length === 0) {
