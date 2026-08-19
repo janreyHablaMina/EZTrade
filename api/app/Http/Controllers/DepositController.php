@@ -69,6 +69,7 @@ class DepositController extends Controller
 
                     $currentUserId = $user->referred_by;
                     $level = 1;
+                    $totalBonusPaidOut = 0;
 
                     while ($currentUserId && $level <= 3) {
                         $referrer = \App\Models\User::find($currentUserId);
@@ -86,14 +87,15 @@ class DepositController extends Controller
                             'message' => 'You received a ' . number_format($bonus, 2) . ' USDT bonus from your level ' . $level . ' referral making their first deposit!',
                             'type' => 'success',
                         ]);
-
+                        
+                        $totalBonusPaidOut += $bonus;
                         $currentUserId = $referrer->referred_by;
                         $level++;
                     }
 
-                    // Deduct the 10% referral bonus
-                    if ($user->referred_by) {
-                        $adminDeductionAmount = $deposit->amount * 0.10; // Default: Admin pays full 10%
+                    // Deduct the total referral bonus paid out
+                    if ($totalBonusPaidOut > 0) {
+                        $adminDeductionAmount = $totalBonusPaidOut; // Default: Admin pays full 100% of the bonus
 
                         // Check if there is an Ambassador in the upline
                         $uplineId = $user->referred_by;
@@ -110,9 +112,9 @@ class DepositController extends Controller
                         }
 
                         if ($foundAmbassador) {
-                            // Split 5% Admin / 5% Ambassador
-                            $adminDeductionAmount = $deposit->amount * 0.05;
-                            $ambassadorDeductionAmount = $deposit->amount * 0.05;
+                            // Split 50% Admin / 50% Ambassador
+                            $adminDeductionAmount = $totalBonusPaidOut / 2;
+                            $ambassadorDeductionAmount = $totalBonusPaidOut / 2;
 
                             $foundAmbassador->balance -= $ambassadorDeductionAmount;
                             $foundAmbassador->save();

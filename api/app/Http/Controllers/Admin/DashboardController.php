@@ -97,23 +97,42 @@ class DashboardController extends Controller
         foreach ($usersWithApprovedDeposits as $record) {
             $firstDeposit = Deposit::where('user_id', $record->user_id)->where('status', 'Approved')->orderBy('created_at', 'asc')->first();
             if ($firstDeposit && $firstDeposit->user && $firstDeposit->user->referred_by) {
-                
                 $hasAmbassador = false;
                 $uplineId = $firstDeposit->user->referred_by;
-                while ($uplineId) {
-                    $upline = \App\Models\User::find($uplineId);
+                
+                // 1. Calculate the total bonus paid out
+                $rates = [1 => 0.10, 2 => 0.05, 3 => 0.03];
+                $level = 1;
+                $totalBonusPaidOut = 0;
+                $currentUplineId = $uplineId;
+                
+                while ($currentUplineId && $level <= 3) {
+                    $upline = \App\Models\User::find($currentUplineId);
+                    if (!$upline) break;
+                    
+                    $totalBonusPaidOut += $firstDeposit->amount * $rates[$level];
+                    $currentUplineId = $upline->referred_by;
+                    $level++;
+                }
+                
+                // 2. Check for an ambassador anywhere in the entire upline chain
+                $ambassadorCheckId = $uplineId;
+                while ($ambassadorCheckId) {
+                    $upline = \App\Models\User::find($ambassadorCheckId);
                     if (!$upline) break;
                     if ($upline->role === 'Ambassador') {
                         $hasAmbassador = true;
                         break;
                     }
-                    $uplineId = $upline->referred_by;
+                    $ambassadorCheckId = $upline->referred_by;
                 }
                 
-                if ($hasAmbassador) {
-                    $adminMinusBonuses += $firstDeposit->amount * 0.05; // Admin pays 5%
-                } else {
-                    $adminMinusBonuses += $firstDeposit->amount * 0.10; // Admin pays full 10%
+                if ($totalBonusPaidOut > 0) {
+                    if ($hasAmbassador) {
+                        $adminMinusBonuses += $totalBonusPaidOut / 2; // Admin pays 50%
+                    } else {
+                        $adminMinusBonuses += $totalBonusPaidOut; // Admin pays full 100%
+                    }
                 }
             }
         }

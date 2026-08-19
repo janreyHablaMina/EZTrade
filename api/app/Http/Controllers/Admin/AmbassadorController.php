@@ -71,13 +71,46 @@ class AmbassadorController extends Controller
         $directReferralEarnings = 0;
         $minusBonuses = 0;
         
-        $downlineUsers = User::whereIn('id', $downlineIds)->get();
-        foreach ($downlineUsers as $u) {
-            $firstDeposit = \App\Models\Deposit::where('user_id', $u->id)->where('status', 'Approved')->orderBy('created_at', 'asc')->first();
-            if ($firstDeposit) {
-                if ($u->referred_by == $ambassador->id || $u->referred_by == $ambassador->referral_code) {
-                    $directReferralEarnings += $firstDeposit->amount * 0.10; // 10% direct bonus
-                    $minusBonuses += $firstDeposit->amount * 0.05; // 5% deduction
+        $usersWithApprovedDeposits = \App\Models\Deposit::with('user')->where('status', 'Approved')->select('user_id')->distinct()->get();
+        
+        foreach ($usersWithApprovedDeposits as $record) {
+            $firstDeposit = \App\Models\Deposit::where('user_id', $record->user_id)->where('status', 'Approved')->orderBy('created_at', 'asc')->first();
+            if ($firstDeposit && $firstDeposit->user && $firstDeposit->user->referred_by) {
+                
+                $rates = [1 => 0.10, 2 => 0.05, 3 => 0.03];
+                $level = 1;
+                $totalBonusPaidOut = 0;
+                $currentUplineId = $firstDeposit->user->referred_by;
+                
+                while ($currentUplineId && $level <= 3) {
+                    $upline = \App\Models\User::find($currentUplineId);
+                    if (!$upline) break;
+                    
+                    $bonus = $firstDeposit->amount * $rates[$level];
+                    $totalBonusPaidOut += $bonus;
+                    
+                    if ($upline->id === $ambassador->id) {
+                        $directReferralEarnings += $bonus;
+                    }
+                    
+                    $currentUplineId = $upline->referred_by;
+                    $level++;
+                }
+                
+                $uplineId = $firstDeposit->user->referred_by;
+                $foundAmbassadorId = null;
+                while ($uplineId) {
+                    $upline = \App\Models\User::find($uplineId);
+                    if (!$upline) break;
+                    if ($upline->role === 'Ambassador') {
+                        $foundAmbassadorId = $upline->id;
+                        break;
+                    }
+                    $uplineId = $upline->referred_by;
+                }
+                
+                if ($foundAmbassadorId === $ambassador->id && $totalBonusPaidOut > 0) {
+                    $minusBonuses += $totalBonusPaidOut / 2;
                 }
             }
         }
