@@ -62,69 +62,7 @@ class VipPlanController extends Controller
         $user->vip_plan_id = $plan->id;
         $user->save();
 
-        // Multi-tier referral bonus based on VIP Plan cost
-        $rates = [
-            1 => 0.10,
-            2 => 0.05,
-            3 => 0.02,
-        ];
-
-        $currentUserId = $user->referred_by;
-        $level = 1;
-
-        while ($currentUserId && $level <= 3) {
-            $referrer = \App\Models\User::find($currentUserId);
-            if (!$referrer) {
-                break;
-            }
-
-            $bonus = $plan->min_deposit * $rates[$level];
-            $referrer->balance += $bonus;
-            $referrer->save();
-            
-            \App\Models\Notification::create([
-                'user_id' => $referrer->id,
-                'title' => 'Level ' . $level . ' Referral Bonus!',
-                'message' => 'You received a ' . number_format($bonus, 2) . ' USDT bonus from your level ' . $level . ' referral purchasing a VIP Plan!',
-                'type' => 'success',
-            ]);
-
-            $currentUserId = $referrer->referred_by;
-            $level++;
-        }
-
-        // Deduct the 10% referral bonus from Admin (5%) and Ambassador (5%)
-        if ($user->referred_by) {
-            $deductionAmount = $plan->min_deposit * 0.05; // 5% each
-
-            // 1. Deduct from Admin
-            $admin = \App\Models\User::where('role', 'Admin')->first();
-            if ($admin) {
-                $admin->balance -= $deductionAmount;
-                $admin->save();
-            }
-
-            // 2. Find the Ambassador for this downline and deduct from them
-            $uplineId = $user->referred_by;
-            while ($uplineId) {
-                $upline = \App\Models\User::find($uplineId);
-                if (!$upline) break;
-
-                if ($upline->role === 'Ambassador') {
-                    $upline->balance -= $deductionAmount;
-                    $upline->save();
-                    
-                    \App\Models\Notification::create([
-                        'user_id' => $upline->id,
-                        'title' => 'Referral Bonus Deduction',
-                        'message' => 'A deduction of ' . number_format($deductionAmount, 2) . ' USDT was applied for a downline VIP Plan purchase.',
-                        'type' => 'warning',
-                    ]);
-                    break; // Stop at the first Ambassador
-                }
-                $uplineId = $upline->referred_by;
-            }
-        }
+        // Referral bonus logic has been moved to DepositController
 
         return response()->json([
             'message' => 'VIP Plan unlocked successfully!',

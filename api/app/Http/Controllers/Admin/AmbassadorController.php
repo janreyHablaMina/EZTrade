@@ -66,13 +66,18 @@ class AmbassadorController extends Controller
             ->whereNotNull('vip_plan_id')
             ->get();
             
-        $activeTradeCapital = 0;
+        $activeTradeCapital = $usersWithPlans->sum(fn($u) => $u->vipPlan->min_deposit ?? 0);
+        
         $directReferralEarnings = 0;
-        foreach ($usersWithPlans as $u) {
-            if ($u->vipPlan) {
-                $activeTradeCapital += $u->vipPlan->min_deposit;
+        $minusBonuses = 0;
+        
+        $downlineUsers = User::whereIn('id', $downlineIds)->get();
+        foreach ($downlineUsers as $u) {
+            $firstDeposit = \App\Models\Deposit::where('user_id', $u->id)->where('status', 'Approved')->orderBy('created_at', 'asc')->first();
+            if ($firstDeposit) {
                 if ($u->referred_by == $ambassador->id || $u->referred_by == $ambassador->referral_code) {
-                    $directReferralEarnings += $u->vipPlan->min_deposit * 0.10; // 10% direct bonus
+                    $directReferralEarnings += $firstDeposit->amount * 0.10; // 10% direct bonus
+                    $minusBonuses += $firstDeposit->amount * 0.05; // 5% deduction
                 }
             }
         }
@@ -80,12 +85,6 @@ class AmbassadorController extends Controller
         $earningsLogs = \App\Models\EarningsLog::where('user_id', $ambassador->id)->get();
         $grossAssets = $earningsLogs->sum('amount') + $directReferralEarnings;
         
-        $minusBonuses = 0;
-        foreach ($usersWithPlans as $u) {
-            if ($u->vipPlan && ($u->referred_by == $ambassador->id || $u->referred_by == $ambassador->referral_code)) {
-                $minusBonuses += $u->vipPlan->min_deposit * 0.05; // 5% deduction
-            }
-        }
         $netBalance = $ambassador->balance;
 
         return response()->json([

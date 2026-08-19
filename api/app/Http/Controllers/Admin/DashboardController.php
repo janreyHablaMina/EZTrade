@@ -86,15 +86,34 @@ class DashboardController extends Controller
             ->get();
             
         $adminTradeCapital = 0;
-        $adminMinusBonuses = 0;
         foreach ($usersWithPlans as $u) {
             if ($u->vipPlan) {
                 $adminTradeCapital += $u->vipPlan->min_deposit;
-                if ($u->referred_by) {
-                    $referrer = \App\Models\User::where('id', $u->referred_by)->orWhere('referral_code', $u->referred_by)->first();
-                    if ($referrer && $referrer->role === 'Ambassador') {
-                        $adminMinusBonuses += $u->vipPlan->min_deposit * 0.05; // 5% deduction
+            }
+        }
+        $adminMinusBonuses = 0;
+        $usersWithApprovedDeposits = Deposit::with('user')->where('status', 'Approved')->select('user_id')->distinct()->get();
+        
+        foreach ($usersWithApprovedDeposits as $record) {
+            $firstDeposit = Deposit::where('user_id', $record->user_id)->where('status', 'Approved')->orderBy('created_at', 'asc')->first();
+            if ($firstDeposit && $firstDeposit->user && $firstDeposit->user->referred_by) {
+                
+                $hasAmbassador = false;
+                $uplineId = $firstDeposit->user->referred_by;
+                while ($uplineId) {
+                    $upline = \App\Models\User::find($uplineId);
+                    if (!$upline) break;
+                    if ($upline->role === 'Ambassador') {
+                        $hasAmbassador = true;
+                        break;
                     }
+                    $uplineId = $upline->referred_by;
+                }
+                
+                if ($hasAmbassador) {
+                    $adminMinusBonuses += $firstDeposit->amount * 0.05; // Admin pays 5%
+                } else {
+                    $adminMinusBonuses += $firstDeposit->amount * 0.10; // Admin pays full 10%
                 }
             }
         }
