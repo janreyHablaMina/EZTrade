@@ -67,21 +67,26 @@ class AmbassadorController extends Controller
             ->get();
             
         $activeTradeCapital = 0;
+        $directReferralEarnings = 0;
         foreach ($usersWithPlans as $u) {
             if ($u->vipPlan) {
                 $activeTradeCapital += $u->vipPlan->min_deposit;
+                if ($u->referred_by == $ambassador->id || $u->referred_by == $ambassador->referral_code) {
+                    $directReferralEarnings += $u->vipPlan->min_deposit * 0.10; // 10% direct bonus
+                }
             }
         }
         
+        $earningsLogs = \App\Models\EarningsLog::where('user_id', $ambassador->id)->get();
+        $grossAssets = $earningsLogs->sum('amount') + $directReferralEarnings;
+        
         $minusBonuses = 0;
         foreach ($usersWithPlans as $u) {
-            if ($u->vipPlan && $u->referred_by) {
-                $minusBonuses += $u->vipPlan->min_deposit * 0.05; // 5% deduction for VIP plan purchase
+            if ($u->vipPlan && ($u->referred_by == $ambassador->id || $u->referred_by == $ambassador->referral_code)) {
+                $minusBonuses += $u->vipPlan->min_deposit * 0.05; // 5% deduction
             }
         }
-
         $netBalance = $ambassador->balance;
-        $grossAssets = $netBalance + $minusBonuses; // Total earnings before deductions
 
         return response()->json([
             'id' => 'EZT-' . str_pad($ambassador->id, 4, '0', STR_PAD_LEFT),
@@ -121,8 +126,25 @@ class AmbassadorController extends Controller
     public function earnings($id)
     {
         $ambassador = User::findOrFail($id);
-        $downlineIds = User::where('referred_by', $ambassador->id)->pluck('id');
+        $earningsLogs = \App\Models\EarningsLog::with('sourceUser')
+            ->where('user_id', $ambassador->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $earnings = $earningsLogs->map(function($log) {
+            return [
+                'id' => 'L'.$log->id,
+                'user' => $log->sourceUser,
+                'deposit_amount' => $log->deposit_amount,
+                'gross_cut' => $log->amount,
+                'deduction' => 0,
+                'direct_bonus' => 0,
+                'net_earnings' => $log->amount,
+                'created_at' => $log->created_at,
+            ];
+        })->toArray();
         
+        $downlineIds = User::where('referred_by', $ambassador->id)->pluck('id');
         $usersWithPlans = User::with('vipPlan')
             ->whereIn('id', $downlineIds)
             ->where('status', 'Active')
@@ -130,29 +152,24 @@ class AmbassadorController extends Controller
             ->orderBy('updated_at', 'desc')
             ->get();
 
-        $earnings = $usersWithPlans->map(function($user) use ($ambassador) {
-            $grossCut = $user->vipPlan->min_deposit * 0.05;
-            $deduction = 0;
-            $directBonus = 0;
-            
-            if ($user->referred_by) {
-                $deduction = $user->vipPlan->min_deposit * 0.05; // ALWAYS deducted
-                if ($user->referred_by == $ambassador->id) {
-                    $directBonus = $user->vipPlan->min_deposit * 0.10;
-                }
+        foreach ($usersWithPlans as $user) {
+            if ($user->vipPlan && ($user->referred_by == $ambassador->id || $user->referred_by == $ambassador->referral_code)) {
+                $directBonus = $user->vipPlan->min_deposit * 0.10;
+                $earnings[] = [
+                    'id' => 'D'.$user->id,
+                    'user' => $user,
+                    'deposit_amount' => $user->vipPlan->min_deposit,
+                    'gross_cut' => $directBonus,
+                    'deduction' => 0,
+                    'direct_bonus' => $directBonus,
+                    'net_earnings' => $directBonus,
+                    'created_at' => $user->updated_at,
+                ];
             }
-            $netEarnings = $grossCut - $deduction + $directBonus;
-
-            return [
-                'id' => $user->id, // using user ID as proxy
-                'user' => $user,
-                'deposit_amount' => $user->vipPlan->min_deposit,
-                'gross_cut' => $grossCut,
-                'deduction' => $deduction,
-                'direct_bonus' => $directBonus,
-                'net_earnings' => $netEarnings,
-                'created_at' => $user->updated_at,
-            ];
+        }
+        
+        usort($earnings, function($a, $b) {
+            return strtotime($b['created_at']) - strtotime($a['created_at']);
         });
 
         return response()->json($earnings);

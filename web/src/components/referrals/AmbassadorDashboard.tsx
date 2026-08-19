@@ -2,10 +2,47 @@
 
 import { KpiCard } from "@/components/admin/KpiCard";
 import { Users, DollarSign, Activity, Link as LinkIcon, Share2, Copy } from "lucide-react";
+import { useState, useEffect } from "react";
+import { webApi } from "@/lib/api";
 
-export function AmbassadorDashboard() {
-  // Mock data for the Ambassador view
-  const ambassadorData = {
+export function AmbassadorDashboard({ ambassadorId }: { ambassadorId?: number }) {
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    if (!ambassadorId) return;
+    const fetchAmbassador = async () => {
+      try {
+        const [ambData, downlineData, earningsData] = await Promise.all([
+          webApi.get(`/admin/ambassadors/${ambassadorId}`),
+          webApi.get(`/admin/ambassadors/${ambassadorId}/downline`),
+          webApi.get(`/admin/ambassadors/${ambassadorId}/earnings`)
+        ]);
+        
+        setData({
+          name: ambData.name,
+          referralCode: ambData.referralCode,
+          referralLink: `https://eztrade.app/ref/${ambData.referralCode}`,
+          totalDownline: ambData.downlineCount,
+          activeDownline: downlineData.filter((d: any) => d.status === 'Active').length,
+          downlineAssets: ambData.financials?.activeTradeCapital || 0,
+          dailyEarnings: ambData.financials?.grossAssets || 0,
+          downlineUsers: downlineData.map((d: any) => ({
+            id: `U${d.id}`,
+            name: d.name,
+            deposits: d.vip_plan ? d.vip_plan.min_deposit : 0,
+            joinDate: new Date(d.created_at).toLocaleDateString(),
+            level: 1
+          }))
+        });
+      } catch (e) {
+        console.error("Failed to fetch ambassador preview data", e);
+      }
+    };
+    fetchAmbassador();
+  }, [ambassadorId]);
+
+  // Mock data as fallback for the Ambassador view
+  const ambassadorData = data || {
     name: "Alex Johnson",
     referralCode: "ALEX15K",
     referralLink: "https://eztrade.app/ref/ALEX15K",
@@ -97,8 +134,8 @@ export function AmbassadorDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.05]">
-              {ambassadorData.downlineUsers.map((user, idx) => (
-                <tr key={idx} className="hover:bg-white/[0.02] transition">
+              {ambassadorData.downlineUsers.map((user: any, idx: number) => (
+                <tr key={user.id} className="hover:bg-white/[0.02] transition">
                   <td className="px-5 py-4 flex items-center gap-3">
                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10 text-xs font-medium text-sky-400 border border-sky-500/20">
                       {user.name.charAt(0)}

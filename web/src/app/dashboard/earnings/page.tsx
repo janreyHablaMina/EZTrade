@@ -143,7 +143,7 @@ export default function EarningsPage() {
           <KpiCard
             label="Gross Assets (Earnings)"
             value={`+$${(financials?.grossAssets || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
-            subtext="Total before bonus deductions"
+            subtext="Calculated daily at 12 AM midnight"
             icon={TrendingUp}
             iconClassName="text-white"
           />

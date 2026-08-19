@@ -21,9 +21,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${outfit.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-bg font-sans text-white">{children}</body>
+      <body suppressHydrationWarning className="min-h-full bg-bg font-sans text-white">{children}</body>
     </html>
   );
 }

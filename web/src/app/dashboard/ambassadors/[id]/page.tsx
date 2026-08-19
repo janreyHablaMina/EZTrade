@@ -229,9 +229,9 @@ export default function AmbassadorDetailsPage() {
         {/* Financial KPI Row */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <KpiCard
-            label="Total Deposits"
+            label="Total Downline Deposit"
             value={`$${(ambassador.financials?.totalDownlineDeposits || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
-            subtext="Total deposit volume from network"
+            subtext="Total deposit of the downline"
             icon={Wallet}
           />
           <KpiCard
@@ -244,7 +244,7 @@ export default function AmbassadorDetailsPage() {
           <KpiCard
             label="Gross Assets (Earnings + Referrals)"
             value={`+$${(ambassador?.financials?.grossAssets || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
-            subtext="Total before bonus deductions"
+            subtext="Calculated daily at 12 AM midnight"
             icon={TrendingUp}
             iconClassName="text-white"
           />

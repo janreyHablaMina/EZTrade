@@ -46,6 +46,7 @@ Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsR
 
 // ── Admin Endpoints ─────────────────────────────────────────────────────────────
 Route::get('/admin/dashboard-stats', [\App\Http\Controllers\Admin\DashboardController::class, 'getStats']);
+Route::get('/admin/visualize-stats', [\App\Http\Controllers\Admin\DashboardController::class, 'visualizeStats']);
 Route::get('/admin/referrals', [\App\Http\Controllers\Admin\ReferralController::class, 'index']);
 Route::get('/admin/ambassadors', [\App\Http\Controllers\Admin\AmbassadorController::class, 'index']);
 Route::get('/admin/ambassadors/{id}', [\App\Http\Controllers\Admin\AmbassadorController::class, 'show']);
@@ -57,6 +58,7 @@ Route::get('/settings/trade', [\App\Http\Controllers\TradeSettingsController::cl
 Route::post('/settings/trade', [\App\Http\Controllers\TradeSettingsController::class, 'updateSettings']);
 Route::post('/trading-codes/generate', [\App\Http\Controllers\TradingCodeController::class, 'generate']);
 Route::post('/trading-codes/redeem', [TradingCodeController::class, 'redeem']);
+Route::post('/admin/simulate-midnight', [\App\Http\Controllers\Admin\MidnightController::class, 'simulate']);
 Route::get('/earnings', [\App\Http\Controllers\EarningController::class, 'index']);
 
 // ── Authenticated ─────────────────────────────────────────────────────────────

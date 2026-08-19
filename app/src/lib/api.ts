@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://192.168.254.104:8000';
+const API_BASE_URL = 'http://10.0.2.2:8000';
 
 async function fetchJSON(endpoint: string, options: RequestInit = {}): Promise<any> {
   const fetchPromise = fetch(`${API_BASE_URL}/api${endpoint}`, {

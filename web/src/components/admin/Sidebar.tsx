@@ -53,6 +53,7 @@ const settings: NavItem[] = [
 
 const admin: NavItem[] = [
   { label: "Audit Logs", href: "/dashboard/audit-logs", icon: ScrollText },
+  { label: "Visualize", href: "/dashboard/visualize", icon: Activity },
 ];
 
 function NavSection({ title, items }: { title: string; items: NavItem[] }) {

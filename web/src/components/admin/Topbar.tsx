@@ -1,4 +1,5 @@
-import { Bell, Maximize2, Search } from "lucide-react";
+import { Bell, Maximize2, Search, Calendar } from "lucide-react";
+import { webApi } from "@/lib/api";
 
 export function Topbar() {
   return (

@@ -37,27 +37,21 @@ class EarningController extends Controller
 
         $admin = \App\Models\User::where('role', 'Admin')->first();
         $netBalance = $admin ? $admin->balance : 0;
-        $grossAssets = $netBalance + $minusBonuses;
 
-        $adminEarnings = $usersWithPlans->map(function($user) {
-            $grossCut = $user->vipPlan->min_deposit * 0.05;
-            $deduction = 0;
-            
-            if ($user->referred_by) {
-                $deduction = $user->vipPlan->min_deposit * 0.05;
-            }
-            
-            $netEarnings = $grossCut - $deduction;
+        $earningsLogs = \App\Models\EarningsLog::with('sourceUser')->orderBy('created_at', 'desc')->get();
+        $grossAssets = $earningsLogs->where('type', 'Daily Admin Cut')->sum('amount');
+        $minusBonuses = $earningsLogs->where('type', 'Daily Ambassador Cut')->sum('amount');
 
+        $adminEarnings = $earningsLogs->map(function($log) {
             return [
-                'id' => $user->id, // using user ID as a proxy for the transaction ID
-                'user' => $user,
-                'type' => 'VIP Plan Cut (5%)',
-                'amount_earned' => $netEarnings,
-                'gross_cut' => $grossCut,
-                'deduction' => $deduction,
-                'deposit_amount' => $user->vipPlan->min_deposit,
-                'created_at' => $user->updated_at, // approximation of when plan was unlocked
+                'id' => $log->id,
+                'user' => $log->sourceUser,
+                'type' => $log->type,
+                'amount_earned' => $log->amount,
+                'gross_cut' => $log->amount,
+                'deduction' => 0,
+                'deposit_amount' => $log->deposit_amount,
+                'created_at' => $log->created_at,
             ];
         });
         

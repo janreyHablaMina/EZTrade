@@ -75,4 +75,37 @@ class DashboardController extends Controller
             ],
         ]);
     }
+
+    public function visualizeStats(Request $request)
+    {
+        $adminDeposits = Deposit::where('status', 'Approved')->sum('amount');
+        
+        $usersWithPlans = User::with('vipPlan')
+            ->where('status', 'Active')
+            ->whereNotNull('vip_plan_id')
+            ->get();
+            
+        $adminTradeCapital = 0;
+        $adminMinusBonuses = 0;
+        foreach ($usersWithPlans as $u) {
+            if ($u->vipPlan) {
+                $adminTradeCapital += $u->vipPlan->min_deposit;
+                if ($u->referred_by) {
+                    $referrer = \App\Models\User::where('id', $u->referred_by)->orWhere('referral_code', $u->referred_by)->first();
+                    if ($referrer && $referrer->role === 'Ambassador') {
+                        $adminMinusBonuses += $u->vipPlan->min_deposit * 0.05; // 5% deduction
+                    }
+                }
+            }
+        }
+        
+        $admin = User::where('role', 'Admin')->first();
+        
+        return response()->json([
+            'total_deposit' => $adminDeposits,
+            'active_capital' => $adminTradeCapital,
+            'minus_bonuses' => $adminMinusBonuses,
+            'net_balance' => $admin ? $admin->balance : 0
+        ]);
+    }
 }
