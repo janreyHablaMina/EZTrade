@@ -8,6 +8,27 @@ use Illuminate\Http\Request;
 
 class AmbassadorController extends Controller
 {
+    protected function getAllDownlineIds($userId)
+    {
+        $allDownlineIds = [];
+        $currentLevelIds = [$userId];
+
+        while (!empty($currentLevelIds)) {
+            $nextLevelIds = \App\Models\User::whereIn('referred_by', $currentLevelIds)
+                ->pluck('id')
+                ->toArray();
+                
+            if (empty($nextLevelIds)) {
+                break;
+            }
+            
+            $allDownlineIds = array_merge($allDownlineIds, $nextLevelIds);
+            $currentLevelIds = $nextLevelIds;
+        }
+
+        return $allDownlineIds;
+    }
+
     public function index()
     {
         // Fetch all users with role 'Ambassador'
@@ -16,9 +37,10 @@ class AmbassadorController extends Controller
             ->get();
 
         $data = $ambassadors->map(function ($ambassador) {
-            // Get all downline users
-            $downline = User::where('referred_by', $ambassador->id)->get();
-            $downlineCount = $downline->count();
+            // Get all downline users recursively
+            $downlineIds = $this->getAllDownlineIds($ambassador->id);
+            $downline = User::whereIn('id', $downlineIds)->get();
+            $downlineCount = count($downlineIds);
             
             // Total assets (balance) of downline
             $totalDownlineAssets = $downline->sum('balance');
@@ -48,11 +70,10 @@ class AmbassadorController extends Controller
     {
         $ambassador = User::findOrFail($id);
         
-        $downline = User::where('referred_by', $ambassador->id)->get();
-        $downlineCount = $downline->count();
+        $downlineIds = $this->getAllDownlineIds($ambassador->id);
+        $downline = User::whereIn('id', $downlineIds)->get();
+        $downlineCount = count($downlineIds);
         $totalDownlineAssets = $downline->sum('balance');
-        
-        $downlineIds = $downline->pluck('id');
         $deposits = \App\Models\Deposit::whereIn('user_id', $downlineIds)
             ->where('status', 'Approved')
             ->get();
@@ -70,6 +91,7 @@ class AmbassadorController extends Controller
         
         $directReferralEarnings = 0;
         $minusBonuses = 0;
+        $totalReferralGiven = 0;
         
         $usersWithApprovedDeposits = \App\Models\Deposit::with('user')->where('status', 'Approved')->select('user_id')->distinct()->get();
         
@@ -109,8 +131,9 @@ class AmbassadorController extends Controller
                     $uplineId = $upline->referred_by;
                 }
                 
-                if ($foundAmbassadorId === $ambassador->id && $totalBonusPaidOut > 0) {
-                    $minusBonuses += $totalBonusPaidOut / 2;
+                if ($foundAmbassadorId === $ambassador->id) {
+                    $minusBonuses += $totalBonusPaidOut / 2; // Ambassador pays 50%
+                    $totalReferralGiven += $totalBonusPaidOut;
                 }
             }
         }
@@ -140,6 +163,7 @@ class AmbassadorController extends Controller
                 'activeTradeCapital' => $activeTradeCapital,
                 'grossAssets' => $grossAssets,
                 'minusBonuses' => $minusBonuses,
+                'totalReferralGiven' => $totalReferralGiven,
                 'netBalance' => $netBalance,
             ]
         ]);
@@ -148,8 +172,9 @@ class AmbassadorController extends Controller
     public function downline($id)
     {
         $ambassador = User::findOrFail($id);
+        $downlineIds = $this->getAllDownlineIds($ambassador->id);
         $users = User::with('vipPlan')
-            ->where('referred_by', $ambassador->id)
+            ->whereIn('id', $downlineIds)
             ->orderBy('created_at', 'desc')
             ->get();
         return response()->json($users);
@@ -176,7 +201,7 @@ class AmbassadorController extends Controller
             ];
         })->toArray();
         
-        $downlineIds = User::where('referred_by', $ambassador->id)->pluck('id');
+        $downlineIds = $this->getAllDownlineIds($ambassador->id);
         $usersWithPlans = User::with('vipPlan')
             ->whereIn('id', $downlineIds)
             ->where('status', 'Active')
@@ -185,7 +210,7 @@ class AmbassadorController extends Controller
             ->get();
 
         foreach ($usersWithPlans as $user) {
-            if ($user->vipPlan && ($user->referred_by == $ambassador->id || $user->referred_by == $ambassador->referral_code)) {
+            if ($user->vipPlan && in_array($user->id, $downlineIds)) {
                 $directBonus = $user->vipPlan->min_deposit * 0.10;
                 $earnings[] = [
                     'id' => 'D'.$user->id,
@@ -211,7 +236,7 @@ class AmbassadorController extends Controller
     {
         $ambassador = User::findOrFail($id);
         
-        $downlineIds = User::where('referred_by', $ambassador->id)->pluck('id');
+        $downlineIds = $this->getAllDownlineIds($ambassador->id);
         
         $users = User::with('vipPlan')
             ->whereIn('id', $downlineIds)

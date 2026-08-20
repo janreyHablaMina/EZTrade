@@ -92,6 +92,7 @@ class DashboardController extends Controller
             }
         }
         $adminMinusBonuses = 0;
+        $adminTotalReferralGiven = 0;
         $usersWithApprovedDeposits = Deposit::with('user')->where('status', 'Approved')->select('user_id')->distinct()->get();
         
         foreach ($usersWithApprovedDeposits as $record) {
@@ -128,6 +129,7 @@ class DashboardController extends Controller
                 }
                 
                 if ($totalBonusPaidOut > 0) {
+                    $adminTotalReferralGiven += $totalBonusPaidOut;
                     if ($hasAmbassador) {
                         $adminMinusBonuses += $totalBonusPaidOut / 2; // Admin pays 50%
                     } else {
@@ -143,6 +145,7 @@ class DashboardController extends Controller
             'total_deposit' => $adminDeposits,
             'active_capital' => $adminTradeCapital,
             'minus_bonuses' => $adminMinusBonuses,
+            'total_referral_given' => $adminTotalReferralGiven,
             'net_balance' => $admin ? $admin->balance : 0
         ]);
     }

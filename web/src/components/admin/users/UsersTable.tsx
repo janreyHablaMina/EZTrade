@@ -132,12 +132,8 @@ export function UsersTable({
                     </td>
                     <td className="py-3.5">
                       <div className="text-muted-2">
-                        $
-                        {(
-                          user.deposited -
-                          user.withdrawn +
-                          user.earnings
-                        ).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                        {(user.deposited - user.withdrawn + user.earnings) < 0 ? "-" : ""}$
+                        {Math.abs(user.deposited - user.withdrawn + user.earnings).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                       </div>
                       {user.pendingDeposit && user.pendingDeposit > 0 && (
                         <div className="text-[10px] text-warning font-semibold mt-1" title="Pending Deposit">
