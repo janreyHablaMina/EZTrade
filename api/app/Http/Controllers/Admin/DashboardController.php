@@ -86,13 +86,36 @@ class DashboardController extends Controller
             ->get();
             
         $adminTradeCapital = 0;
+        $tradeCapitalAmbassador = 0;
+        $tradeCapitalNonAmbassador = 0;
+        
         foreach ($usersWithPlans as $u) {
             if ($u->vipPlan) {
                 $adminTradeCapital += $u->vipPlan->min_deposit;
+                
+                $hasAmb = false;
+                $uplineId = $u->referred_by;
+                while ($uplineId) {
+                    $upline = \App\Models\User::find($uplineId);
+                    if (!$upline) break;
+                    if ($upline->role === 'Ambassador') {
+                        $hasAmb = true;
+                        break;
+                    }
+                    $uplineId = $upline->referred_by;
+                }
+                
+                if ($hasAmb) {
+                    $tradeCapitalAmbassador += $u->vipPlan->min_deposit;
+                } else {
+                    $tradeCapitalNonAmbassador += $u->vipPlan->min_deposit;
+                }
             }
         }
         $adminMinusBonuses = 0;
         $adminTotalReferralGiven = 0;
+        $referralGivenAmbassador = 0;
+        $referralGivenNonAmbassador = 0;
         $usersWithApprovedDeposits = Deposit::with('user')->where('status', 'Approved')->select('user_id')->distinct()->get();
         
         foreach ($usersWithApprovedDeposits as $record) {
@@ -131,8 +154,10 @@ class DashboardController extends Controller
                 if ($totalBonusPaidOut > 0) {
                     $adminTotalReferralGiven += $totalBonusPaidOut;
                     if ($hasAmbassador) {
+                        $referralGivenAmbassador += $totalBonusPaidOut;
                         $adminMinusBonuses += $totalBonusPaidOut / 2; // Admin pays 50%
                     } else {
+                        $referralGivenNonAmbassador += $totalBonusPaidOut;
                         $adminMinusBonuses += $totalBonusPaidOut; // Admin pays full 100%
                     }
                 }
@@ -141,11 +166,35 @@ class DashboardController extends Controller
         
         $admin = User::where('role', 'Admin')->first();
         
+        $adminGrossAmbassador = 0;
+        $adminGrossNonAmbassador = 0;
+        if ($admin) {
+            $adminEarningsLogs = \App\Models\EarningsLog::where('user_id', $admin->id)->where('type', 'Daily Admin Cut')->get();
+            foreach ($adminEarningsLogs as $log) {
+                if (abs($log->amount - ($log->deposit_amount * 0.05)) < 0.01) {
+                    $adminGrossAmbassador += $log->amount;
+                } else {
+                    $adminGrossNonAmbassador += $log->amount;
+                }
+            }
+        }
+
+        $adminNetAmbassador = $adminGrossAmbassador - ($referralGivenAmbassador / 2);
+        $adminNetNonAmbassador = $adminGrossNonAmbassador - $referralGivenNonAmbassador;
+        
         return response()->json([
             'total_deposit' => $adminDeposits,
             'active_capital' => $adminTradeCapital,
+            'trade_capital_ambassador' => $tradeCapitalAmbassador,
+            'trade_capital_non_ambassador' => $tradeCapitalNonAmbassador,
             'minus_bonuses' => $adminMinusBonuses,
             'total_referral_given' => $adminTotalReferralGiven,
+            'referral_given_ambassador' => $referralGivenAmbassador,
+            'referral_given_non_ambassador' => $referralGivenNonAmbassador,
+            'admin_gross_ambassador' => $adminGrossAmbassador,
+            'admin_gross_non_ambassador' => $adminGrossNonAmbassador,
+            'admin_net_ambassador' => $adminNetAmbassador,
+            'admin_net_non_ambassador' => $adminNetNonAmbassador,
             'net_balance' => $admin ? $admin->balance : 0
         ]);
     }

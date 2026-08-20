@@ -78,6 +78,87 @@ export default function VisualizePage() {
       
       {adminStats && ambassadorsData.length > 0 && (
         <div className="space-y-8">
+          
+          {/* Global Breakdown Summary */}
+          <div className="rounded-xl border border-border bg-card-elevated p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-white mb-4">
+              Admin Global Breakdown
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              
+              {/* --- ROW 1: DIRECT (NOT AMBASSADOR) --- */}
+
+              {/* Trading Capital - Non Ambassadors */}
+              <div className="flex flex-col h-full space-y-3">
+                <h3 className="text-sm font-medium text-muted-2">Trade Capital (Direct)</h3>
+                <div className="flex-1 flex flex-col rounded-lg bg-bg-deep p-4 border border-white/[0.05]">
+                  <span className="text-xl font-bold text-emerald-400">
+                    ${(adminStats.trade_capital_non_ambassador || 0).toLocaleString("en-US", {minimumFractionDigits: 2})}
+                  </span>
+                  <span className="text-xs text-muted-2 mt-1">Not under Ambassadors</span>
+                </div>
+              </div>
+
+              {/* Total Referral Given - Non Ambassadors */}
+              <div className="flex flex-col h-full space-y-3">
+                <h3 className="text-sm font-medium text-muted-2">Referrals Given (Direct)</h3>
+                <div className="flex-1 flex flex-col rounded-lg bg-bg-deep p-4 border border-white/[0.05]">
+                  <span className="text-xl font-bold text-purple-400">
+                    ${(adminStats.referral_given_non_ambassador || 0).toLocaleString("en-US", {minimumFractionDigits: 2})}
+                  </span>
+                  <span className="text-xs text-muted-2 mt-1">Not under Ambassadors</span>
+                </div>
+              </div>
+
+              {/* Net Income - Non Ambassadors */}
+              <div className="flex flex-col h-full space-y-3">
+                <h3 className="text-sm font-medium text-muted-2">Net Income (Direct)</h3>
+                <div className="flex-1 flex flex-col rounded-lg bg-bg-deep p-4 border border-white/[0.05]">
+                  <span className={`text-xl font-bold ${(adminStats.admin_net_non_ambassador || 0) < 0 ? "text-danger" : "text-emerald-400"}`}>
+                    {(adminStats.admin_net_non_ambassador || 0) < 0 ? "-" : ""}${Math.abs(adminStats.admin_net_non_ambassador || 0).toLocaleString("en-US", {minimumFractionDigits: 2})}
+                  </span>
+                  <span className="text-xs text-muted-2 mt-1">Not under Ambassadors</span>
+                </div>
+              </div>
+
+              {/* --- ROW 2: AMBASSADORS --- */}
+
+              {/* Trading Capital - Ambassadors */}
+              <div className="flex flex-col h-full space-y-3">
+                <h3 className="text-sm font-medium text-muted-2">Trade Capital (Ambassadors)</h3>
+                <div className="flex-1 flex flex-col rounded-lg bg-bg-deep p-4 border border-white/[0.05]">
+                  <span className="text-xl font-bold text-emerald-400">
+                    ${(adminStats.trade_capital_ambassador || 0).toLocaleString("en-US", {minimumFractionDigits: 2})}
+                  </span>
+                  <span className="text-xs text-muted-2 mt-1">From Ambassador Networks</span>
+                </div>
+              </div>
+
+              {/* Total Referral Given - Ambassadors */}
+              <div className="flex flex-col h-full space-y-3">
+                <h3 className="text-sm font-medium text-muted-2">Referrals Given (Ambassadors)</h3>
+                <div className="flex-1 flex flex-col rounded-lg bg-bg-deep p-4 border border-white/[0.05]">
+                  <span className="text-xl font-bold text-purple-400">
+                    ${(adminStats.referral_given_ambassador || 0).toLocaleString("en-US", {minimumFractionDigits: 2})}
+                  </span>
+                  <span className="text-xs text-muted-2 mt-1">To Ambassador Networks</span>
+                </div>
+              </div>
+
+              {/* Net Income - Ambassadors */}
+              <div className="flex flex-col h-full space-y-3">
+                <h3 className="text-sm font-medium text-muted-2">Net Income (Ambassadors)</h3>
+                <div className="flex-1 flex flex-col rounded-lg bg-bg-deep p-4 border border-white/[0.05]">
+                  <span className={`text-xl font-bold ${(adminStats.admin_net_ambassador || 0) < 0 ? "text-danger" : "text-emerald-400"}`}>
+                    {(adminStats.admin_net_ambassador || 0) < 0 ? "-" : ""}${Math.abs(adminStats.admin_net_ambassador || 0).toLocaleString("en-US", {minimumFractionDigits: 2})}
+                  </span>
+                  <span className="text-xs text-muted-2 mt-1">From Ambassador Networks</span>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+
           {ambassadorsData.map((ambassadorStats: any) => (
             <div key={ambassadorStats.id} className="rounded-xl border border-border bg-card-elevated p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-white mb-4">
