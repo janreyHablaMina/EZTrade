@@ -13,6 +13,8 @@ type UsersFiltersProps = {
   dateRange: string;
   setDateRange: (d: string) => void;
   onReset: () => void;
+  availableStatuses?: string[];
+  availableLevels?: string[];
 };
 
 export function UsersFilters({
@@ -23,6 +25,8 @@ export function UsersFilters({
   status,
   setStatus,
   onReset,
+  availableStatuses = ["Active", "Inactive", "Suspended"],
+  availableLevels = ["Ambassador", "VIP 1", "VIP 2", "VIP 3", "VIP 4", "VIP 5"],
 }: UsersFiltersProps) {
   return (
     <div className="mt-5 rounded-2xl border border-border bg-card p-4 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
@@ -41,9 +45,9 @@ export function UsersFilters({
             containerClassName="sm:w-[130px]"
           >
             <option value="all">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-            <option value="Suspended">Suspended</option>
+            {availableStatuses.map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
           </Select>
 
           <Select
@@ -52,16 +56,9 @@ export function UsersFilters({
             containerClassName="sm:w-[130px]"
           >
             <option value="all">All Levels</option>
-            <option value="Ambassador">Ambassador</option>
-            <option value="VIP 1">VIP 1</option>
-            <option value="VIP 2">VIP 2</option>
-            <option value="VIP 3">VIP 3</option>
-            <option value="VIP 4">VIP 4</option>
-            <option value="VIP 5">VIP 5</option>
-          </Select>
-
-          <Select containerClassName="sm:w-[130px] hidden md:block">
-            <option value="all">All Countries</option>
+            {availableLevels.map(l => (
+              <option key={l} value={l}>{l}</option>
+            ))}
           </Select>
 
           <div className="flex items-center gap-2">

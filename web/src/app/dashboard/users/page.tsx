@@ -91,6 +91,20 @@ export default function UsersPage() {
     }
   }, [toastMessage]);
 
+  // Derive available filter options from loaded data
+  const availableStatuses = useMemo(() => {
+    return Array.from(new Set(usersList.map(u => u.status))).sort();
+  }, [usersList]);
+
+  const availableLevels = useMemo(() => {
+    const levels = Array.from(new Set(usersList.map(u => u.role === 'Ambassador' ? 'Ambassador' : u.vipLevel))).filter(Boolean);
+    return levels.sort((a, b) => {
+      if (a === 'Ambassador') return -1;
+      if (b === 'Ambassador') return 1;
+      return a.localeCompare(b);
+    });
+  }, [usersList]);
+
   // Apply filters logic
   const filteredUsers = useMemo(() => {
     return usersList.filter((user) => {
@@ -334,6 +348,8 @@ export default function UsersPage() {
         dateRange={dateRange}
         setDateRange={setDateRange}
         onReset={handleReset}
+        availableStatuses={availableStatuses}
+        availableLevels={availableLevels}
       />
 
       {/* Users Table Card */}
