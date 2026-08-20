@@ -87,30 +87,32 @@ export default function Home() {
           icon={ArrowDownToLine}
         />
         <KpiCard
-          label="Total Withdrawals"
-          value={formatCurrency(stats.total_withdrawals)}
-          change=""
-          icon={ArrowUpFromLine}
-        />
-        <KpiCard
-          label="Total Earnings Paid"
-          value={formatCurrency(stats.total_earnings)}
-          change=""
-          icon={Coins}
-        />
-        <KpiCard
-          label="Active VIP Users"
-          value={stats.active_vips.toLocaleString()}
+          label="Total Trade Capital"
+          value={formatCurrency(stats.admin_trade_capital || 0)}
           change=""
           icon={Crown}
         />
         <KpiCard
-          label="Pending Deposits"
-          value={stats.pending_deposits.toLocaleString()}
+          label="Gross Income"
+          value={formatCurrency(stats.admin_gross_income || 0)}
+          change=""
+          icon={Coins}
+        />
+        <KpiCard
+          label="Total Deduction"
+          value={formatCurrency(stats.admin_total_deduction || 0)}
           change=""
           positive={false}
-          icon={Hourglass}
-          iconClassName="text-warning"
+          icon={ArrowUpFromLine}
+          iconClassName="text-danger"
+        />
+        <KpiCard
+          label="Net Income"
+          value={formatCurrency(stats.admin_net_income || 0)}
+          change=""
+          positive={(stats.admin_net_income || 0) >= 0}
+          icon={Coins}
+          iconClassName={(stats.admin_net_income || 0) >= 0 ? "text-emerald-400" : "text-danger"}
         />
       </div>
 

@@ -34,12 +34,17 @@ export default function UsersPage() {
   const [status, setStatus] = useState("all");
   const [dateRange, setDateRange] = useState("");
   const [usersList, setUsersList] = useState<UserRecord[]>([]);
+  const [globalStats, setGlobalStats] = useState<any>(null);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
 
   const fetchUsers = useCallback(async () => {
     try {
       setIsLoadingUsers(true);
-      const data = await webApi.get("/users");
+      const [data, statsRes] = await Promise.all([
+        webApi.get("/users"),
+        webApi.get("/users/global/stats")
+      ]);
+      setGlobalStats(statsRes);
       const mappedUsers: UserRecord[] = data.map((u: any) => ({
           id: `EZT-${u.id.toString().padStart(4, '0')}`,
           dbId: u.id,
@@ -304,6 +309,47 @@ export default function UsersPage() {
           icon={Coins}
         />
       </div>
+
+      {globalStats && (
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Total Assets (Trading Capital) */}
+          <div className="rounded-xl border border-border bg-card-elevated p-6 shadow-sm">
+            <h3 className="text-sm font-medium text-muted-2">Total Assets (Trading Capital)</h3>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-white">
+                ${(globalStats.total_trading_capital || 0).toLocaleString("en-US", {minimumFractionDigits: 2})}
+              </span>
+            </div>
+          </div>
+          {/* Total Assets (They have) */}
+          <div className="rounded-xl border border-border bg-card-elevated p-6 shadow-sm">
+            <h3 className="text-sm font-medium text-muted-2">Total Assets (They have)</h3>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-white">
+                ${(globalStats.total_balance || 0).toLocaleString("en-US", {minimumFractionDigits: 2})}
+              </span>
+            </div>
+          </div>
+          {/* Total Deduction */}
+          <div className="rounded-xl border border-border bg-card-elevated p-6 shadow-sm">
+            <h3 className="text-sm font-medium text-muted-2">Total Deduction</h3>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-danger">
+                ${(globalStats.total_deduction || 0).toLocaleString("en-US", {minimumFractionDigits: 2})}
+              </span>
+            </div>
+          </div>
+          {/* Net Income */}
+          <div className="rounded-xl border border-border bg-card-elevated p-6 shadow-sm">
+            <h3 className="text-sm font-medium text-muted-2">Net Income</h3>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-emerald-400">
+                ${(globalStats.net_income || 0).toLocaleString("en-US", {minimumFractionDigits: 2})}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Users Management Container */}
       <div className="rounded-2xl border border-border bg-card shadow-[0_10px_30px_rgba(0,0,0,0.25)]">

@@ -50,6 +50,55 @@ class DashboardController extends Controller
         // System Stats
         $totalTrades = \App\Models\TradingCodeRedemption::count();
 
+        // Calculate Admin Specific Metrics
+        $usersWithPlans = User::with('vipPlan')->where('status', 'Active')->whereNotNull('vip_plan_id')->get();
+        $adminTradeCapital = $usersWithPlans->sum(fn($u) => $u->vipPlan->min_deposit ?? 0);
+
+        $adminMinusBonuses = 0;
+        $usersWithApprovedDeposits = Deposit::with('user')->where('status', 'Approved')->select('user_id')->distinct()->get();
+        foreach ($usersWithApprovedDeposits as $record) {
+            $firstDeposit = Deposit::where('user_id', $record->user_id)->where('status', 'Approved')->orderBy('created_at', 'asc')->first();
+            if ($firstDeposit && $firstDeposit->user && $firstDeposit->user->referred_by) {
+                $hasAmbassador = false;
+                $uplineId = $firstDeposit->user->referred_by;
+                $rates = [1 => 0.10, 2 => 0.05, 3 => 0.03];
+                $level = 1;
+                $totalBonusPaidOut = 0;
+                $currentUplineId = $uplineId;
+                while ($currentUplineId && $level <= 3) {
+                    $upline = User::find($currentUplineId);
+                    if (!$upline) break;
+                    $totalBonusPaidOut += $firstDeposit->amount * $rates[$level];
+                    $currentUplineId = $upline->referred_by;
+                    $level++;
+                }
+                $ambassadorCheckId = $uplineId;
+                while ($ambassadorCheckId) {
+                    $upline = User::find($ambassadorCheckId);
+                    if (!$upline) break;
+                    if ($upline->role === 'Ambassador') {
+                        $hasAmbassador = true;
+                        break;
+                    }
+                    $ambassadorCheckId = $upline->referred_by;
+                }
+                if ($totalBonusPaidOut > 0) {
+                    if ($hasAmbassador) {
+                        $adminMinusBonuses += $totalBonusPaidOut / 2;
+                    } else {
+                        $adminMinusBonuses += $totalBonusPaidOut;
+                    }
+                }
+            }
+        }
+
+        $admin = User::where('role', 'Admin')->first();
+        $adminGrossIncome = 0;
+        if ($admin) {
+            $adminGrossIncome = \App\Models\EarningsLog::where('user_id', $admin->id)->where('type', 'Daily Admin Cut')->sum('amount');
+        }
+        $adminNetIncome = $adminGrossIncome - $adminMinusBonuses;
+
         return response()->json([
             'total_users' => $totalUsers,
             'active_vips' => $activeVips,
@@ -73,6 +122,10 @@ class DashboardController extends Controller
             'system_stats' => [
                 'total_trades' => $totalTrades,
             ],
+            'admin_trade_capital' => $adminTradeCapital,
+            'admin_gross_income' => $adminGrossIncome,
+            'admin_total_deduction' => $adminMinusBonuses,
+            'admin_net_income' => $adminNetIncome,
         ]);
     }
 

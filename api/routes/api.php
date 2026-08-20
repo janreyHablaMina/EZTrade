@@ -15,6 +15,7 @@ Route::post('/login', [AuthController::class, 'login']);
 
 // ── Users ─────────────────────────────────────────────────────────────────────
 Route::get('/users', [UserController::class, 'index']);
+Route::get('/users/global/stats', [UserController::class, 'globalStats']);
 Route::get('/users/{id}', [UserController::class, 'show']);
 Route::patch('/users/{id}', [UserController::class, 'update']);
 Route::delete('/users/{id}', [UserController::class, 'destroy']);

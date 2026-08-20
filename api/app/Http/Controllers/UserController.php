@@ -12,6 +12,41 @@ class UserController extends Controller
     {
         return response()->json(User::with('vipPlan')->orderBy('created_at', 'desc')->get());
     }
+    public function globalStats()
+    {
+        $usersWithPlans = User::where('role', '!=', 'Admin')->with('vipPlan')->where('status', 'Active')->whereNotNull('vip_plan_id')->get();
+        $totalTradingCapital = $usersWithPlans->sum(fn($u) => $u->vipPlan->min_deposit ?? 0);
+        
+        $totalBalance = User::where('role', '!=', 'Admin')->sum('balance');
+        
+        $totalDeduction = 0;
+        $usersWithApprovedDeposits = \App\Models\Deposit::with('user')->where('status', 'Approved')->select('user_id')->distinct()->get();
+        foreach ($usersWithApprovedDeposits as $record) {
+            $firstDeposit = \App\Models\Deposit::where('user_id', $record->user_id)->where('status', 'Approved')->orderBy('created_at', 'asc')->first();
+            if ($firstDeposit && $firstDeposit->user && $firstDeposit->user->referred_by) {
+                $rates = [1 => 0.10, 2 => 0.05, 3 => 0.03];
+                $level = 1;
+                $currentUplineId = $firstDeposit->user->referred_by;
+                while ($currentUplineId && $level <= 3) {
+                    $upline = \App\Models\User::find($currentUplineId);
+                    if (!$upline) break;
+                    $totalDeduction += $firstDeposit->amount * $rates[$level];
+                    $currentUplineId = $upline->referred_by;
+                    $level++;
+                }
+            }
+        }
+        
+        $totalEarnings = \App\Models\TradingCodeRedemption::sum('reward_amount') + 
+                         \App\Models\EarningsLog::where('type', 'Daily Ambassador Cut')->sum('amount');
+
+        return response()->json([
+            'total_trading_capital' => $totalTradingCapital,
+            'total_balance' => $totalBalance,
+            'total_deduction' => $totalDeduction,
+            'net_income' => $totalEarnings,
+        ]);
+    }
 
     public function show($id)
     {
