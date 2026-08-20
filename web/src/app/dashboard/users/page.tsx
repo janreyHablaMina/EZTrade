@@ -256,13 +256,19 @@ export default function UsersPage() {
   return (
     <AdminShell>
       {/* Top Header section */}
-      <div className="flex h-full flex-col gap-6 relative">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Users Management</h1>
-          <p className="text-sm text-muted-2">View and manage all platform users</p>
+          <h1 className="text-xl font-semibold tracking-tight text-white sm:text-2xl">
+            Users Management
+          </h1>
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-2">
+            <span>Dashboard</span>
+            <span className="text-[10px] text-muted-2/65">&gt;</span>
+            <span className="text-muted">Users</span>
+          </p>
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handleSimulateDailyTrade}
@@ -274,9 +280,16 @@ export default function UsersPage() {
           </button>
           <button
             type="button"
-            className="flex items-center gap-2 rounded-xl bg-purple px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-bright shadow-[0_8px_20px_rgba(123,44,255,0.3)] hover:shadow-[0_8px_20px_rgba(123,44,255,0.45)] cursor-pointer"
+            className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.04] cursor-pointer"
           >
-            <Plus className="h-4 w-4" />
+            <Download className="h-3.5 w-3.5" />
+            Export
+          </button>
+          <button
+            type="button"
+            className="flex items-center gap-1.5 rounded-xl bg-purple hover:bg-purple-bright px-3.5 py-2 text-sm font-semibold text-white transition shadow-[0_8px_20px_rgba(123,44,255,0.3)] hover:shadow-[0_8px_20px_rgba(123,44,255,0.45)] cursor-pointer"
+          >
+            <Plus className="h-3.5 w-3.5" />
             Add User
           </button>
         </div>
@@ -310,119 +323,51 @@ export default function UsersPage() {
         />
       </div>
 
-      {globalStats && (
-        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Total Assets (Trading Capital) */}
-          <div className="rounded-xl border border-border bg-card-elevated p-6 shadow-sm">
-            <h3 className="text-sm font-medium text-muted-2">Total Assets (Trading Capital)</h3>
-            <div className="mt-4 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-white">
-                ${(globalStats.total_trading_capital || 0).toLocaleString("en-US", {minimumFractionDigits: 2})}
-              </span>
-            </div>
-          </div>
-          {/* Total Assets (They have) */}
-          <div className="rounded-xl border border-border bg-card-elevated p-6 shadow-sm">
-            <h3 className="text-sm font-medium text-muted-2">Total Assets (They have)</h3>
-            <div className="mt-4 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-white">
-                ${(globalStats.total_balance || 0).toLocaleString("en-US", {minimumFractionDigits: 2})}
-              </span>
-            </div>
-          </div>
-          {/* Total Deduction */}
-          <div className="rounded-xl border border-border bg-card-elevated p-6 shadow-sm">
-            <h3 className="text-sm font-medium text-muted-2">Total Deduction</h3>
-            <div className="mt-4 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-danger">
-                ${(globalStats.total_deduction || 0).toLocaleString("en-US", {minimumFractionDigits: 2})}
-              </span>
-            </div>
-          </div>
-          {/* Net Income */}
-          <div className="rounded-xl border border-border bg-card-elevated p-6 shadow-sm">
-            <h3 className="text-sm font-medium text-muted-2">Net Income</h3>
-            <div className="mt-4 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-emerald-400">
-                ${(globalStats.net_income || 0).toLocaleString("en-US", {minimumFractionDigits: 2})}
-              </span>
-            </div>
-          </div>
-        </div>
+      {/* Filters Card */}
+      <UsersFilters
+        search={search}
+        setSearch={setSearch}
+        vipLevel={vipLevel}
+        setVipLevel={setVipLevel}
+        status={status}
+        setStatus={setStatus}
+        dateRange={dateRange}
+        setDateRange={setDateRange}
+        onReset={handleReset}
+      />
+
+      {/* Users Table Card */}
+      {isLoadingUsers ? (
+        <div className="py-8 text-center text-muted-2">Loading users...</div>
+      ) : (
+        <UsersTable
+          users={filteredUsers}
+          paginatedUsers={paginatedUsers}
+          totalCount={usersList.length}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
+          selectedIds={selectedIds}
+          setSelectedIds={setSelectedIds}
+          toggleSelectAll={toggleSelectAll}
+          toggleSelectRow={toggleSelectRow}
+          onViewUser={(user) => {
+            if (user.role === "Ambassador") {
+              router.push(`/dashboard/ambassadors/${user.id}`);
+            } else {
+              setViewingUser(user);
+            }
+          }}
+          onEditUser={setEditingUser}
+          onNotifyUser={setNotifyingUser}
+          onSuspendUser={(user) => setAccountAction({ user, action: 'suspend' })}
+          onUnsuspendUser={(user) => setAccountAction({ user, action: 'unsuspend' })}
+          onDeactivateUser={(user) => setAccountAction({ user, action: 'deactivate' })}
+          onReactivateUser={(user) => setAccountAction({ user, action: 'reactivate' })}
+          onDeleteUser={(user) => setAccountAction({ user, action: 'delete' })}
+        />
       )}
-
-      {/* Main Users Management Container */}
-      <div className="rounded-2xl border border-border bg-card shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
-        {/* Section Header */}
-        <div className="flex flex-col gap-4 border-b border-border/50 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple/10 text-purple-bright">
-              <Users className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-semibold text-white">Users Management</h2>
-              <p className="mt-0.5 text-xs text-muted-2">View and manage all platform users</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="flex items-center gap-1.5 rounded-xl border border-border bg-card-elevated px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.04] cursor-pointer"
-            >
-              <Download className="h-4 w-4" />
-              Export
-            </button>
-          </div>
-        </div>
-
-        <div className="p-5 flex flex-col gap-5">
-          {/* Filters */}
-          <UsersFilters
-            search={search}
-            setSearch={setSearch}
-            vipLevel={vipLevel}
-            setVipLevel={setVipLevel}
-            status={status}
-            setStatus={setStatus}
-            dateRange={dateRange}
-            setDateRange={setDateRange}
-            onReset={handleReset}
-          />
-
-          {isLoadingUsers ? (
-            <div className="py-8 text-center text-muted-2">Loading users...</div>
-          ) : (
-            <UsersTable
-              users={filteredUsers}
-              paginatedUsers={paginatedUsers}
-              totalCount={usersList.length}
-            currentPage={currentPage}
-            setCurrentPage={setCurrentPage}
-            pageSize={pageSize}
-            setPageSize={setPageSize}
-            selectedIds={selectedIds}
-            setSelectedIds={setSelectedIds}
-            toggleSelectAll={toggleSelectAll}
-            toggleSelectRow={toggleSelectRow}
-            onViewUser={(user) => {
-              if (user.role === "Ambassador") {
-                router.push(`/dashboard/ambassadors/${user.id}`);
-              } else {
-                setViewingUser(user);
-              }
-            }}
-            onEditUser={setEditingUser}
-            onNotifyUser={setNotifyingUser}
-            onSuspendUser={(user) => setAccountAction({ user, action: 'suspend' })}
-            onUnsuspendUser={(user) => setAccountAction({ user, action: 'unsuspend' })}
-            onDeactivateUser={(user) => setAccountAction({ user, action: 'deactivate' })}
-            onReactivateUser={(user) => setAccountAction({ user, action: 'reactivate' })}
-              onDeleteUser={(user) => setAccountAction({ user, action: 'delete' })}
-            />
-          )}
-        </div>
-      </div>
 
       {/* Floating Bulk Actions Bar */}
       <GenericFloatingActions
@@ -555,7 +500,6 @@ export default function UsersPage() {
           </div>
         </div>
       )}
-      </div>
     </AdminShell>
   );
 }

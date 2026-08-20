@@ -73,7 +73,7 @@ function NavSection({ title, items }: { title: string; items: NavItem[] }) {
               href={item.href}
               className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
                 isActive
-                  ? "bg-purple text-white shadow-[0_8px_24px_rgba(123,44,255,0.35)]"
+                  ? "bg-purple text-white"
                   : "text-muted hover:bg-white/[0.04] hover:text-white"
               }`}
             >
@@ -115,7 +115,7 @@ export function Sidebar() {
           href="/dashboard"
           className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
             isDashboard
-              ? "bg-purple text-white shadow-[0_8px_24px_rgba(123,44,255,0.35)]"
+              ? "bg-purple text-white"
               : "text-muted hover:bg-white/[0.04] hover:text-white"
           }`}
         >
