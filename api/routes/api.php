@@ -47,6 +47,7 @@ Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsR
 
 // ── Admin Endpoints ─────────────────────────────────────────────────────────────
 Route::get('/admin/dashboard-stats', [\App\Http\Controllers\Admin\DashboardController::class, 'getStats']);
+Route::get('/admin/chart-data', [\App\Http\Controllers\Admin\DashboardController::class, 'getChartData']);
 Route::get('/admin/visualize-stats', [\App\Http\Controllers\Admin\DashboardController::class, 'visualizeStats']);
 Route::get('/admin/referrals', [\App\Http\Controllers\Admin\ReferralController::class, 'index']);
 Route::get('/admin/ambassadors', [\App\Http\Controllers\Admin\AmbassadorController::class, 'index']);

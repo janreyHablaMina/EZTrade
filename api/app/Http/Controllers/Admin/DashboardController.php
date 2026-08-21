@@ -251,4 +251,71 @@ class DashboardController extends Controller
             'net_balance' => $admin ? $admin->balance : 0
         ]);
     }
+
+    public function getChartData(Request $request)
+    {
+        $range = $request->query('range', 'today'); // today, week, month
+
+        $now = now();
+
+        if ($range === 'today') {
+            $start = $now->copy()->startOfDay();
+            $end   = $now->copy()->endOfDay();
+            $groupFormat = 'HH24":00"'; // PostgreSQL hourly
+        } elseif ($range === 'week') {
+            $start = $now->copy()->startOfWeek();
+            $end   = $now->copy()->endOfWeek();
+            $groupFormat = 'YYYY-MM-DD';
+        } else {
+            // month
+            $start = $now->copy()->startOfMonth();
+            $end   = $now->copy()->endOfMonth();
+            $groupFormat = 'YYYY-MM-DD';
+        }
+
+        $pgFormat = $groupFormat;
+
+        // Deposits
+        $deposits = Deposit::where('status', 'Approved')
+            ->whereBetween('created_at', [$start, $end])
+            ->select(DB::raw("TO_CHAR(created_at, '{$pgFormat}') as label"), DB::raw('SUM(amount) as total'))
+            ->groupBy(DB::raw("TO_CHAR(created_at, '{$pgFormat}')"))
+            ->orderBy(DB::raw("TO_CHAR(created_at, '{$pgFormat}')"))
+            ->pluck('total', 'label');
+
+        // Withdrawals
+        $withdrawals = Withdrawal::where('status', 'Completed')
+            ->whereBetween('created_at', [$start, $end])
+            ->select(DB::raw("TO_CHAR(created_at, '{$pgFormat}') as label"), DB::raw('SUM(amount) as total'))
+            ->groupBy(DB::raw("TO_CHAR(created_at, '{$pgFormat}')"))
+            ->orderBy(DB::raw("TO_CHAR(created_at, '{$pgFormat}')"))
+            ->pluck('total', 'label');
+
+        // Earnings
+        $earnings = \App\Models\EarningsLog::whereBetween('created_at', [$start, $end])
+            ->select(DB::raw("TO_CHAR(created_at, '{$pgFormat}') as label"), DB::raw('SUM(amount) as total'))
+            ->groupBy(DB::raw("TO_CHAR(created_at, '{$pgFormat}')"))
+            ->orderBy(DB::raw("TO_CHAR(created_at, '{$pgFormat}')"))
+            ->pluck('total', 'label');
+
+        // Build a unified set of labels
+        $allLabels = collect($deposits->keys())
+            ->merge($withdrawals->keys())
+            ->merge($earnings->keys())
+            ->unique()
+            ->sort()
+            ->values();
+
+        $result = $allLabels->map(fn($label) => [
+            'label'       => $label,
+            'deposits'    => (float) ($deposits[$label] ?? 0),
+            'withdrawals' => (float) ($withdrawals[$label] ?? 0),
+            'earnings'    => (float) ($earnings[$label] ?? 0),
+        ]);
+
+        return response()->json([
+            'range'  => $range,
+            'points' => $result->values(),
+        ]);
+    }
 }
