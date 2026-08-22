@@ -12,9 +12,10 @@ type WithdrawalsFiltersProps = {
   setNetwork: (n: string) => void;
   currency: string;
   setCurrency: (c: string) => void;
-  dateRange: string;
-  setDateRange: (d: string) => void;
-  onFilter: () => void;
+  dateFrom: string;
+  setDateFrom: (d: string) => void;
+  dateTo: string;
+  setDateTo: (d: string) => void;
   onReset: () => void;
 };
 
@@ -27,9 +28,10 @@ export function WithdrawalsFilters({
   setNetwork,
   currency,
   setCurrency,
-  dateRange,
-  setDateRange,
-  onFilter,
+  dateFrom,
+  setDateFrom,
+  dateTo,
+  setDateTo,
   onReset,
 }: WithdrawalsFiltersProps) {
   return (
@@ -78,20 +80,19 @@ export function WithdrawalsFilters({
           </Select>
 
           <Input
-            icon={<Calendar className="h-4 w-4" />}
-            placeholder="Select date range"
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="sm:w-36 [&::-webkit-calendar-picker-indicator]:invert-[0.6] cursor-pointer"
+          />
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="sm:w-36 [&::-webkit-calendar-picker-indicator]:invert-[0.6] cursor-pointer"
           />
 
           <div className="flex items-center gap-2">
-            <Button
-              onClick={onFilter}
-              icon={<Filter className="h-3.5 w-3.5" />}
-              className="w-full sm:w-auto"
-            >
-              Filter
-            </Button>
             <Button
               variant="outline"
               onClick={onReset}

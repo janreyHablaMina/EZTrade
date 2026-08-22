@@ -24,7 +24,8 @@ export default function WithdrawalsPage() {
   const [status, setStatus] = useState("all");
   const [network, setNetwork] = useState("all");
   const [currency, setCurrency] = useState("all");
-  const [dateRange, setDateRange] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
 
   const fetchWithdrawals = async () => {
@@ -45,6 +46,7 @@ export default function WithdrawalsPage() {
           year: 'numeric', month: 'short', day: 'numeric',
           hour: '2-digit', minute: '2-digit'
         }),
+        createdAt: w.created_at,
       }));
       setWithdrawals(mapped);
     } catch (e) {
@@ -56,31 +58,30 @@ export default function WithdrawalsPage() {
     fetchWithdrawals();
   }, []);
 
-  // Applied filters state
-  const [filters, setFilters] = useState({
-    search: "",
-    status: "all",
-    network: "all",
-    currency: "all",
-  });
-
   // Apply filters logic
   const filteredWithdrawals = useMemo(() => {
     return withdrawals.filter((withdrawal) => {
       const matchSearch =
-        !filters.search ||
-        withdrawal.userName.toLowerCase().includes(filters.search.toLowerCase()) ||
-        withdrawal.userEmail.toLowerCase().includes(filters.search.toLowerCase()) ||
-        withdrawal.id.toLowerCase().includes(filters.search.toLowerCase()) ||
-        withdrawal.walletAddress.toLowerCase().includes(filters.search.toLowerCase());
+        !search ||
+        withdrawal.userName.toLowerCase().includes(search.toLowerCase()) ||
+        withdrawal.userEmail.toLowerCase().includes(search.toLowerCase()) ||
+        withdrawal.id.toLowerCase().includes(search.toLowerCase()) ||
+        withdrawal.walletAddress.toLowerCase().includes(search.toLowerCase());
 
-      const matchStatus = filters.status === "all" || withdrawal.status === filters.status;
-      const matchNetwork = filters.network === "all" || withdrawal.network === filters.network;
-      const matchCurrency = filters.currency === "all" || withdrawal.currency === filters.currency;
+      const matchStatus = status === "all" || withdrawal.status === status;
+      const matchNetwork = network === "all" || withdrawal.network === network;
+      const matchCurrency = currency === "all" || withdrawal.currency === currency;
 
-      return matchSearch && matchStatus && matchNetwork && matchCurrency;
+      let matchDate = true;
+      if (dateFrom || dateTo) {
+        const withdrawalDate = new Date(withdrawal.createdAt).setHours(0, 0, 0, 0);
+        if (dateFrom && withdrawalDate < new Date(dateFrom).setHours(0, 0, 0, 0)) matchDate = false;
+        if (dateTo && withdrawalDate > new Date(dateTo).setHours(0, 0, 0, 0)) matchDate = false;
+      }
+
+      return matchSearch && matchStatus && matchNetwork && matchCurrency && matchDate;
     });
-  }, [filters, withdrawals]);
+  }, [search, status, network, currency, dateFrom, dateTo, withdrawals]);
 
   const {
     currentPage,
@@ -99,28 +100,13 @@ export default function WithdrawalsPage() {
     clearSelection
   } = useTableSelection(paginatedWithdrawals);
 
-  const handleFilter = () => {
-    setFilters({
-      search,
-      status,
-      network,
-      currency,
-    });
-    setCurrentPage(1);
-  };
-
   const handleReset = () => {
     setSearch("");
     setStatus("all");
     setNetwork("all");
     setCurrency("all");
-    setDateRange("");
-    setFilters({
-      search: "",
-      status: "all",
-      network: "all",
-      currency: "all",
-    });
+    setDateFrom("");
+    setDateTo("");
     setCurrentPage(1);
   };
 
@@ -156,27 +142,10 @@ export default function WithdrawalsPage() {
             <span className="text-muted">Withdrawals</span>
           </p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.04] cursor-pointer"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Export
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-1.5 rounded-xl bg-purple hover:bg-purple-bright px-3.5 py-2 text-xs font-semibold text-white transition shadow-[0_8px_20px_rgba(123,44,255,0.3)] hover:shadow-[0_8px_20px_rgba(123,44,255,0.45)] cursor-pointer"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Manual Withdrawal
-          </button>
-        </div>
       </div>
 
       {/* KPI Cards Row */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-7">
         <KpiCard
           label="Total Withdrawals"
           value={withdrawals.length.toLocaleString()}
@@ -187,6 +156,14 @@ export default function WithdrawalsPage() {
           label="Total Amount"
           value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
             withdrawals.filter(w => w.status === 'Completed').reduce((sum, w) => sum + (w.amount || 0), 0)
+          )}
+          change=""
+          icon={Coins}
+        />
+        <KpiCard
+          label="Total Fees"
+          value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+            withdrawals.filter(w => w.status === 'Completed').reduce((sum, w) => sum + ((w.amount || 0) * 0.20), 0)
           )}
           change=""
           icon={Coins}
@@ -237,9 +214,10 @@ export default function WithdrawalsPage() {
         setNetwork={setNetwork}
         currency={currency}
         setCurrency={setCurrency}
-        dateRange={dateRange}
-        setDateRange={setDateRange}
-        onFilter={handleFilter}
+        dateFrom={dateFrom}
+        setDateFrom={setDateFrom}
+        dateTo={dateTo}
+        setDateTo={setDateTo}
         onReset={handleReset}
       />
 
