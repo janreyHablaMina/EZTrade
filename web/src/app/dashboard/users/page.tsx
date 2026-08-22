@@ -292,20 +292,6 @@ export default function UsersPage() {
             <ArrowUpRight className="h-4 w-4" />
             {isProcessingAction ? 'Simulating...' : 'Simulate Daily Trade'}
           </button>
-          <button
-            type="button"
-            className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.04] cursor-pointer"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Export
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-1.5 rounded-xl bg-purple hover:bg-purple-bright px-3.5 py-2 text-sm font-semibold text-white transition shadow-[0_8px_20px_rgba(123,44,255,0.3)] hover:shadow-[0_8px_20px_rgba(123,44,255,0.45)] cursor-pointer"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add User
-          </button>
         </div>
       </div>
 

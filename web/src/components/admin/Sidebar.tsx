@@ -1,6 +1,7 @@
 "use client";
-
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { webApi } from "@/lib/api";
 import { usePathname } from "next/navigation";
 import { BrandLogo } from "@/components/BrandLogo";
 import type { LucideIcon } from "lucide-react";
@@ -29,29 +30,8 @@ type NavItem = {
   label: string;
   href: string;
   icon: LucideIcon;
-  badge?: boolean;
+  badge?: boolean | number;
 };
-
-const management: NavItem[] = [
-  { label: "Users", href: "/dashboard/users", icon: Users },
-  { label: "VIP Plans", href: "/dashboard/vip-plans", icon: Crown },
-  { label: "Deposits", href: "/dashboard/deposits", icon: ArrowDownToLine },
-  { label: "Withdrawals", href: "/dashboard/withdrawals", icon: ArrowUpFromLine },
-  { label: "Transactions", href: "/dashboard/transactions", icon: ArrowLeftRight },
-  { label: "Earnings", href: "/dashboard/earnings", icon: Coins },
-  { label: "Referrals", href: "/dashboard/referrals", icon: Share2 },
-  { label: "Notifications", href: "/dashboard/notifications", icon: Bell, badge: true },
-];
-
-const settings: NavItem[] = [
-  { label: "App Release", href: "/dashboard/app-release", icon: ArrowDownToLine },
-  { label: "System Settings", href: "/dashboard/settings", icon: Settings },
-];
-
-const admin: NavItem[] = [
-  { label: "Audit Logs", href: "/dashboard/audit-logs", icon: ScrollText },
-  { label: "Visualize", href: "/dashboard/visualize", icon: Activity },
-];
 
 function NavSection({ title, items }: { title: string; items: NavItem[] }) {
   const pathname = usePathname();
@@ -82,8 +62,12 @@ function NavSection({ title, items }: { title: string; items: NavItem[] }) {
                 }`}
               />
               <span className="flex-1">{item.label}</span>
-              {item.badge ? (
-                <span className="h-2 w-2 rounded-full bg-danger shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+              {item.badge === true ? (
+                <span className="h-2 w-2 rounded-full bg-danger" />
+              ) : typeof item.badge === 'number' && item.badge > 0 ? (
+                <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-white">
+                  {item.badge}
+                </span>
               ) : null}
             </Link>
           );
@@ -96,6 +80,47 @@ function NavSection({ title, items }: { title: string; items: NavItem[] }) {
 export function Sidebar() {
   const pathname = usePathname();
   const isDashboard = pathname === "/dashboard" || pathname === "/dashboard/";
+  const [pendingDeposits, setPendingDeposits] = useState(0);
+  const [pendingWithdrawals, setPendingWithdrawals] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0); // Assuming notifications will also be fetched later or are 0 for now
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const [deposits, withdrawals] = await Promise.all([
+          webApi.get('/deposits'),
+          webApi.get('/withdrawals')
+        ]);
+        const depCount = deposits.filter((d: any) => d.status === 'Pending').length;
+        const withCount = withdrawals.filter((w: any) => w.status === 'Pending').length;
+        setPendingDeposits(depCount);
+        setPendingWithdrawals(withCount);
+      } catch (err) {
+        console.error("Failed to fetch pending counts:", err);
+      }
+    };
+    fetchCounts();
+  }, []);
+
+  const management: NavItem[] = [
+    { label: "Users", href: "/dashboard/users", icon: Users },
+    { label: "VIP Plans", href: "/dashboard/vip-plans", icon: Crown },
+    { label: "Deposits", href: "/dashboard/deposits", icon: ArrowDownToLine, badge: pendingDeposits },
+    { label: "Withdrawals", href: "/dashboard/withdrawals", icon: ArrowUpFromLine, badge: pendingWithdrawals },
+    { label: "Transactions", href: "/dashboard/transactions", icon: ArrowLeftRight },
+    { label: "Earnings", href: "/dashboard/earnings", icon: Coins },
+    { label: "Referrals", href: "/dashboard/referrals", icon: Share2 },
+    { label: "Notifications", href: "/dashboard/notifications", icon: Bell, badge: unreadNotifications },
+  ];
+
+  const settings: NavItem[] = [
+    { label: "App Release", href: "/dashboard/app-release", icon: ArrowDownToLine },
+    { label: "System Settings", href: "/dashboard/settings", icon: Settings },
+  ];
+
+  const admin: NavItem[] = [
+    { label: "Visualize", href: "/dashboard/visualize", icon: Activity },
+  ];
 
   return (
     <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-border bg-bg-deep/90 px-3 py-4 lg:flex">

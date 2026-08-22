@@ -151,12 +151,6 @@ export function UsersTable({
                             label="Send Notification"
                             onClick={() => onNotifyUser?.(user)}
                           />
-                          <TableActionsMenuItem
-                            icon="📈"
-                            label="Simulate Trade ($10)"
-                            onClick={() => onSimulateTrade?.(user)}
-                          />
-                          <TableActionsMenuItem icon="🔑" label="Reset Password" />
                           <TableActionsMenuDivider />
                         {user.status === "Suspended" ? (
                           <TableActionsMenuItem
