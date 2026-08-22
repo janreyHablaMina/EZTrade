@@ -14,6 +14,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { DepositsFilters } from "@/components/admin/deposits/DepositsFilters";
 import { DepositsTable } from "@/components/admin/deposits/DepositsTable";
+import { DepositDetailsModal } from "@/components/admin/deposits/DepositDetailsModal";
 import { GenericFloatingActions } from "@/components/admin/GenericFloatingActions";
 import { usePagination } from "@/hooks/usePagination";
 import { useTableSelection } from "@/hooks/useTableSelection";
@@ -24,7 +25,19 @@ export default function DepositsPage() {
   const [status, setStatus] = useState("all");
   const [network, setNetwork] = useState("all");
   const [currency, setCurrency] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [deposits, setDeposits] = useState<any[]>([]);
+  const [selectedDepositForDetails, setSelectedDepositForDetails] = useState<any | null>(null);
+
+  const handleResetFilters = () => {
+    setSearch("");
+    setStatus("all");
+    setNetwork("all");
+    setCurrency("all");
+    setDateFrom("");
+    setDateTo("");
+  };
 
   const fetchDeposits = async () => {
     try {
@@ -44,6 +57,7 @@ export default function DepositsPage() {
           year: 'numeric', month: 'short', day: 'numeric',
           hour: '2-digit', minute: '2-digit'
         }),
+        createdAt: d.created_at,
       }));
       setDeposits(mapped);
     } catch (e) {
@@ -69,9 +83,16 @@ export default function DepositsPage() {
       const matchNetwork = network === "all" || deposit.network === network;
       const matchCurrency = currency === "all" || deposit.currency === currency;
 
-      return matchSearch && matchStatus && matchNetwork && matchCurrency;
+      let matchDate = true;
+      if (dateFrom || dateTo) {
+        const depositDate = new Date(deposit.createdAt).setHours(0, 0, 0, 0);
+        if (dateFrom && depositDate < new Date(dateFrom).setHours(0, 0, 0, 0)) matchDate = false;
+        if (dateTo && depositDate > new Date(dateTo).setHours(0, 0, 0, 0)) matchDate = false;
+      }
+
+      return matchSearch && matchStatus && matchNetwork && matchCurrency && matchDate;
     });
-  }, [search, status, network, currency, deposits]);
+  }, [search, status, network, currency, dateFrom, dateTo, deposits]);
 
   const {
     currentPage,
@@ -110,6 +131,52 @@ export default function DepositsPage() {
     }
   };
 
+  const handleBulkVerify = async () => {
+    const depositsToProcess = deposits.filter(
+      (d) => selectedIds.includes(d.id) && d.status === "Pending"
+    );
+
+    if (depositsToProcess.length === 0) {
+      clearSelection();
+      return;
+    }
+
+    try {
+      await Promise.all(
+        depositsToProcess.map((d) =>
+          webApi.patch(`/deposits/${d.dbId}`, { status: 'Approved' })
+        )
+      );
+      fetchDeposits();
+      clearSelection();
+    } catch (e) {
+      console.error('Failed to bulk verify deposits', e);
+    }
+  };
+
+  const handleBulkReject = async () => {
+    const depositsToProcess = deposits.filter(
+      (d) => selectedIds.includes(d.id) && d.status === "Pending"
+    );
+
+    if (depositsToProcess.length === 0) {
+      clearSelection();
+      return;
+    }
+
+    try {
+      await Promise.all(
+        depositsToProcess.map((d) =>
+          webApi.patch(`/deposits/${d.dbId}`, { status: 'Rejected' })
+        )
+      );
+      fetchDeposits();
+      clearSelection();
+    } catch (e) {
+      console.error('Failed to bulk reject deposits', e);
+    }
+  };
+
   return (
     <AdminShell>
       {/* Top Header section */}
@@ -123,23 +190,6 @@ export default function DepositsPage() {
             <span className="text-[10px] text-muted-2/65">&gt;</span>
             <span className="text-muted">Deposits</span>
           </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.04] cursor-pointer"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Export
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-1.5 rounded-xl bg-purple hover:bg-purple-bright px-3.5 py-2 text-xs font-semibold text-white transition shadow-[0_8px_20px_rgba(123,44,255,0.3)] hover:shadow-[0_8px_20px_rgba(123,44,255,0.45)] cursor-pointer"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Manual Deposit
-          </button>
         </div>
       </div>
 
@@ -205,6 +255,11 @@ export default function DepositsPage() {
         setNetwork={setNetwork}
         currency={currency}
         setCurrency={setCurrency}
+        dateFrom={dateFrom}
+        setDateFrom={setDateFrom}
+        dateTo={dateTo}
+        setDateTo={setDateTo}
+        onReset={handleResetFilters}
       />
 
       {/* Deposits Table Card */}
@@ -219,11 +274,9 @@ export default function DepositsPage() {
         selectedIds={selectedIds}
         toggleSelectAll={toggleSelectAll}
         toggleSelectRow={toggleSelectRow}
-        onViewDetails={(dep) => console.log("View details for:", dep.id)}
+        onViewDetails={(dep) => setSelectedDepositForDetails(dep)}
         onVerify={handleVerify}
         onReject={handleReject}
-        onAddManual={(dep) => console.log("Add manual deposit:", dep.id)}
-        onNotesHistory={(dep) => console.log("Notes / History for:", dep.id)}
       />
 
       <GenericFloatingActions
@@ -232,25 +285,25 @@ export default function DepositsPage() {
       >
         <button
           type="button"
-          onClick={() => {
-            console.log("Bulk verify deposits:", selectedIds);
-            clearSelection();
-          }}
+          onClick={handleBulkVerify}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-success/30 bg-success/10 text-success hover:bg-success/20 transition cursor-pointer text-xs font-medium"
         >
           <CheckCircle2 className="h-3.5 w-3.5" /> Verify Selected
         </button>
         <button
           type="button"
-          onClick={() => {
-            console.log("Bulk reject deposits:", selectedIds);
-            clearSelection();
-          }}
+          onClick={handleBulkReject}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-danger/30 bg-danger/10 text-danger hover:bg-danger/20 transition cursor-pointer text-xs font-medium"
         >
           <XCircle className="h-3.5 w-3.5" /> Reject Selected
         </button>
       </GenericFloatingActions>
+
+      <DepositDetailsModal
+        isOpen={!!selectedDepositForDetails}
+        onClose={() => setSelectedDepositForDetails(null)}
+        deposit={selectedDepositForDetails}
+      />
     </AdminShell>
   );
 }

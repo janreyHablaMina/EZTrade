@@ -11,6 +11,11 @@ type DepositsFiltersProps = {
   setNetwork: (n: string) => void;
   currency: string;
   setCurrency: (c: string) => void;
+  dateFrom: string;
+  setDateFrom: (d: string) => void;
+  dateTo: string;
+  setDateTo: (d: string) => void;
+  onReset: () => void;
 };
 
 export function DepositsFilters({
@@ -22,6 +27,11 @@ export function DepositsFilters({
   setNetwork,
   currency,
   setCurrency,
+  dateFrom,
+  setDateFrom,
+  dateTo,
+  setDateTo,
+  onReset,
 }: DepositsFiltersProps) {
   return (
     <div className="mt-5 rounded-2xl border border-border bg-card p-4 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
@@ -67,6 +77,27 @@ export function DepositsFilters({
             <option value="BTC">BTC</option>
             <option value="ETH">ETH</option>
           </Select>
+
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="sm:w-36 [&::-webkit-calendar-picker-indicator]:invert-[0.6] cursor-pointer"
+          />
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="sm:w-36 [&::-webkit-calendar-picker-indicator]:invert-[0.6] cursor-pointer"
+          />
+
+          <button
+            type="button"
+            onClick={onReset}
+            className="h-9 px-4 rounded-xl border border-border bg-card-elevated text-xs font-semibold text-white transition hover:bg-white/5 cursor-pointer whitespace-nowrap"
+          >
+            Reset
+          </button>
         </div>
       </div>
     </div>

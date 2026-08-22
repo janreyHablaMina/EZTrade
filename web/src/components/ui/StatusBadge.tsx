@@ -13,7 +13,7 @@ type StatusBadgeProps = {
 export function StatusBadge({ status, type, showIcon = false, className = "" }: StatusBadgeProps) {
   // Infer type from status string if not explicitly provided
   const resolvedType = type || (
-    status === "Active" || status === "Success" || status === "Verified" || status === "Completed" ? "Success" :
+    status === "Active" || status === "Success" || status === "Verified" || status === "Completed" || status === "Approved" ? "Success" :
     status === "Pending" ? "Warning" :
     "Danger"
   );

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { PaginationFooter } from "@/components/admin/PaginationFooter";
 import {
   TableActionsMenu,
-  TableActionsMenuDivider,
   TableActionsMenuItem,
 } from "@/components/admin/TableActionsMenu";
 import {
@@ -172,13 +171,10 @@ export function DepositsTable({
                     </td>
                     <td className="py-3.5 text-muted-2">{deposit.submittedAt}</td>
                     <td className="py-3.5 text-right pr-1">
-                      <TableActionsMenu estimatedHeight={220}>
+                      <TableActionsMenu estimatedHeight={120}>
                         <TableActionsMenuItem icon="👁" label="View Details" onClick={() => onViewDetails?.(deposit)} />
                         <TableActionsMenuItem icon="✅" label="Verify Deposit" onClick={() => onVerify?.(deposit)} className="text-success" />
                         <TableActionsMenuItem icon="❌" label="Reject Deposit" onClick={() => onReject?.(deposit)} className="text-danger" />
-                        <TableActionsMenuItem icon="➕" label="Add Manual Deposit" onClick={() => onAddManual?.(deposit)} className="text-purple-bright" />
-                        <TableActionsMenuDivider />
-                        <TableActionsMenuItem icon="📝" label="Notes / History" onClick={() => onNotesHistory?.(deposit)} />
                       </TableActionsMenu>
                     </td>
                   </tr>
