@@ -221,21 +221,7 @@ export default function UsersPage() {
     setToastMessage("Notification sent successfully");
   };
 
-  const handleSimulateDailyTrade = async () => {
-    try {
-      setIsProcessingAction(true);
-      const response = await webApi.post('/users/simulate-trade');
-      
-      await fetchUsers(); // Refresh the list since many users might have updated
-      
-      setToastMessage(`Simulated daily trade for ${response.processed} users. Total Profit: +$${Number(response.total_profit).toFixed(2)}`);
-    } catch (err) {
-      console.error("Failed to simulate daily trade:", err);
-      setToastMessage("Failed to simulate daily trade");
-    } finally {
-      setIsProcessingAction(false);
-    }
-  };
+
 
   const handleAccountAction = async () => {
     if (!accountAction) return;
@@ -280,18 +266,6 @@ export default function UsersPage() {
             <span className="text-[10px] text-muted-2/65">&gt;</span>
             <span className="text-muted">Users</span>
           </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleSimulateDailyTrade}
-            disabled={isProcessingAction}
-            className="flex items-center gap-2 rounded-xl bg-success/20 px-4 py-2 text-sm font-semibold text-success transition hover:bg-success/30 cursor-pointer disabled:opacity-50"
-          >
-            <ArrowUpRight className="h-4 w-4" />
-            {isProcessingAction ? 'Simulating...' : 'Simulate Daily Trade'}
-          </button>
         </div>
       </div>
 
