@@ -24,7 +24,6 @@ export default function DepositsPage() {
   const [status, setStatus] = useState("all");
   const [network, setNetwork] = useState("all");
   const [currency, setCurrency] = useState("all");
-  const [dateRange, setDateRange] = useState("");
   const [deposits, setDeposits] = useState<any[]>([]);
 
   const fetchDeposits = async () => {
@@ -56,31 +55,23 @@ export default function DepositsPage() {
     fetchDeposits();
   }, []);
 
-  // Applied filters state
-  const [filters, setFilters] = useState({
-    search: "",
-    status: "all",
-    network: "all",
-    currency: "all",
-  });
-
-  // Apply filters logic
+  // Apply filters live on state change
   const filteredDeposits = useMemo(() => {
     return deposits.filter((deposit) => {
       const matchSearch =
-        !filters.search ||
-        deposit.userName?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        deposit.userEmail?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        deposit.id?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        deposit.txid?.toLowerCase().includes(filters.search.toLowerCase());
+        !search ||
+        deposit.userName?.toLowerCase().includes(search.toLowerCase()) ||
+        deposit.userEmail?.toLowerCase().includes(search.toLowerCase()) ||
+        deposit.id?.toLowerCase().includes(search.toLowerCase()) ||
+        deposit.txid?.toLowerCase().includes(search.toLowerCase());
 
-      const matchStatus = filters.status === "all" || deposit.status === filters.status;
-      const matchNetwork = filters.network === "all" || deposit.network === filters.network;
-      const matchCurrency = filters.currency === "all" || deposit.currency === filters.currency;
+      const matchStatus = status === "all" || deposit.status === status;
+      const matchNetwork = network === "all" || deposit.network === network;
+      const matchCurrency = currency === "all" || deposit.currency === currency;
 
       return matchSearch && matchStatus && matchNetwork && matchCurrency;
     });
-  }, [filters, deposits]);
+  }, [search, status, network, currency, deposits]);
 
   const {
     currentPage,
@@ -100,16 +91,6 @@ export default function DepositsPage() {
   } = useTableSelection(paginatedDeposits);
 
 
-
-  const handleFilter = () => {
-    setFilters({
-      search,
-      status,
-      network,
-      currency,
-    });
-    setCurrentPage(1);
-  };
 
   const handleVerify = async (deposit: any) => {
     try {
@@ -224,9 +205,6 @@ export default function DepositsPage() {
         setNetwork={setNetwork}
         currency={currency}
         setCurrency={setCurrency}
-        dateRange={dateRange}
-        setDateRange={setDateRange}
-        onFilter={handleFilter}
       />
 
       {/* Deposits Table Card */}

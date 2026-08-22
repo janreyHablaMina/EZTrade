@@ -1,7 +1,6 @@
-import { Search, Calendar, Filter } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { Button } from "@/components/ui/Button";
 
 type DepositsFiltersProps = {
   search: string;
@@ -12,9 +11,6 @@ type DepositsFiltersProps = {
   setNetwork: (n: string) => void;
   currency: string;
   setCurrency: (c: string) => void;
-  dateRange: string;
-  setDateRange: (d: string) => void;
-  onFilter: () => void;
 };
 
 export function DepositsFilters({
@@ -26,9 +22,6 @@ export function DepositsFilters({
   setNetwork,
   currency,
   setCurrency,
-  dateRange,
-  setDateRange,
-  onFilter,
 }: DepositsFiltersProps) {
   return (
     <div className="mt-5 rounded-2xl border border-border bg-card p-4 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
@@ -47,9 +40,9 @@ export function DepositsFilters({
             containerClassName="sm:w-36"
           >
             <option value="all">All Status</option>
-            <option value="Completed">Completed</option>
+            <option value="Approved">Approved</option>
             <option value="Pending">Pending</option>
-            <option value="Failed">Failed</option>
+            <option value="Rejected">Rejected</option>
           </Select>
 
           <Select
@@ -74,21 +67,6 @@ export function DepositsFilters({
             <option value="BTC">BTC</option>
             <option value="ETH">ETH</option>
           </Select>
-
-          <Input
-            icon={<Calendar className="h-4 w-4" />}
-            placeholder="Select date range"
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
-          />
-
-          <Button
-            onClick={onFilter}
-            icon={<Filter className="h-3.5 w-3.5" />}
-            className="w-full sm:w-auto"
-          >
-            Filter
-          </Button>
         </div>
       </div>
     </div>
