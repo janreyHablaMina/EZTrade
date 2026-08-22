@@ -148,17 +148,17 @@ export default function EarningsPage() {
             iconClassName="text-white"
           />
           <KpiCard
-            label="Minus Bonuses"
-            value={`-$${(financials?.minusBonuses || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
-            subtext="Deductions for referral payouts"
-            icon={AlertCircle}
-            iconClassName="text-danger"
+            label="Total Ambassador Earnings"
+            value={`$${(financials?.minusBonuses || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+            subtext="Total bonuses paid to ambassadors"
+            icon={Users}
+            iconClassName="text-success"
           />
           <KpiCard
-            label="Net Balance"
+            label="Total Admin Earnings"
             value={`$${(financials?.netBalance || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
-            subtext="Admin's available wallet balance"
-            icon={CheckCircle2}
+            subtext="Net platform profit after bonuses"
+            icon={Coins}
             iconClassName="text-purple-bright"
           />
         </div>

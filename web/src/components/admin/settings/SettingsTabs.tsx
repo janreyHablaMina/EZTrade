@@ -3,7 +3,9 @@
 const TABS = [
   "Profile & Account",
   "Security",
+  "General Settings",
   "Preferences",
+  "Trade Automation",
   "Notifications",
   "API & Integrations",
 ];

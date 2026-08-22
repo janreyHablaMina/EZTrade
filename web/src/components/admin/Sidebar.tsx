@@ -40,15 +40,12 @@ const management: NavItem[] = [
   { label: "Transactions", href: "/dashboard/transactions", icon: ArrowLeftRight },
   { label: "Earnings", href: "/dashboard/earnings", icon: Coins },
   { label: "Referrals", href: "/dashboard/referrals", icon: Share2 },
-  { label: "Assets", href: "/dashboard/assets", icon: Wallet },
   { label: "Notifications", href: "/dashboard/notifications", icon: Bell, badge: true },
 ];
 
 const settings: NavItem[] = [
-  { label: "Trade Automation", href: "/dashboard/trade-signals", icon: Activity },
   { label: "App Release", href: "/dashboard/app-release", icon: ArrowDownToLine },
   { label: "System Settings", href: "/dashboard/settings", icon: Settings },
-  { label: "General Settings", href: "/dashboard/general-settings", icon: SlidersHorizontal },
 ];
 
 const admin: NavItem[] = [

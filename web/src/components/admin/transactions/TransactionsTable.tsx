@@ -43,8 +43,6 @@ type TransactionsTableProps = {
   pageSize: number;
   setPageSize: (s: number) => void;
   onViewDetails?: (tx: TransactionRecord) => void;
-  onPrint?: (tx: TransactionRecord) => void;
-  onHistory?: (tx: TransactionRecord) => void;
   onRefresh?: () => void;
 };
 
@@ -57,8 +55,6 @@ export function TransactionsTable({
   pageSize,
   setPageSize,
   onViewDetails,
-  onPrint,
-  onHistory,
   onRefresh,
 }: TransactionsTableProps) {
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
@@ -262,29 +258,6 @@ export function TransactionsTable({
                             >
                               <Eye className="h-3.5 w-3.5 text-muted-2 mr-2 inline" />
                               View Details
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActiveDropdownId(null);
-                                onPrint?.(tx);
-                              }}
-                              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
-                            >
-                              <Printer className="h-3.5 w-3.5 text-muted-2 mr-2 inline" />
-                              Print Receipt
-                            </button>
-                            <div className="my-1 border-t border-border/45" />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActiveDropdownId(null);
-                                onHistory?.(tx);
-                              }}
-                              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
-                            >
-                              <FileText className="h-3.5 w-3.5 text-muted-2 mr-2 inline" />
-                              History / Logs
                             </button>
                           </div>
                         </>

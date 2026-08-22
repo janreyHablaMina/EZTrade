@@ -6,6 +6,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { TransactionsFilters } from "@/components/admin/transactions/TransactionsFilters";
 import { TransactionsTable } from "@/components/admin/transactions/TransactionsTable";
+import { TransactionDetailsModal } from "@/components/admin/transactions/TransactionDetailsModal";
 import { webApi } from "@/lib/api";
 import { useEffect } from "react";
 
@@ -14,8 +15,10 @@ export default function TransactionsPage() {
   const [type, setType] = useState("all");
   const [status, setStatus] = useState("all");
   const [currency, setCurrency] = useState("all");
-  const [dateRange, setDateRange] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [selectedTransactionForDetails, setSelectedTransactionForDetails] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchTransactions = async () => {
@@ -42,6 +45,7 @@ export default function TransactionsPage() {
           hour: '2-digit', minute: '2-digit'
         }),
         timestamp: new Date(d.created_at).getTime(),
+        createdAt: d.created_at,
         referenceTxid: d.txid || 'N/A',
         description: 'Wallet funding'
       }));
@@ -62,6 +66,7 @@ export default function TransactionsPage() {
           hour: '2-digit', minute: '2-digit'
         }),
         timestamp: new Date(w.created_at).getTime(),
+        createdAt: w.created_at,
         referenceTxid: w.txid || 'N/A',
         description: 'Funds withdrawal'
       }));
@@ -80,12 +85,6 @@ export default function TransactionsPage() {
   }, []);
 
   // Filter application state
-  const [filters, setFilters] = useState({
-    search: "",
-    type: "all",
-    status: "all",
-    currency: "all",
-  });
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -94,20 +93,27 @@ export default function TransactionsPage() {
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
       const matchSearch =
-        !filters.search ||
-        tx.userName?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        tx.userEmail?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        tx.id?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        tx.referenceTxid?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        tx.description?.toLowerCase().includes(filters.search.toLowerCase());
+        !search ||
+        tx.userName?.toLowerCase().includes(search.toLowerCase()) ||
+        tx.userEmail?.toLowerCase().includes(search.toLowerCase()) ||
+        tx.id?.toLowerCase().includes(search.toLowerCase()) ||
+        tx.referenceTxid?.toLowerCase().includes(search.toLowerCase()) ||
+        tx.description?.toLowerCase().includes(search.toLowerCase());
 
-      const matchType = filters.type === "all" || tx.type === filters.type;
-      const matchStatus = filters.status === "all" || tx.status.toLowerCase() === filters.status.toLowerCase();
-      const matchCurrency = filters.currency === "all" || tx.currency === filters.currency;
+      const matchType = type === "all" || tx.type === type;
+      const matchStatus = status === "all" || tx.status.toLowerCase() === status.toLowerCase();
+      const matchCurrency = currency === "all" || tx.currency === currency;
 
-      return matchSearch && matchType && matchStatus && matchCurrency;
+      let matchDate = true;
+      if (dateFrom || dateTo) {
+        const txDate = new Date(tx.createdAt).setHours(0, 0, 0, 0);
+        if (dateFrom && txDate < new Date(dateFrom).setHours(0, 0, 0, 0)) matchDate = false;
+        if (dateTo && txDate > new Date(dateTo).setHours(0, 0, 0, 0)) matchDate = false;
+      }
+
+      return matchSearch && matchType && matchStatus && matchCurrency && matchDate;
     });
-  }, [filters, transactions]);
+  }, [search, type, status, currency, dateFrom, dateTo, transactions]);
 
   // Paginated transactions
   const paginatedTransactions = useMemo(() => {
@@ -115,28 +121,13 @@ export default function TransactionsPage() {
     return filteredTransactions.slice(start, start + pageSize);
   }, [filteredTransactions, currentPage, pageSize]);
 
-  const handleFilter = () => {
-    setFilters({
-      search,
-      type,
-      status,
-      currency,
-    });
-    setCurrentPage(1);
-  };
-
   const handleReset = () => {
     setSearch("");
     setType("all");
     setStatus("all");
     setCurrency("all");
-    setDateRange("");
-    setFilters({
-      search: "",
-      type: "all",
-      status: "all",
-      currency: "all",
-    });
+    setDateFrom("");
+    setDateTo("");
     setCurrentPage(1);
   };
 
@@ -154,20 +145,10 @@ export default function TransactionsPage() {
             <span className="text-muted">Transactions</span>
           </p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.04] cursor-pointer"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Export
-          </button>
-        </div>
       </div>
 
       {/* KPI Cards Row */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-4">
         <KpiCard
           label="Total Transactions"
           value={transactions.length.toLocaleString()}
@@ -187,25 +168,12 @@ export default function TransactionsPage() {
           icon={ArrowUpFromLine}
         />
         <KpiCard
-          label="Total Transfers"
-          value="0"
-          change=""
-          icon={RefreshCw}
-        />
-        <KpiCard
           label="Total Amount"
           value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
             transactions.filter(t => t.status === 'Completed').reduce((sum, t) => sum + (t.amount || 0), 0)
           )}
           change=""
           icon={Coins}
-        />
-        <KpiCard
-          label="Total Fees"
-          value="$0.00"
-          change=""
-          icon={Coins}
-          iconClassName="text-warning"
         />
       </div>
 
@@ -219,9 +187,10 @@ export default function TransactionsPage() {
         setStatus={setStatus}
         currency={currency}
         setCurrency={setCurrency}
-        dateRange={dateRange}
-        setDateRange={setDateRange}
-        onFilter={handleFilter}
+        dateFrom={dateFrom}
+        setDateFrom={setDateFrom}
+        dateTo={dateTo}
+        setDateTo={setDateTo}
         onReset={handleReset}
       />
 
@@ -235,9 +204,13 @@ export default function TransactionsPage() {
         pageSize={pageSize}
         setPageSize={setPageSize}
         onRefresh={fetchTransactions}
-        onViewDetails={(tx) => console.log("View details for:", tx.id)}
-        onPrint={(tx) => console.log("Print receipt for:", tx.id)}
-        onHistory={(tx) => console.log("History log for:", tx.id)}
+        onViewDetails={(tx) => setSelectedTransactionForDetails(tx)}
+      />
+
+      <TransactionDetailsModal
+        isOpen={!!selectedTransactionForDetails}
+        onClose={() => setSelectedTransactionForDetails(null)}
+        transaction={selectedTransactionForDetails}
       />
     </AdminShell>
   );
