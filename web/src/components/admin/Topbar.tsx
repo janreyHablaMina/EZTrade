@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Bell, Maximize2, Search, Calendar, ArrowUpRight, Check, X, ChevronDown, User, Settings, LogOut } from "lucide-react";
+import { useParams, usePathname } from "next/navigation";
+import { Bell, Maximize2, Search, Calendar, ArrowUpRight, Check, X, ChevronDown, User, Settings, LogOut, Clock } from "lucide-react";
 import { webApi } from "@/lib/api";
 import { GlobalSearchModal } from "./GlobalSearchModal";
 
@@ -8,6 +9,11 @@ export function Topbar() {
   const [toastMessage, setToastMessage] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isSimulatingAmbassador, setIsSimulatingAmbassador] = useState(false);
+  
+  const pathname = usePathname();
+  const params = useParams();
+  const isAmbassadorPage = pathname?.includes("/ambassadors/") && params?.id;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -37,6 +43,29 @@ export function Topbar() {
     }
   };
 
+  const handleSimulateAmbassador = async () => {
+    try {
+      setIsSimulatingAmbassador(true);
+      const realId = parseInt(String(params.id).replace(/\D/g, ''));
+      const res = await webApi.post(`/admin/ambassadors/${realId}/simulate`, {});
+      
+      // Use the raw toast notification from the Topbar
+      setToastMessage(`Simulation complete. New Balance: $${Number(res.data?.new_balance || 0).toFixed(2)}`);
+      
+      // Auto-hide toast
+      setTimeout(() => setToastMessage(""), 5000);
+
+      // Reload the page to reflect new data
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      console.error("Failed to simulate ambassador:", err);
+      setToastMessage("Failed to simulate ambassador");
+      setTimeout(() => setToastMessage(""), 5000);
+    } finally {
+      setIsSimulatingAmbassador(false);
+    }
+  };
+
   return (
     <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-bg/85 px-4 py-3 backdrop-blur-xl sm:px-6 lg:px-7">
       <div className="relative flex min-w-0 flex-1">
@@ -57,6 +86,18 @@ export function Topbar() {
       </div>
 
       <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        {isAmbassadorPage && (
+          <button
+            type="button"
+            onClick={handleSimulateAmbassador}
+            disabled={isSimulatingAmbassador}
+            className="hidden sm:flex items-center gap-2 rounded-xl bg-purple-bright/20 px-4 py-2 text-xs font-semibold text-purple-bright transition hover:bg-purple-bright/30 cursor-pointer disabled:opacity-50 border border-purple-bright/30"
+          >
+            <Clock className="h-4 w-4" />
+            {isSimulatingAmbassador ? 'Simulating...' : 'Simulate Ambassador'}
+          </button>
+        )}
+
         <button
           type="button"
           onClick={handleSimulateDailyTrade}

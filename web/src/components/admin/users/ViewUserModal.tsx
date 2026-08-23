@@ -1,4 +1,5 @@
-import { X, User, Mail, Phone, Calendar, CheckCircle2, ShieldAlert, CreditCard, Wallet, TrendingUp, Clock, AlertCircle, Users } from "lucide-react";
+import { useState } from "react";
+import { X, User, Mail, Phone, Calendar, CheckCircle2, ShieldAlert, CreditCard, Wallet, TrendingUp, Clock, AlertCircle, Users, Check } from "lucide-react";
 import { type UserRecord, vipBadgeStyles } from "@/types/admin";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
@@ -9,7 +10,17 @@ type ViewUserModalProps = {
 };
 
 export function ViewUserModal({ isOpen, onClose, user }: ViewUserModalProps) {
+  const [isCopied, setIsCopied] = useState(false);
+
   if (!isOpen || !user) return null;
+
+  const handleCopy = () => {
+    if (user?.referralCode) {
+      navigator.clipboard.writeText(user.referralCode);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -64,6 +75,60 @@ export function ViewUserModal({ isOpen, onClose, user }: ViewUserModalProps) {
             </div>
           </div>
 
+          <div className="flex flex-col gap-3 rounded-xl border border-border bg-card-elevated p-4 mt-2">
+            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-2 border-b border-border/50 pb-2 mb-1">
+              Financial Overview
+            </h4>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mt-1">
+              <div>
+                <p className="text-[10px] text-muted-2 mb-1 flex items-center gap-1.5">
+                  <CreditCard className="h-3 w-3" /> Total Deposits
+                </p>
+                <p className="text-lg font-bold text-white">
+                  ${user.deposited.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                </p>
+                {user.pendingDeposit && user.pendingDeposit > 0 && (
+                  <p className="text-[10px] text-warning mt-0.5">
+                    +${user.pendingDeposit.toLocaleString()} pending
+                  </p>
+                )}
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-2 mb-1 flex items-center gap-1.5">
+                  <TrendingUp className="h-3 w-3" /> Total Trade
+                </p>
+                <p className="text-lg font-bold text-white">
+                  ${((user as any).totalTrade || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-2 mb-1 flex items-center gap-1.5">
+                  <Wallet className="h-3 w-3" /> Balance
+                </p>
+                <p className="text-lg font-bold text-white">
+                  ${(user.deposited - user.withdrawn + user.earnings).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-2 mb-1 flex items-center gap-1.5">
+                  <CreditCard className="h-3 w-3" /> Total Withdrawn
+                </p>
+                <p className="text-lg font-bold text-white">
+                  ${user.withdrawn.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-2 mb-1 flex items-center gap-1.5">
+                  <TrendingUp className="h-3 w-3" /> Total Earnings
+                </p>
+                <p className="text-lg font-bold text-success">
+                  +${user.earnings.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Contact Info */}
             <div className="flex flex-col gap-3 rounded-xl border border-border bg-card-elevated p-4">
@@ -102,108 +167,57 @@ export function ViewUserModal({ isOpen, onClose, user }: ViewUserModalProps) {
               </div>
             </div>
 
-            {/* Verification Status */}
-            <div className="flex flex-col gap-3 rounded-xl border border-border bg-card-elevated p-4">
-              <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-2 border-b border-border/50 pb-2 mb-1">
-                Security & Verification
-              </h4>
-              
-              <div className="flex items-center gap-3">
-                <div className={`flex h-8 w-8 items-center justify-center rounded-lg shrink-0 ${
-                  user.kycStatus === "Verified" ? "bg-success/10 text-success" : "bg-warning/10 text-warning"
-                }`}>
-                  {user.kycStatus === "Verified" ? <CheckCircle2 className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-2">KYC Status</p>
-                  <p className={`text-sm font-medium ${user.kycStatus === "Verified" ? "text-white" : "text-warning"}`}>
-                    {user.kycStatus}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="mt-auto">
-                <button className="w-full rounded-lg border border-border bg-white/[0.02] px-3 py-2 text-xs font-medium text-white transition hover:bg-white/[0.04]">
-                  Request Additional Docs
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Network & Referrals (Only show if relevant) */}
-          {(user.teamSize !== undefined || user.referralCode) && (
-            <div className="flex flex-col gap-3 rounded-xl border border-border bg-card-elevated p-4">
-              <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-2 border-b border-border/50 pb-2 mb-1">
-                Network & Referrals
-              </h4>
-              <div className="grid grid-cols-2 gap-4 mt-1">
+            {/* Network & Referrals (Only show if relevant) */}
+            {(user.teamSize !== undefined || user.referralCode) && (
+              <div className="flex flex-col gap-3 rounded-xl border border-border bg-card-elevated p-4">
+                <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-2 border-b border-border/50 pb-2 mb-1">
+                  Network & Referrals
+                </h4>
+                
                 {user.referralCode && (
-                  <div>
-                    <p className="text-[10px] text-muted-2 mb-1">Referral Code</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold text-white font-mono">{user.referralCode}</p>
-                      <button className="text-[10px] text-purple-bright hover:text-white transition">Copy</button>
+                  <div className="mt-1 flex items-center justify-between rounded-lg border border-dashed border-purple-bright/30 bg-purple-bright/5 p-2.5">
+                    <div>
+                      <p className="text-[9px] font-semibold text-purple-bright/80 uppercase tracking-wider">Referral Code</p>
+                      <p className="text-sm font-bold text-white font-mono mt-0.5 tracking-wider">{user.referralCode}</p>
                     </div>
+                    <button 
+                      onClick={handleCopy}
+                      className="flex h-7 items-center justify-center rounded-md bg-purple-bright/15 px-3 text-xs font-semibold text-purple-bright hover:bg-purple-bright/25 transition-colors cursor-pointer gap-1.5"
+                    >
+                      {isCopied ? (
+                        <>
+                          <Check className="h-3 w-3" />
+                          Copied!
+                        </>
+                      ) : (
+                        "Copy"
+                      )}
+                    </button>
                   </div>
                 )}
-                {user.teamSize !== undefined && (
-                  <div>
-                    <p className="text-[10px] text-muted-2 mb-1">Total Team Size</p>
-                    <p className="text-sm font-bold text-white flex items-center gap-1.5">
-                      <Users className="h-3.5 w-3.5 text-muted-2" />
-                      {user.teamSize.toLocaleString()} Members
-                    </p>
-                  </div>
-                )}
+                
+                <div className="flex flex-col gap-3 mt-1">
+                  {user.teamSize !== undefined && (
+                    <div className="rounded-lg bg-white/[0.02] p-2.5 border border-white/[0.03]">
+                      <p className="text-[10px] text-muted-2 mb-1">Total Team Size</p>
+                      <p className="text-sm font-bold text-white flex items-center gap-1.5">
+                        <Users className="h-3.5 w-3.5 text-purple-bright" />
+                        {user.teamSize.toLocaleString()} Members
+                      </p>
+                    </div>
+                  )}
+                  {user.totalDownlineAssets !== undefined && (
+                    <div className="rounded-lg bg-white/[0.02] p-2.5 border border-white/[0.03]">
+                      <p className="text-[10px] text-muted-2 mb-1">Team Assets</p>
+                      <p className="text-sm font-bold text-success flex items-center gap-1.5">
+                        <TrendingUp className="h-3.5 w-3.5 text-success" />
+                        ${user.totalDownlineAssets.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-
-          {/* Financial Overview */}
-          <div className="flex flex-col gap-3 rounded-xl border border-border bg-card-elevated p-4">
-            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-2 border-b border-border/50 pb-2 mb-1">
-              Financial Overview
-            </h4>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-1">
-              <div>
-                <p className="text-[10px] text-muted-2 mb-1 flex items-center gap-1.5">
-                  <Wallet className="h-3 w-3" /> Balance
-                </p>
-                <p className="text-lg font-bold text-white">
-                  ${(user.deposited - user.withdrawn + user.earnings).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-2 mb-1 flex items-center gap-1.5">
-                  <CreditCard className="h-3 w-3" /> Total Deposits
-                </p>
-                <p className="text-lg font-bold text-white">
-                  ${user.deposited.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                </p>
-                {user.pendingDeposit && user.pendingDeposit > 0 && (
-                  <p className="text-[10px] text-warning mt-0.5">
-                    +${user.pendingDeposit.toLocaleString()} pending
-                  </p>
-                )}
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-2 mb-1 flex items-center gap-1.5">
-                  <CreditCard className="h-3 w-3" /> Total Withdrawn
-                </p>
-                <p className="text-lg font-bold text-white">
-                  ${user.withdrawn.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-2 mb-1 flex items-center gap-1.5">
-                  <TrendingUp className="h-3 w-3" /> Total Earnings
-                </p>
-                <p className="text-lg font-bold text-success">
-                  +${user.earnings.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

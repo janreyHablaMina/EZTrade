@@ -30,6 +30,7 @@ type UsersTableProps = {
   onDeactivateUser?: (user: UserRecord) => void;
   onReactivateUser?: (user: UserRecord) => void;
   onDeleteUser?: (user: UserRecord) => void;
+  isDownlineView?: boolean;
 };
 
 export function UsersTable({
@@ -52,6 +53,7 @@ export function UsersTable({
   onDeactivateUser,
   onReactivateUser,
   onDeleteUser,
+  isDownlineView,
 }: UsersTableProps) {
   return (
     <div className="mt-5 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex flex-col">
@@ -74,6 +76,12 @@ export function UsersTable({
               <th className="pb-3.5 font-medium">Status</th>
               <th className="pb-3.5 font-medium">Balance</th>
               <th className="pb-3.5 font-medium">Joined</th>
+              {isDownlineView && (
+                <>
+                  <th className="pb-3.5 font-medium text-emerald-400">Cut %</th>
+                  <th className="pb-3.5 font-medium text-emerald-400">Generated</th>
+                </>
+              )}
               <th className="pb-3.5 font-medium text-right pr-1">Actions</th>
             </tr>
           </thead>
@@ -142,6 +150,18 @@ export function UsersTable({
                       )}
                     </td>
                     <td className="py-3.5 text-muted-2">{user.registeredAt}</td>
+                    {isDownlineView && (
+                      <>
+                        <td className="py-3.5">
+                          <span className="inline-flex rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400">
+                            10%
+                          </span>
+                        </td>
+                        <td className="py-3.5 font-bold text-emerald-400">
+                          +${((user.deposited || 0) * 0.1).toFixed(2)}
+                        </td>
+                      </>
+                    )}
                     <td className="py-3.5 text-right pr-1">
                         <TableActionsMenu estimatedHeight={350}>
                           <TableActionsMenuItem icon="👁" label="View User" onClick={() => onViewUser?.(user)} />
@@ -192,7 +212,7 @@ export function UsersTable({
               })
             ) : (
               <tr>
-                <td colSpan={9} className="py-8 text-center text-muted-2">
+                <td colSpan={isDownlineView ? 11 : 9} className="py-8 text-center text-muted-2">
                   No users found matching your filters.
                 </td>
               </tr>
