@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { DepositsFilters } from "@/components/admin/deposits/DepositsFilters";
+import { GenericFilters, FilterConfig } from "@/components/admin/GenericFilters";
 import { DepositsTable } from "@/components/admin/deposits/DepositsTable";
 import { DepositDetailsModal } from "@/components/admin/deposits/DepositDetailsModal";
 import { GenericFloatingActions } from "@/components/admin/GenericFloatingActions";
@@ -22,22 +22,14 @@ import { webApi } from "@/lib/api";
 import { useApi } from "@/hooks/useApi";
 
 export default function DepositsPage() {
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
-  const [network, setNetwork] = useState("all");
-  const [currency, setCurrency] = useState("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [params, setParams] = useState<Record<string, string>>({
+    search: '', status: 'all', network: 'all', currency: 'all', dateFrom: '', dateTo: ''
+  });
   const { data: depositsData, isLoading, mutate: mutateDeposits } = useApi('/deposits');
   const [selectedDepositForDetails, setSelectedDepositForDetails] = useState<any | null>(null);
 
   const handleResetFilters = () => {
-    setSearch("");
-    setStatus("all");
-    setNetwork("all");
-    setCurrency("all");
-    setDateFrom("");
-    setDateTo("");
+    setParams({ search: '', status: 'all', network: 'all', currency: 'all', dateFrom: '', dateTo: '' });
   };
 
   const deposits = useMemo<any[]>(() => {
@@ -64,17 +56,24 @@ export default function DepositsPage() {
   // Apply filters live on state change
   const filteredDeposits = useMemo(() => {
     return deposits.filter((deposit) => {
+      const search = params.search?.toLowerCase() || '';
       const matchSearch =
         !search ||
-        deposit.userName?.toLowerCase().includes(search.toLowerCase()) ||
-        deposit.userEmail?.toLowerCase().includes(search.toLowerCase()) ||
-        deposit.id?.toLowerCase().includes(search.toLowerCase()) ||
-        deposit.txid?.toLowerCase().includes(search.toLowerCase());
+        deposit.userName?.toLowerCase().includes(search) ||
+        deposit.userEmail?.toLowerCase().includes(search) ||
+        deposit.id?.toLowerCase().includes(search) ||
+        deposit.txid?.toLowerCase().includes(search);
+
+      const status = params.status || 'all';
+      const network = params.network || 'all';
+      const currency = params.currency || 'all';
 
       const matchStatus = status === "all" || deposit.status === status;
       const matchNetwork = network === "all" || deposit.network === network;
       const matchCurrency = currency === "all" || deposit.currency === currency;
 
+      const dateFrom = params.dateFrom;
+      const dateTo = params.dateTo;
       let matchDate = true;
       if (dateFrom || dateTo) {
         const depositDate = new Date(deposit.createdAt).setHours(0, 0, 0, 0);
@@ -84,7 +83,36 @@ export default function DepositsPage() {
 
       return matchSearch && matchStatus && matchNetwork && matchCurrency && matchDate;
     });
-  }, [search, status, network, currency, dateFrom, dateTo, deposits]);
+  }, [params, deposits]);
+
+  const updateFilter = (key: string, value: string) => {
+    setParams(prev => ({ ...prev, [key]: value }));
+  };
+
+  const filterConfig = useMemo<FilterConfig[]>(() => [
+    { type: 'search', key: 'search', placeholder: 'Search by user, email, txid...' },
+    { 
+      type: 'select', 
+      key: 'status', 
+      defaultLabel: 'All Statuses',
+      options: [
+        { label: 'Pending', value: 'Pending' },
+        { label: 'Approved', value: 'Approved' },
+        { label: 'Rejected', value: 'Rejected' }
+      ]
+    },
+    { 
+      type: 'select', 
+      key: 'network', 
+      defaultLabel: 'All Networks',
+      options: [
+        { label: 'TRC20', value: 'TRC20' },
+        { label: 'ERC20', value: 'ERC20' },
+        { label: 'BEP20', value: 'BEP20' }
+      ]
+    },
+    { type: 'dateRange', fromKey: 'dateFrom', toKey: 'dateTo' }
+  ], []);
 
   const {
     currentPage,
@@ -237,22 +265,13 @@ export default function DepositsPage() {
         />
       </div>
 
-      {/* Filters Card */}
-      <DepositsFilters
-        search={search}
-        setSearch={setSearch}
-        status={status}
-        setStatus={setStatus}
-        network={network}
-        setNetwork={setNetwork}
-        currency={currency}
-        setCurrency={setCurrency}
-        dateFrom={dateFrom}
-        setDateFrom={setDateFrom}
-        dateTo={dateTo}
-        setDateTo={setDateTo}
-        onReset={handleResetFilters}
-      />
+        {/* Filters */}
+        <GenericFilters
+          config={filterConfig}
+          params={params}
+          updateFilter={updateFilter}
+          onReset={handleResetFilters}
+        />
 
       {/* Deposits Table Card */}
       <DepositsTable

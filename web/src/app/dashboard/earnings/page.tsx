@@ -5,7 +5,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { Wallet, Users, Coins, Download, Calendar, User, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react";
 import type { EarningRecord } from "@/types/admin";
-import { EarningsFilters } from "@/components/admin/earnings/EarningsFilters";
+import { GenericFilters, FilterConfig } from "@/components/admin/GenericFilters";
 import { EarningsTable } from "@/components/admin/earnings/EarningsTable";
 import { webApi } from "@/lib/api";
 import { useApi } from "@/hooks/useApi";
@@ -14,10 +14,7 @@ export default function EarningsPage() {
   const [earnings, setEarnings] = useState<EarningRecord[]>([]);
   const [financials, setFinancials] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [vipLevel, setVipLevel] = useState("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [params, setParams] = useState<Record<string, string>>({ search: '', vipLevel: 'all', dateFrom: '', dateTo: '' });
   const { data: vipPlansData } = useApi('/vip-plans');
 
   const fetchEarnings = async () => {
@@ -57,11 +54,16 @@ export default function EarningsPage() {
 
   const filteredEarnings = useMemo(() => {
     return earnings.filter((er) => {
+      const search = params.search?.toLowerCase() || "";
+      const vipLevel = params.vipLevel || "all";
+      const dateFrom = params.dateFrom;
+      const dateTo = params.dateTo;
+
       const matchesSearch =
         search === "" ||
-        er.userName.toLowerCase().includes(search.toLowerCase()) ||
-        er.userEmail.toLowerCase().includes(search.toLowerCase()) ||
-        er.id.toLowerCase().includes(search.toLowerCase());
+        er.userName.toLowerCase().includes(search) ||
+        er.userEmail.toLowerCase().includes(search) ||
+        er.id.toLowerCase().includes(search);
 
       const matchesVip = vipLevel === "all" || er.vipLevel.toString() === vipLevel;
 
@@ -82,14 +84,29 @@ export default function EarningsPage() {
 
       return matchesSearch && matchesVip && matchesDate;
     });
-  }, [earnings, search, vipLevel, dateFrom, dateTo]);
+  }, [earnings, params]);
+
+  const updateFilter = (key: string, value: string) => {
+    setParams(prev => ({ ...prev, [key]: value }));
+  };
 
   const handleReset = () => {
-    setSearch("");
-    setVipLevel("all");
-    setDateFrom("");
-    setDateTo("");
+    setParams({ search: '', vipLevel: 'all', dateFrom: '', dateTo: '' });
   };
+
+  const filterConfig = useMemo<FilterConfig[]>(() => {
+    const sortedPlans = vipPlansData ? [...vipPlansData].sort((a, b) => a.level.localeCompare(b.level)) : [];
+    return [
+      { type: 'search', key: 'search', placeholder: 'Search by user, email, or txid...' },
+      { 
+        type: 'select', 
+        key: 'vipLevel', 
+        defaultLabel: 'All Levels',
+        options: sortedPlans.map((p: any) => ({ label: p.level, value: p.id.toString() }))
+      },
+      { type: 'dateRange', fromKey: 'dateFrom', toKey: 'dateTo' }
+    ];
+  }, [vipPlansData]);
 
   const totalEarnings = earnings.reduce((sum, e) => sum + e.amount, 0);
   const uniqueUsers = new Set(earnings.map(e => e.userEmail)).size;
@@ -163,16 +180,10 @@ export default function EarningsPage() {
         </div>
 
         {/* Filters */}
-        <EarningsFilters
-          search={search}
-          setSearch={setSearch}
-          vipLevel={vipLevel}
-          setVipLevel={setVipLevel}
-          dateFrom={dateFrom}
-          setDateFrom={setDateFrom}
-          dateTo={dateTo}
-          setDateTo={setDateTo}
-          vipPlans={vipPlansData || []}
+        <GenericFilters
+          config={filterConfig}
+          params={params}
+          updateFilter={updateFilter}
           onReset={handleReset}
         />
 

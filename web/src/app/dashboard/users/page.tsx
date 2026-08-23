@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { UsersFilters } from "@/components/admin/users/UsersFilters";
+import { GenericFilters, FilterConfig } from "@/components/admin/GenericFilters";
 import { UsersTable } from "@/components/admin/users/UsersTable";
 import { GenericFloatingActions } from "@/components/admin/GenericFloatingActions";
 import { ViewUserModal } from "@/components/admin/users/ViewUserModal";
@@ -30,10 +30,9 @@ import { useRouter } from "next/navigation";
 
 export default function UsersPage() {
   const router = useRouter();
-  const [search, setSearch] = useState("");
-  const [vipLevel, setVipLevel] = useState("all");
-  const [status, setStatus] = useState("all");
-  const [dateRange, setDateRange] = useState("");
+  const [params, setParams] = useState<Record<string, string>>({
+    search: '', vipLevel: 'all', status: 'all'
+  });
   const { data: rawUsers, isLoading: isLoadingUsersData, mutate: mutateUsers } = useApi("/users");
   const { data: globalStats, isLoading: isLoadingStats, mutate: mutateStats } = useApi("/users/global/stats");
 
@@ -95,21 +94,49 @@ export default function UsersPage() {
   // Apply filters logic
   const filteredUsers = useMemo(() => {
     return usersList.filter((user) => {
+      const search = params.search?.toLowerCase() || '';
       const matchSearch =
         !search ||
-        user.name.toLowerCase().includes(search.toLowerCase()) ||
-        user.email.toLowerCase().includes(search.toLowerCase()) ||
+        user.name.toLowerCase().includes(search) ||
+        user.email.toLowerCase().includes(search) ||
         user.phone.includes(search) ||
-        user.id.toLowerCase().includes(search.toLowerCase());
+        user.id.toLowerCase().includes(search);
 
+      const vipLevel = params.vipLevel || 'all';
       const matchVip = 
         vipLevel === "all" || 
         (vipLevel === "Ambassador" ? user.role === "Ambassador" : user.vipLevel === vipLevel);
+      
+      const status = params.status || 'all';
       const matchStatus = status === "all" || user.status === status;
 
       return matchSearch && matchVip && matchStatus;
     });
-  }, [search, vipLevel, status, usersList]);
+  }, [params, usersList]);
+
+  const updateFilter = (key: string, value: string) => {
+    setParams(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleReset = () => {
+    setParams({ search: '', vipLevel: 'all', status: 'all' });
+  };
+
+  const filterConfig = useMemo<FilterConfig[]>(() => [
+    { type: 'search', key: 'search', placeholder: 'Search users...' },
+    { 
+      type: 'select', 
+      key: 'status', 
+      defaultLabel: 'All Statuses',
+      options: availableStatuses.map(s => ({ label: s, value: s }))
+    },
+    { 
+      type: 'select', 
+      key: 'vipLevel', 
+      defaultLabel: 'All Levels',
+      options: availableLevels.map(l => ({ label: l, value: l }))
+    }
+  ], [availableStatuses, availableLevels]);
 
   const {
     currentPage,
@@ -168,15 +195,8 @@ export default function UsersPage() {
   // Reset page when filters change
   useMemo(() => {
     setCurrentPage(1);
-  }, [search, vipLevel, status]);
+  }, [params]);
 
-  const handleReset = () => {
-    setSearch("");
-    setVipLevel("all");
-    setStatus("all");
-    setDateRange("");
-    setCurrentPage(1);
-  };
 
   const handleSaveUser = async (updatedUser: UserRecord) => {
     try {
@@ -283,20 +303,13 @@ export default function UsersPage() {
         />
       </div>
 
-      {/* Filters Card */}
-      <UsersFilters
-        search={search}
-        setSearch={setSearch}
-        vipLevel={vipLevel}
-        setVipLevel={setVipLevel}
-        status={status}
-        setStatus={setStatus}
-        dateRange={dateRange}
-        setDateRange={setDateRange}
-        onReset={handleReset}
-        availableStatuses={availableStatuses}
-        availableLevels={availableLevels}
-      />
+        {/* Filters */}
+        <GenericFilters
+          config={filterConfig}
+          params={params}
+          updateFilter={updateFilter}
+          onReset={handleReset}
+        />
 
       {/* Users Table Card */}
       {isLoadingUsers ? (

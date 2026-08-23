@@ -5,55 +5,45 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { Users, UserCheck, DollarSign, TrendingUp, BadgePercent, Download, Calendar, Wallet, Coins } from "lucide-react";
 import type { ReferralRecord } from "@/types/admin";
-import { ReferralsFilters } from "@/components/admin/referrals/ReferralsFilters";
+import { GenericFilters, FilterConfig } from "@/components/admin/GenericFilters";
 import { ReferralsTable } from "@/components/admin/referrals/ReferralsTable";
-import { webApi } from "@/lib/api";
 import { useApi } from "@/hooks/useApi";
+import { useAdminFilters } from "@/hooks/useAdminFilters";
 
 export default function ReferralsPage() {
-  const [referrals, setReferrals] = useState<ReferralRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [vipLevel, setVipLevel] = useState("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
   const { data: vipPlansData } = useApi('/vip-plans');
 
-  const fetchReferrals = async () => {
-    setIsLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (search) params.append("search", search);
-      if (vipLevel !== "all") params.append("vipLevel", vipLevel);
-      if (dateFrom) params.append("dateFrom", dateFrom);
-      if (dateTo) params.append("dateTo", dateTo);
+  const { data: rawReferrals, isLoading, params, updateFilter, resetFilters } = useAdminFilters('/admin/referrals', {
+    search: '',
+    vipLevel: 'all',
+    dateFrom: '',
+    dateTo: ''
+  });
 
-      const data = await webApi.get(`/admin/referrals?${params.toString()}`);
-      const mapped = data.map((r: any) => ({
-        ...r,
-        registeredAt: new Date(r.registeredAt).toLocaleString('en-US', {
-          year: 'numeric', month: 'short', day: 'numeric',
-          hour: '2-digit', minute: '2-digit'
-        }),
-      }));
-      setReferrals(mapped);
-    } catch (e) {
-      console.error('Failed to fetch referrals:', e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const referrals = useMemo(() => {
+    if (!rawReferrals) return [];
+    return rawReferrals.map((r: any) => ({
+      ...r,
+      registeredAt: new Date(r.registeredAt).toLocaleString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      }),
+    }));
+  }, [rawReferrals]);
 
-  useEffect(() => {
-    fetchReferrals();
-  }, [search, vipLevel, dateFrom, dateTo]);
-
-  const handleReset = () => {
-    setSearch("");
-    setVipLevel("all");
-    setDateFrom("");
-    setDateTo("");
-  };
+  const filterConfig = useMemo<FilterConfig[]>(() => {
+    const sortedPlans = vipPlansData ? [...vipPlansData].sort((a, b) => a.level.localeCompare(b.level)) : [];
+    return [
+      { type: 'search', key: 'search', placeholder: 'Search by user, email or phone...' },
+      { 
+        type: 'select', 
+        key: 'vipLevel', 
+        defaultLabel: 'All Levels',
+        options: sortedPlans.map((p: any) => ({ label: p.level, value: p.id.toString() }))
+      },
+      { type: 'dateRange', fromKey: 'dateFrom', toKey: 'dateTo' }
+    ];
+  }, [vipPlansData]);
 
   const totalReferrals = referrals.length;
   const activeReferrals = referrals.filter(r => r.status === 'Active').length;
@@ -116,17 +106,11 @@ export default function ReferralsPage() {
         </div>
 
         {/* Filters */}
-        <ReferralsFilters
-          search={search}
-          setSearch={setSearch}
-          vipLevel={vipLevel}
-          setVipLevel={setVipLevel}
-          dateFrom={dateFrom}
-          setDateFrom={setDateFrom}
-          dateTo={dateTo}
-          setDateTo={setDateTo}
-          onReset={handleReset}
-          vipPlans={vipPlansData || []}
+        <GenericFilters
+          config={filterConfig}
+          params={params}
+          updateFilter={updateFilter}
+          onReset={resetFilters}
         />
 
         {/* Table */}

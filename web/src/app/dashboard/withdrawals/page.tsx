@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { WithdrawalsFilters } from "@/components/admin/withdrawals/WithdrawalsFilters";
+import { GenericFilters, FilterConfig } from "@/components/admin/GenericFilters";
 import { WithdrawalsTable } from "@/components/admin/withdrawals/WithdrawalsTable";
 import { GenericFloatingActions } from "@/components/admin/GenericFloatingActions";
 import { usePagination } from "@/hooks/usePagination";
@@ -21,12 +21,9 @@ import { webApi } from "@/lib/api";
 import { useApi } from "@/hooks/useApi";
 
 export default function WithdrawalsPage() {
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
-  const [network, setNetwork] = useState("all");
-  const [currency, setCurrency] = useState("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [params, setParams] = useState<Record<string, string>>({
+    search: '', status: 'all', network: 'all', currency: 'all', dateFrom: '', dateTo: ''
+  });
   const { data: withdrawalsData, isLoading, mutate: mutateWithdrawals } = useApi('/withdrawals');
 
   const withdrawals = useMemo<any[]>(() => {
@@ -53,17 +50,24 @@ export default function WithdrawalsPage() {
   // Apply filters logic
   const filteredWithdrawals = useMemo(() => {
     return withdrawals.filter((withdrawal) => {
+      const search = params.search?.toLowerCase() || '';
       const matchSearch =
         !search ||
-        withdrawal.userName.toLowerCase().includes(search.toLowerCase()) ||
-        withdrawal.userEmail.toLowerCase().includes(search.toLowerCase()) ||
-        withdrawal.id.toLowerCase().includes(search.toLowerCase()) ||
-        withdrawal.walletAddress.toLowerCase().includes(search.toLowerCase());
+        withdrawal.userName.toLowerCase().includes(search) ||
+        withdrawal.userEmail.toLowerCase().includes(search) ||
+        withdrawal.id.toLowerCase().includes(search) ||
+        withdrawal.walletAddress.toLowerCase().includes(search);
+
+      const status = params.status || 'all';
+      const network = params.network || 'all';
+      const currency = params.currency || 'all';
 
       const matchStatus = status === "all" || withdrawal.status === status;
       const matchNetwork = network === "all" || withdrawal.network === network;
       const matchCurrency = currency === "all" || withdrawal.currency === currency;
 
+      const dateFrom = params.dateFrom;
+      const dateTo = params.dateTo;
       let matchDate = true;
       if (dateFrom || dateTo) {
         const withdrawalDate = new Date(withdrawal.createdAt).setHours(0, 0, 0, 0);
@@ -73,7 +77,40 @@ export default function WithdrawalsPage() {
 
       return matchSearch && matchStatus && matchNetwork && matchCurrency && matchDate;
     });
-  }, [search, status, network, currency, dateFrom, dateTo, withdrawals]);
+  }, [params, withdrawals]);
+
+  const updateFilter = (key: string, value: string) => {
+    setParams(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleReset = () => {
+    setParams({ search: '', status: 'all', network: 'all', currency: 'all', dateFrom: '', dateTo: '' });
+  };
+
+  const filterConfig = useMemo<FilterConfig[]>(() => [
+    { type: 'search', key: 'search', placeholder: 'Search by user, email, txid...' },
+    { 
+      type: 'select', 
+      key: 'status', 
+      defaultLabel: 'All Statuses',
+      options: [
+        { label: 'Pending', value: 'Pending' },
+        { label: 'Completed', value: 'Completed' },
+        { label: 'Rejected', value: 'Rejected' }
+      ]
+    },
+    { 
+      type: 'select', 
+      key: 'network', 
+      defaultLabel: 'All Networks',
+      options: [
+        { label: 'TRC20', value: 'TRC20' },
+        { label: 'ERC20', value: 'ERC20' },
+        { label: 'BEP20', value: 'BEP20' }
+      ]
+    },
+    { type: 'dateRange', fromKey: 'dateFrom', toKey: 'dateTo' }
+  ], []);
 
   const {
     currentPage,
@@ -91,16 +128,6 @@ export default function WithdrawalsPage() {
     toggleSelectRow,
     clearSelection
   } = useTableSelection(paginatedWithdrawals);
-
-  const handleReset = () => {
-    setSearch("");
-    setStatus("all");
-    setNetwork("all");
-    setCurrency("all");
-    setDateFrom("");
-    setDateTo("");
-    setCurrentPage(1);
-  };
 
   const handleApprove = async (withdrawal: any) => {
     try {
@@ -196,20 +223,11 @@ export default function WithdrawalsPage() {
         />
       </div>
 
-      {/* Filters Card */}
-      <WithdrawalsFilters
-        search={search}
-        setSearch={setSearch}
-        status={status}
-        setStatus={setStatus}
-        network={network}
-        setNetwork={setNetwork}
-        currency={currency}
-        setCurrency={setCurrency}
-        dateFrom={dateFrom}
-        setDateFrom={setDateFrom}
-        dateTo={dateTo}
-        setDateTo={setDateTo}
+      {/* Filters */}
+      <GenericFilters
+        config={filterConfig}
+        params={params}
+        updateFilter={updateFilter}
         onReset={handleReset}
       />
 
