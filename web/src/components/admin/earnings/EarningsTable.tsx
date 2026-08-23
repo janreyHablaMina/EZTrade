@@ -22,6 +22,7 @@ const typeBadgeStyles: Record<string, string> = {
 
 type EarningsTableProps = {
   earnings: EarningRecord[];
+  vipPlans: any[];
 };
 
 const PAGE_SIZES = [10, 20, 50];
@@ -48,7 +49,7 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[idx];
 }
 
-export function EarningsTable({ earnings }: EarningsTableProps) {
+export function EarningsTable({ earnings, vipPlans }: EarningsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -60,7 +61,7 @@ export function EarningsTable({ earnings }: EarningsTableProps) {
       <div className="overflow-x-auto">
         <table className="w-full text-xs" style={{ minWidth: "980px" }}>
           <thead>
-            <tr className="border-b border-border/50 bg-white/[0.02] text-left text-muted">
+            <tr className="border-b border-border/50 text-left text-muted">
               <th className="pb-3.5 pl-5 pt-4 font-medium w-56">User</th>
               <th className="pb-3.5 pt-4 font-medium">VIP Level</th>
               <th className="pb-3.5 pt-4 font-medium">Type</th>
@@ -93,11 +94,16 @@ export function EarningsTable({ earnings }: EarningsTableProps) {
 
                   {/* VIP Level */}
                   <td className="py-3.5">
-                    <span
-                      className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold ${vipBadgeStyles[er.vipLevel]}`}
-                    >
-                      VIP {er.vipLevel}
-                    </span>
+                    {(() => {
+                      const levelName = vipPlans?.find((p: any) => p.id === er.vipLevel)?.level || `VIP ${er.vipLevel}`;
+                      return (
+                        <span
+                          className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold ${vipBadgeStyles[levelName] || 'bg-gray-500/20 text-gray-400'}`}
+                        >
+                          {levelName}
+                        </span>
+                      );
+                    })()}
                   </td>
 
                   {/* Type */}

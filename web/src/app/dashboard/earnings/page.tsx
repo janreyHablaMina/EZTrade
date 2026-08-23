@@ -8,16 +8,17 @@ import type { EarningRecord } from "@/types/admin";
 import { EarningsFilters } from "@/components/admin/earnings/EarningsFilters";
 import { EarningsTable } from "@/components/admin/earnings/EarningsTable";
 import { webApi } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 
 export default function EarningsPage() {
   const [earnings, setEarnings] = useState<EarningRecord[]>([]);
   const [financials, setFinancials] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [type, setType] = useState("all");
   const [vipLevel, setVipLevel] = useState("all");
-  const [status, setStatus] = useState("all");
-  const [dateRange, setDateRange] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const { data: vipPlansData } = useApi('/vip-plans');
 
   const fetchEarnings = async () => {
     setIsLoading(true);
@@ -62,20 +63,32 @@ export default function EarningsPage() {
         er.userEmail.toLowerCase().includes(search.toLowerCase()) ||
         er.id.toLowerCase().includes(search.toLowerCase());
 
-      const matchesType = type === "all" || er.type === type;
       const matchesVip = vipLevel === "all" || er.vipLevel.toString() === vipLevel;
-      const matchesStatus = status === "all" || er.status.toLowerCase() === status.toLowerCase();
 
-      return matchesSearch && matchesType && matchesVip && matchesStatus;
+      let matchesDate = true;
+      if (dateFrom || dateTo) {
+        const erDate = new Date(er.dateTime);
+        if (dateFrom) {
+          const from = new Date(dateFrom);
+          from.setHours(0, 0, 0, 0);
+          matchesDate = matchesDate && erDate >= from;
+        }
+        if (dateTo) {
+          const to = new Date(dateTo);
+          to.setHours(23, 59, 59, 999);
+          matchesDate = matchesDate && erDate <= to;
+        }
+      }
+
+      return matchesSearch && matchesVip && matchesDate;
     });
-  }, [earnings, search, type, vipLevel, status]);
+  }, [earnings, search, vipLevel, dateFrom, dateTo]);
 
   const handleReset = () => {
     setSearch("");
-    setType("all");
     setVipLevel("all");
-    setStatus("all");
-    setDateRange("");
+    setDateFrom("");
+    setDateTo("");
   };
 
   const totalEarnings = earnings.reduce((sum, e) => sum + e.amount, 0);
@@ -98,7 +111,7 @@ export default function EarningsPage() {
 
   return (
     <AdminShell>
-      <div className="mx-auto max-w-7xl">
+      <div className="w-full">
         {/* Header Options */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -108,20 +121,6 @@ export default function EarningsPage() {
             <p className="mt-1.5 text-xs text-muted-2">
               Dashboard <span className="mx-1">&gt;</span> Earnings
             </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 rounded-xl bg-purple/10 px-4 py-2.5 text-xs font-semibold text-purple-bright border border-purple/20 transition hover:bg-purple/20">
-              <Download className="h-3.5 w-3.5" />
-              Export
-            </button>
-            <div className="relative">
-              <Calendar className="absolute left-3.5 top-2.5 h-4 w-4 text-muted-2 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="May 11, 2024 - May 18, 2024"
-                className="w-56 rounded-xl border border-border bg-card-elevated py-2.5 pl-10 pr-4 text-xs text-white placeholder-muted-2 outline-none focus:border-border-strong transition cursor-pointer"
-              />
-            </div>
           </div>
         </div>
 
@@ -167,21 +166,19 @@ export default function EarningsPage() {
         <EarningsFilters
           search={search}
           setSearch={setSearch}
-          type={type}
-          setType={setType}
           vipLevel={vipLevel}
           setVipLevel={setVipLevel}
-          status={status}
-          setStatus={setStatus}
-          dateRange={dateRange}
-          setDateRange={setDateRange}
-          onFilter={() => {}}
+          dateFrom={dateFrom}
+          setDateFrom={setDateFrom}
+          dateTo={dateTo}
+          setDateTo={setDateTo}
+          vipPlans={vipPlansData || []}
           onReset={handleReset}
         />
 
         {/* Table */}
         <div className="mt-5">
-          <EarningsTable earnings={filteredEarnings} />
+          <EarningsTable earnings={filteredEarnings} vipPlans={vipPlansData || []} />
         </div>
       </div>
     </AdminShell>
