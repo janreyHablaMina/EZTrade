@@ -8,13 +8,12 @@ type ReferralsFiltersProps = {
   setSearch: (s: string) => void;
   vipLevel: string;
   setVipLevel: (v: string) => void;
-  status: string;
-  setStatus: (s: string) => void;
   dateFrom: string;
   setDateFrom: (d: string) => void;
   dateTo: string;
   setDateTo: (d: string) => void;
   onReset: () => void;
+  vipPlans?: any[];
 };
 
 export function ReferralsFilters({
@@ -22,13 +21,12 @@ export function ReferralsFilters({
   setSearch,
   vipLevel,
   setVipLevel,
-  status,
-  setStatus,
   dateFrom,
   setDateFrom,
   dateTo,
   setDateTo,
   onReset,
+  vipPlans = [],
 }: ReferralsFiltersProps) {
   return (
     <div className="mt-5 rounded-2xl border border-border bg-card p-4 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
@@ -47,22 +45,11 @@ export function ReferralsFilters({
             containerClassName="sm:w-36"
           >
             <option value="all">All Levels</option>
-            <option value="1">VIP 1</option>
-            <option value="2">VIP 2</option>
-            <option value="3">VIP 3</option>
-            <option value="4">VIP 4</option>
-            <option value="5">VIP 5</option>
-            <option value="6">VIP 6</option>
-          </Select>
-
-          <Select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            containerClassName="sm:w-36"
-          >
-            <option value="all">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
+            {[...vipPlans].sort((a, b) => a.level.localeCompare(b.level)).map((plan: any) => (
+              <option key={plan.id} value={plan.id}>
+                {plan.level}
+              </option>
+            ))}
           </Select>
 
           <div className="flex items-center gap-2">

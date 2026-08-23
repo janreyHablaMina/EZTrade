@@ -93,7 +93,6 @@ class ReferralController extends Controller
                 'userName' => $user->name,
                 'userEmail' => $user->email,
                 'vipLevel' => $user->vip_plan_id ?? 1,
-                'status' => 'Active', // Assume active
                 'registeredAt' => $user->created_at,
                 'totalDeposited' => $totalDeposited,
                 'totalEarnings' => $totalEarnings,

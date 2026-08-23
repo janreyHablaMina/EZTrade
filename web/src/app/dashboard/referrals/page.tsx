@@ -15,7 +15,6 @@ export default function ReferralsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [vipLevel, setVipLevel] = useState("all");
-  const [status, setStatus] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const { data: vipPlansData } = useApi('/vip-plans');
@@ -26,7 +25,6 @@ export default function ReferralsPage() {
       const params = new URLSearchParams();
       if (search) params.append("search", search);
       if (vipLevel !== "all") params.append("vipLevel", vipLevel);
-      if (status !== "all") params.append("status", status);
       if (dateFrom) params.append("dateFrom", dateFrom);
       if (dateTo) params.append("dateTo", dateTo);
 
@@ -48,12 +46,11 @@ export default function ReferralsPage() {
 
   useEffect(() => {
     fetchReferrals();
-  }, [search, vipLevel, status, dateFrom, dateTo]);
+  }, [search, vipLevel, dateFrom, dateTo]);
 
   const handleReset = () => {
     setSearch("");
     setVipLevel("all");
-    setStatus("all");
     setDateFrom("");
     setDateTo("");
   };
@@ -79,20 +76,7 @@ export default function ReferralsPage() {
               Dashboard <span className="mx-1">&gt;</span> Referrals
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 rounded-xl bg-purple/10 px-4 py-2.5 text-xs font-semibold text-purple-bright border border-purple/20 transition hover:bg-purple/20">
-              <Download className="h-3.5 w-3.5" />
-              Export
-            </button>
-            <div className="relative">
-              <Calendar className="absolute left-3.5 top-2.5 h-4 w-4 text-muted-2 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="May 11, 2024 - May 18, 2024"
-                className="w-56 rounded-xl border border-border bg-card-elevated py-2.5 pl-10 pr-4 text-xs text-white placeholder-muted-2 outline-none focus:border-border-strong transition cursor-pointer"
-              />
-            </div>
-          </div>
+
         </div>
 
         {/* KPI Row */}
@@ -137,13 +121,12 @@ export default function ReferralsPage() {
           setSearch={setSearch}
           vipLevel={vipLevel}
           setVipLevel={setVipLevel}
-          status={status}
-          setStatus={setStatus}
           dateFrom={dateFrom}
           setDateFrom={setDateFrom}
           dateTo={dateTo}
           setDateTo={setDateTo}
           onReset={handleReset}
+          vipPlans={vipPlansData || []}
         />
 
         {/* Table */}

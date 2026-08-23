@@ -11,12 +11,6 @@ const levelBadgeStyles: Record<string, string> = {
   "3": "bg-indigo-500/15 text-indigo-400 border border-indigo-500/25",
 };
 
-const statusBadgeStyles: Record<string, string> = {
-  "Active": "bg-success/15 text-success",
-  "Inactive": "bg-white/10 text-muted-2",
-  "Suspended": "bg-danger/15 text-danger",
-};
-
 const commissionStatusBadgeStyles: Record<string, string> = {
   "Paid": "bg-success/15 text-success",
   "Pending": "bg-warning/15 text-warning",
@@ -68,7 +62,6 @@ export function ReferralsTable({ referrals, vipPlans }: ReferralsTableProps) {
               <th className="pb-3.5 pl-5 pt-4 font-medium">ID</th>
               <th className="pb-3.5 pt-4 font-medium w-56">Referred User</th>
               <th className="pb-3.5 pt-4 font-medium">VIP Level</th>
-              <th className="pb-3.5 pt-4 font-medium">Status</th>
               <th className="pb-3.5 pt-4 font-medium w-32">Registered At</th>
               <th className="pb-3.5 pt-4 font-medium">Total Deposited</th>
               <th className="pb-3.5 pt-4 font-medium">Total Earnings</th>
@@ -114,15 +107,6 @@ export function ReferralsTable({ referrals, vipPlans }: ReferralsTableProps) {
                           </span>
                         );
                       })()}
-                    </td>
-
-                    {/* Status */}
-                    <td className="py-3.5">
-                      <span
-                        className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold ${statusBadgeStyles[ref.status]}`}
-                      >
-                        {ref.status}
-                      </span>
                     </td>
 
                     {/* Registered At */}
