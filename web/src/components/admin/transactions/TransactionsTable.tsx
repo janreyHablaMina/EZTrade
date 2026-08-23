@@ -16,6 +16,7 @@ import {
   Check,
   X,
 } from "lucide-react";
+import { TableActionsMenu, TableActionsMenuItem, TableActionsMenuDivider } from "@/components/admin/TableActionsMenu";
 import type { TransactionRecord } from "@/types/admin";
 
 const typeBadgeStyles: Record<string, string> = {
@@ -57,8 +58,6 @@ export function TransactionsTable({
   onViewDetails,
   onRefresh,
 }: TransactionsTableProps) {
-  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
-
   const handleUpdateStatus = async (tx: any, status: 'Approved' | 'Rejected') => {
     try {
       await webApi.patch(`/deposits/${tx.dbId}`, { status });
@@ -192,76 +191,30 @@ export function TransactionsTable({
                     </td>
                     <td className="py-3.5 text-muted-2">{tx.dateTime}</td>
                     <td className="py-3.5 text-right pr-1 relative">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveDropdownId(
-                            activeDropdownId === tx.id ? null : tx.id
-                          );
-                        }}
-                        className={`flex h-7 w-7 items-center justify-center rounded-lg border bg-card-elevated transition cursor-pointer ml-auto ${
-                          activeDropdownId === tx.id
-                            ? "border-purple-bright/50 text-white bg-purple/10"
-                            : "border-border text-muted hover:text-white"
-                        }`}
-                        aria-label="More options"
-                      >
-                        <MoreVertical className="h-3.5 w-3.5" />
-                      </button>
-
-                      {activeDropdownId === tx.id && (
-                        <>
-                          <div 
-                            className="fixed inset-0 z-20 cursor-default" 
-                            onClick={() => setActiveDropdownId(null)}
-                          />
-                          <div className={`absolute right-1.5 w-44 rounded-xl bg-card-elevated border border-border py-1.5 shadow-[0_10px_35px_rgba(0,0,0,0.55)] z-30 text-left ${
-                            index >= paginatedTransactions.length - 4 && paginatedTransactions.length > 4
-                              ? "bottom-full mb-1"
-                              : "mt-1"
-                          }`}>
-                            {tx.status === 'Pending' && tx.type === 'Deposit' && (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActiveDropdownId(null);
-                                    handleUpdateStatus(tx, 'Approved');
-                                  }}
-                                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-success hover:bg-success/10 transition cursor-pointer text-left font-medium"
-                                >
-                                  <Check className="h-3.5 w-3.5 mr-2 inline" />
-                                  Approve
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActiveDropdownId(null);
-                                    handleUpdateStatus(tx, 'Rejected');
-                                  }}
-                                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-warning hover:bg-warning/10 transition cursor-pointer text-left font-medium"
-                                >
-                                  <X className="h-3.5 w-3.5 mr-2 inline" />
-                                  Reject
-                                </button>
-                                <div className="my-1 border-t border-border/45" />
-                              </>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActiveDropdownId(null);
-                                onViewDetails?.(tx);
-                              }}
-                              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer text-left font-medium"
-                            >
-                              <Eye className="h-3.5 w-3.5 text-muted-2 mr-2 inline" />
-                              View Details
-                            </button>
-                          </div>
-                        </>
-                      )}
+                      <TableActionsMenu estimatedHeight={200}>
+                        {tx.status === 'Pending' && tx.type === 'Deposit' && (
+                          <>
+                            <TableActionsMenuItem 
+                              icon="✅" 
+                              label="Approve" 
+                              onClick={() => handleUpdateStatus(tx, 'Approved')} 
+                              className="text-success" 
+                            />
+                            <TableActionsMenuItem 
+                              icon="❌" 
+                              label="Reject" 
+                              onClick={() => handleUpdateStatus(tx, 'Rejected')} 
+                              className="text-danger" 
+                            />
+                            <TableActionsMenuDivider />
+                          </>
+                        )}
+                        <TableActionsMenuItem 
+                          icon="👁" 
+                          label="View Details" 
+                          onClick={() => onViewDetails?.(tx)} 
+                        />
+                      </TableActionsMenu>
                     </td>
                   </tr>
                 );
