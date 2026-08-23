@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { webApi } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import {
   Users,
   UserCheck,
@@ -33,49 +34,35 @@ export default function UsersPage() {
   const [vipLevel, setVipLevel] = useState("all");
   const [status, setStatus] = useState("all");
   const [dateRange, setDateRange] = useState("");
-  const [usersList, setUsersList] = useState<UserRecord[]>([]);
-  const [globalStats, setGlobalStats] = useState<any>(null);
-  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+  const { data: rawUsers, isLoading: isLoadingUsersData, mutate: mutateUsers } = useApi("/users");
+  const { data: globalStats, isLoading: isLoadingStats, mutate: mutateStats } = useApi("/users/global/stats");
 
-  const fetchUsers = useCallback(async () => {
-    try {
-      setIsLoadingUsers(true);
-      const [data, statsRes] = await Promise.all([
-        webApi.get("/users"),
-        webApi.get("/users/global/stats")
-      ]);
-      setGlobalStats(statsRes);
-      const mappedUsers: UserRecord[] = data.map((u: any) => ({
-          id: `EZT-${u.id.toString().padStart(4, '0')}`,
-          dbId: u.id,
-          name: u.name,
-          email: u.email,
-          phone: u.phone || "N/A",
-          vipLevel: u.vip_plan ? u.vip_plan.level : "None",
-          role: u.role || "User",
-          deposited: parseFloat(u.balance) || 0,
-          withdrawn: 0,
-          earnings: 0,
-          kycStatus: u.kyc_status || "Not Verified",
-          status: u.status || "Active",
-          teamSize: u.team_size || 0,
-          referralCode: u.referral_code || null,
-          registeredAt: new Date(u.created_at).toLocaleDateString('en-US', {
-            year: 'numeric', month: 'short', day: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-          }),
-        }));
-        setUsersList(mappedUsers);
-    } catch (err) {
-      console.error("Failed to fetch users:", err);
-    } finally {
-      setIsLoadingUsers(false);
-    }
-  }, []);
+  const isLoadingUsers = isLoadingUsersData || isLoadingStats;
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  const usersList = useMemo<UserRecord[]>(() => {
+    if (!rawUsers) return [];
+    return rawUsers.map((u: any) => ({
+      id: `EZT-${u.id.toString().padStart(4, '0')}`,
+      dbId: u.id,
+      name: u.name,
+      email: u.email,
+      phone: u.phone || "N/A",
+      vipLevel: u.vip_plan ? u.vip_plan.level : "None",
+      role: u.role || "User",
+      deposited: parseFloat(u.balance) || 0,
+      withdrawn: 0,
+      earnings: 0,
+      kycStatus: u.kyc_status || "Not Verified",
+      status: u.status || "Active",
+      teamSize: u.team_size || 0,
+      referralCode: u.referral_code || null,
+      registeredAt: new Date(u.created_at).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      }),
+    }));
+  }, [rawUsers]);
+
   const [editingUser, setEditingUser] = useState<UserRecord | null>(null);
   const [notifyingUser, setNotifyingUser] = useState<UserRecord | null>(null);
   const [accountAction, setAccountAction] = useState<{ user: UserRecord; action: 'suspend' | 'unsuspend' | 'deactivate' | 'reactivate' | 'delete' } | null>(null);
@@ -163,12 +150,10 @@ export default function UsersPage() {
       
       await Promise.all(promises);
 
-      if (bulkAction === 'delete') {
-        setUsersList((prev) => prev.filter((u) => !selectedIds.includes(u.id)));
-      } else {
-        const newStatus: RowStatus = bulkAction === 'suspend' ? 'Suspended' : 'Inactive';
-        setUsersList((prev) => prev.map((u) => (selectedIds.includes(u.id) ? { ...u, status: newStatus } : u)));
-      }
+      await Promise.all(promises);
+
+      await mutateUsers();
+      await mutateStats();
       setToastMessage(`Successfully ${bulkAction}d ${selectedIds.length} users`);
     } catch (err) {
       console.error("Failed to perform bulk action:", err);
@@ -205,7 +190,7 @@ export default function UsersPage() {
         status: updatedUser.status,
         kyc_status: updatedUser.kycStatus
       });
-      setUsersList(usersList.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+      await mutateUsers();
       setEditingUser(null);
       setToastMessage("User updated successfully");
     } catch (err) {
@@ -232,7 +217,6 @@ export default function UsersPage() {
       
       if (accountAction.action === 'delete') {
         await webApi.delete(`/users/${realId}`);
-        setUsersList((prev) => prev.filter((u) => u.id !== accountAction.user.id));
       } else {
         let newStatus: RowStatus = 'Active';
         if (accountAction.action === 'suspend') newStatus = 'Suspended';
@@ -240,8 +224,10 @@ export default function UsersPage() {
         else if (accountAction.action === 'unsuspend' || accountAction.action === 'reactivate') newStatus = 'Active';
 
         await webApi.patch(`/users/${realId}`, { status: newStatus });
-        setUsersList((prev) => prev.map((u) => (u.id === accountAction.user.id ? { ...u, status: newStatus } : u)));
       }
+      
+      await mutateUsers();
+      await mutateStats();
       
       setToastMessage(`Successfully ${accountAction.action}d ${accountAction.user.name}`);
     } catch (err) {

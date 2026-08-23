@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import {
   Download,
   Coins,
@@ -19,6 +19,7 @@ import { GenericFloatingActions } from "@/components/admin/GenericFloatingAction
 import { usePagination } from "@/hooks/usePagination";
 import { useTableSelection } from "@/hooks/useTableSelection";
 import { webApi } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 
 export default function DepositsPage() {
   const [search, setSearch] = useState("");
@@ -27,7 +28,7 @@ export default function DepositsPage() {
   const [currency, setCurrency] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [deposits, setDeposits] = useState<any[]>([]);
+  const { data: depositsData, isLoading, mutate: mutateDeposits } = useApi('/deposits');
   const [selectedDepositForDetails, setSelectedDepositForDetails] = useState<any | null>(null);
 
   const handleResetFilters = () => {
@@ -39,35 +40,26 @@ export default function DepositsPage() {
     setDateTo("");
   };
 
-  const fetchDeposits = async () => {
-    try {
-      const data = await webApi.get('/deposits');
-      const mapped = data.map((d: any) => ({
-        id: `DEP-${d.id.toString().padStart(6, '0')}`,
-        dbId: d.id,
-        userName: d.user ? d.user.name : 'Unknown',
-        userEmail: d.user ? d.user.email : 'Unknown',
-        userId: d.user ? `EZT-${d.user.id.toString().padStart(4, '0')}` : 'N/A',
-        amount: parseFloat(d.amount),
-        currency: 'USDT',
-        network: d.network,
-        txid: d.txid,
-        status: d.status,
-        submittedAt: new Date(d.created_at).toLocaleString('en-US', {
-          year: 'numeric', month: 'short', day: 'numeric',
-          hour: '2-digit', minute: '2-digit'
-        }),
-        createdAt: d.created_at,
-      }));
-      setDeposits(mapped);
-    } catch (e) {
-      console.error('Failed to fetch deposits:', e);
-    }
-  };
-
-  useEffect(() => {
-    fetchDeposits();
-  }, []);
+  const deposits = useMemo<any[]>(() => {
+    if (!depositsData) return [];
+    return depositsData.map((d: any) => ({
+      id: `DEP-${d.id.toString().padStart(6, '0')}`,
+      dbId: d.id,
+      userName: d.user ? d.user.name : 'Unknown',
+      userEmail: d.user ? d.user.email : 'Unknown',
+      userId: d.user ? `EZT-${d.user.id.toString().padStart(4, '0')}` : 'N/A',
+      amount: parseFloat(d.amount),
+      currency: 'USDT',
+      network: d.network,
+      txid: d.txid,
+      status: d.status,
+      submittedAt: new Date(d.created_at).toLocaleString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      }),
+      createdAt: d.created_at,
+    }));
+  }, [depositsData]);
 
   // Apply filters live on state change
   const filteredDeposits = useMemo(() => {
@@ -147,7 +139,7 @@ export default function DepositsPage() {
           webApi.patch(`/deposits/${d.dbId}`, { status: 'Approved' })
         )
       );
-      fetchDeposits();
+      await mutateDeposits();
       clearSelection();
     } catch (e) {
       console.error('Failed to bulk verify deposits', e);
@@ -170,7 +162,7 @@ export default function DepositsPage() {
           webApi.patch(`/deposits/${d.dbId}`, { status: 'Rejected' })
         )
       );
-      fetchDeposits();
+      await mutateDeposits();
       clearSelection();
     } catch (e) {
       console.error('Failed to bulk reject deposits', e);

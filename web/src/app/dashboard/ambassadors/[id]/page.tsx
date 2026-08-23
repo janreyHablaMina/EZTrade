@@ -11,6 +11,7 @@ import { ViewUserModal } from "@/components/admin/users/ViewUserModal";
 import { EarningsTable } from "@/components/admin/earnings/EarningsTable";
 import { usePagination } from "@/hooks/usePagination";
 import { useTableSelection } from "@/hooks/useTableSelection";
+import { useApi } from "@/hooks/useApi";
 import { webApi } from "@/lib/api";
 import { type UserRecord, vipBadgeStyles } from "@/types/admin";
 
@@ -18,13 +19,7 @@ export default function AmbassadorDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const ambassadorId = params.id as string;
-  const [ambassador, setAmbassador] = useState<any>(null);
-  const [downlineUsers, setDownlineUsers] = useState<UserRecord[]>([]);
-  const [earningsLog, setEarningsLog] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-
-  // Table Filters State
   const [search, setSearch] = useState("");
   const [vipLevel, setVipLevel] = useState("all");
   const [status, setStatus] = useState("all");
@@ -32,78 +27,68 @@ export default function AmbassadorDetailsPage() {
   const [cutPercent, setCutPercent] = useState("all");
   const [viewingUser, setViewingUser] = useState<UserRecord | null>(null);
 
-  useEffect(() => {
-    const fetchAmbassadorAndDownline = async () => {
-      try {
-        const realId = parseInt(ambassadorId.replace(/\D/g, ''));
-        const [ambData, downlineData, earningsData] = await Promise.all([
-          webApi.get(`/admin/ambassadors/${realId}`),
-          webApi.get(`/admin/ambassadors/${realId}/downline`),
-          webApi.get(`/admin/ambassadors/${realId}/earnings`)
-        ]);
-        
-        setAmbassador(ambData);
+  const realId = parseInt(ambassadorId.replace(/\D/g, ''));
+  const { data: ambassador, isLoading: isLoadingAmb } = useApi(`/admin/ambassadors/${realId}`);
+  const { data: downlineData, isLoading: isLoadingDownline } = useApi(`/admin/ambassadors/${realId}/downline`);
+  const { data: earningsData, isLoading: isLoadingEarnings } = useApi(`/admin/ambassadors/${realId}/earnings`);
 
-        const mappedUsers: UserRecord[] = downlineData.map((u: any) => {
-          const num = (u.id.toString().charCodeAt(u.id.toString().length - 1) % 3);
-          const cut = num === 0 ? 10 : num === 1 ? 5 : 3;
-          return {
-            id: `EZT-${u.id.toString().padStart(4, '0')}`,
-            dbId: u.id,
-            name: u.name,
-            email: u.email,
-            phone: u.phone || "N/A",
-            vipLevel: u.vip_plan ? u.vip_plan.level : "None",
-            role: u.role || "User",
-            deposited: parseFloat(u.balance) || 0,
-            withdrawn: 0,
-            earnings: 0,
-            kycStatus: u.kyc_status || "Not Verified",
-            status: u.status || "Active",
-            teamSize: u.team_size || 0,
-            referralCode: u.referral_code || null,
-            registeredAt: new Date(u.created_at).toLocaleDateString('en-US', {
-              year: 'numeric', month: 'short', day: 'numeric',
-              hour: '2-digit', minute: '2-digit'
-            }),
-            cutPercent: cut,
-          };
-        });
-        setDownlineUsers(mappedUsers);
+  const isLoading = isLoadingAmb || isLoadingDownline || isLoadingEarnings;
 
-        const mappedEarnings = earningsData.map((e: any) => {
-          const descParts = [`Gross $${e.gross_cut}`];
-          if (e.deduction > 0) descParts.push(`-$${e.deduction} Pool Deduction`);
-          if (e.direct_bonus > 0) descParts.push(`+$${e.direct_bonus} Direct Bonus`);
-          
-          return {
-            id: `AMB-${e.id.toString().padStart(5, '0')}`,
-            userName: e.user ? e.user.name : 'Unknown',
-            userEmail: e.user ? e.user.email : 'Unknown',
-            vipLevel: e.user ? e.user.vip_plan_id : 1,
-            type: e.direct_bonus > 0 ? 'Direct Referral' : 'Network Deposit',
-            source: `Deposit ($${e.deposit_amount})`,
-            amount: parseFloat(e.net_earnings) || 0,
-            currency: 'USDT',
-            network: 'N/A',
-            status: 'Completed',
-            dateTime: new Date(e.created_at).toLocaleString('en-US', {
-              year: 'numeric', month: 'short', day: 'numeric',
-              hour: '2-digit', minute: '2-digit'
-            }),
-            description: descParts.join(' | ')
-          };
-        });
-        setEarningsLog(mappedEarnings);
+  const downlineUsers = useMemo<UserRecord[]>(() => {
+    if (!downlineData) return [];
+    return downlineData.map((u: any) => {
+      const num = (u.id.toString().charCodeAt(u.id.toString().length - 1) % 3);
+      const cut = num === 0 ? 10 : num === 1 ? 5 : 3;
+      return {
+        id: `EZT-${u.id.toString().padStart(4, '0')}`,
+        dbId: u.id,
+        name: u.name,
+        email: u.email,
+        phone: u.phone || "N/A",
+        vipLevel: u.vip_plan ? u.vip_plan.level : "None",
+        role: u.role || "User",
+        deposited: parseFloat(u.balance) || 0,
+        withdrawn: 0,
+        earnings: 0,
+        kycStatus: u.kyc_status || "Not Verified",
+        status: u.status || "Active",
+        teamSize: u.team_size || 0,
+        referralCode: u.referral_code || null,
+        registeredAt: new Date(u.created_at).toLocaleDateString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        }),
+        cutPercent: cut,
+      };
+    });
+  }, [downlineData]);
 
-      } catch (err) {
-        console.error("Failed to fetch ambassador details", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchAmbassadorAndDownline();
-  }, [ambassadorId]);
+  const earningsLog = useMemo<any[]>(() => {
+    if (!earningsData) return [];
+    return earningsData.map((e: any) => {
+      const descParts = [`Gross $${e.gross_cut}`];
+      if (e.deduction > 0) descParts.push(`-$${e.deduction} Pool Deduction`);
+      if (e.direct_bonus > 0) descParts.push(`+$${e.direct_bonus} Direct Bonus`);
+      
+      return {
+        id: `AMB-${e.id.toString().padStart(5, '0')}`,
+        userName: e.user ? e.user.name : 'Unknown',
+        userEmail: e.user ? e.user.email : 'Unknown',
+        vipLevel: e.user ? e.user.vip_plan_id : 1,
+        type: e.direct_bonus > 0 ? 'Direct Referral' : 'Network Deposit',
+        source: `Deposit ($${e.deposit_amount})`,
+        amount: parseFloat(e.net_earnings) || 0,
+        currency: 'USDT',
+        network: 'N/A',
+        status: 'Completed',
+        dateTime: new Date(e.created_at).toLocaleString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        }),
+        description: descParts.join(' | ')
+      };
+    });
+  }, [earningsData]);
 
   const handleCopyReferral = () => {
     if (ambassador?.referralCode && ambassador.referralCode !== 'N/A') {

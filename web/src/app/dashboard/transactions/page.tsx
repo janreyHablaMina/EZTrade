@@ -7,8 +7,7 @@ import { KpiCard } from "@/components/admin/KpiCard";
 import { TransactionsFilters } from "@/components/admin/transactions/TransactionsFilters";
 import { TransactionsTable } from "@/components/admin/transactions/TransactionsTable";
 import { TransactionDetailsModal } from "@/components/admin/transactions/TransactionDetailsModal";
-import { webApi } from "@/lib/api";
-import { useEffect } from "react";
+import { useApi } from "@/hooks/useApi";
 
 export default function TransactionsPage() {
   const [search, setSearch] = useState("");
@@ -17,72 +16,58 @@ export default function TransactionsPage() {
   const [currency, setCurrency] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [selectedTransactionForDetails, setSelectedTransactionForDetails] = useState<any | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: depositsData, isLoading: isDepLoading } = useApi('/deposits');
+  const { data: withdrawalsData, isLoading: isWdlLoading } = useApi('/withdrawals');
+  
+  const isLoading = isDepLoading || isWdlLoading;
 
-  const fetchTransactions = async () => {
-    setIsLoading(true);
-    try {
-      const [depositsData, withdrawalsData] = await Promise.all([
-        webApi.get('/deposits'),
-        webApi.get('/withdrawals')
-      ]);
+  const transactions = useMemo<any[]>(() => {
+    if (!depositsData || !withdrawalsData) return [];
+    
+    const mappedDeposits = depositsData.map((d: any) => ({
+      id: `TX-D${d.id.toString().padStart(5, '0')}`,
+      dbId: d.id,
+      type: 'Deposit',
+      amount: parseFloat(d.amount),
+      currency: 'USDT',
+      network: d.network,
+      status: d.status === 'Approved' ? 'Completed' : d.status, // Normalize status
+      userName: d.user ? d.user.name : 'Unknown',
+      userEmail: d.user ? d.user.email : 'Unknown',
+      userId: d.user ? `EZT-${d.user.id.toString().padStart(4, '0')}` : 'N/A',
+      dateTime: new Date(d.created_at).toLocaleString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      }),
+      timestamp: new Date(d.created_at).getTime(),
+      createdAt: d.created_at,
+      referenceTxid: d.txid || 'N/A',
+      description: 'Wallet funding'
+    }));
 
-      const mappedDeposits = depositsData.map((d: any) => ({
-        id: `TX-D${d.id.toString().padStart(5, '0')}`,
-        dbId: d.id,
-        type: 'Deposit',
-        amount: parseFloat(d.amount),
-        currency: 'USDT',
-        network: d.network,
-        status: d.status === 'Approved' ? 'Completed' : d.status, // Normalize status
-        userName: d.user ? d.user.name : 'Unknown',
-        userEmail: d.user ? d.user.email : 'Unknown',
-        userId: d.user ? `EZT-${d.user.id.toString().padStart(4, '0')}` : 'N/A',
-        dateTime: new Date(d.created_at).toLocaleString('en-US', {
-          year: 'numeric', month: 'short', day: 'numeric',
-          hour: '2-digit', minute: '2-digit'
-        }),
-        timestamp: new Date(d.created_at).getTime(),
-        createdAt: d.created_at,
-        referenceTxid: d.txid || 'N/A',
-        description: 'Wallet funding'
-      }));
+    const mappedWithdrawals = withdrawalsData.map((w: any) => ({
+      id: `TX-W${w.id.toString().padStart(5, '0')}`,
+      dbId: w.id,
+      type: 'Withdrawal',
+      amount: parseFloat(w.amount),
+      currency: 'USDT',
+      network: w.network,
+      status: w.status,
+      userName: w.user ? w.user.name : 'Unknown',
+      userEmail: w.user ? w.user.email : 'Unknown',
+      userId: w.user ? `EZT-${w.user.id.toString().padStart(4, '0')}` : 'N/A',
+      dateTime: new Date(w.created_at).toLocaleString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      }),
+      timestamp: new Date(w.created_at).getTime(),
+      createdAt: w.created_at,
+      referenceTxid: w.txid || 'N/A',
+      description: 'Funds withdrawal'
+    }));
 
-      const mappedWithdrawals = withdrawalsData.map((w: any) => ({
-        id: `TX-W${w.id.toString().padStart(5, '0')}`,
-        dbId: w.id,
-        type: 'Withdrawal',
-        amount: parseFloat(w.amount),
-        currency: 'USDT',
-        network: w.network,
-        status: w.status,
-        userName: w.user ? w.user.name : 'Unknown',
-        userEmail: w.user ? w.user.email : 'Unknown',
-        userId: w.user ? `EZT-${w.user.id.toString().padStart(4, '0')}` : 'N/A',
-        dateTime: new Date(w.created_at).toLocaleString('en-US', {
-          year: 'numeric', month: 'short', day: 'numeric',
-          hour: '2-digit', minute: '2-digit'
-        }),
-        timestamp: new Date(w.created_at).getTime(),
-        createdAt: w.created_at,
-        referenceTxid: w.txid || 'N/A',
-        description: 'Funds withdrawal'
-      }));
-
-      const allTransactions = [...mappedDeposits, ...mappedWithdrawals].sort((a, b) => b.timestamp - a.timestamp);
-      setTransactions(allTransactions);
-    } catch (e) {
-      console.error('Failed to fetch transactions:', e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTransactions();
-  }, []);
+    return [...mappedDeposits, ...mappedWithdrawals].sort((a, b) => b.timestamp - a.timestamp);
+  }, [depositsData, withdrawalsData]);
 
   // Filter application state
 

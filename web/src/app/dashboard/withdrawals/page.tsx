@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import {
   Download,
   Coins,
@@ -18,6 +18,7 @@ import { GenericFloatingActions } from "@/components/admin/GenericFloatingAction
 import { usePagination } from "@/hooks/usePagination";
 import { useTableSelection } from "@/hooks/useTableSelection";
 import { webApi } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 
 export default function WithdrawalsPage() {
   const [search, setSearch] = useState("");
@@ -26,37 +27,28 @@ export default function WithdrawalsPage() {
   const [currency, setCurrency] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [withdrawals, setWithdrawals] = useState<any[]>([]);
+  const { data: withdrawalsData, isLoading, mutate: mutateWithdrawals } = useApi('/withdrawals');
 
-  const fetchWithdrawals = async () => {
-    try {
-      const data = await webApi.get('/withdrawals');
-      const mapped = data.map((w: any) => ({
-        id: `WDL-${w.id.toString().padStart(6, '0')}`,
-        dbId: w.id,
-        userName: w.user ? w.user.name : 'Unknown',
-        userEmail: w.user ? w.user.email : 'Unknown',
-        userId: w.user ? `EZT-${w.user.id.toString().padStart(4, '0')}` : 'N/A',
-        amount: parseFloat(w.amount),
-        currency: 'USDT',
-        network: w.network,
-        walletAddress: w.txid || 'Pending',
-        status: w.status,
-        submittedAt: new Date(w.created_at).toLocaleString('en-US', {
-          year: 'numeric', month: 'short', day: 'numeric',
-          hour: '2-digit', minute: '2-digit'
-        }),
-        createdAt: w.created_at,
-      }));
-      setWithdrawals(mapped);
-    } catch (e) {
-      console.error('Failed to fetch withdrawals:', e);
-    }
-  };
-
-  useEffect(() => {
-    fetchWithdrawals();
-  }, []);
+  const withdrawals = useMemo<any[]>(() => {
+    if (!withdrawalsData) return [];
+    return withdrawalsData.map((w: any) => ({
+      id: `WDL-${w.id.toString().padStart(6, '0')}`,
+      dbId: w.id,
+      userName: w.user ? w.user.name : 'Unknown',
+      userEmail: w.user ? w.user.email : 'Unknown',
+      userId: w.user ? `EZT-${w.user.id.toString().padStart(4, '0')}` : 'N/A',
+      amount: parseFloat(w.amount),
+      currency: 'USDT',
+      network: w.network,
+      walletAddress: w.txid || 'Pending',
+      status: w.status,
+      submittedAt: new Date(w.created_at).toLocaleString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      }),
+      createdAt: w.created_at,
+    }));
+  }, [withdrawalsData]);
 
   // Apply filters logic
   const filteredWithdrawals = useMemo(() => {
@@ -113,7 +105,7 @@ export default function WithdrawalsPage() {
   const handleApprove = async (withdrawal: any) => {
     try {
       await webApi.patch(`/withdrawals/${withdrawal.dbId}`, { status: 'Completed' });
-      fetchWithdrawals();
+      await mutateWithdrawals();
     } catch (e) {
       console.error('Failed to approve withdrawal', e);
     }
@@ -122,7 +114,7 @@ export default function WithdrawalsPage() {
   const handleReject = async (withdrawal: any) => {
     try {
       await webApi.patch(`/withdrawals/${withdrawal.dbId}`, { status: 'Rejected' });
-      fetchWithdrawals();
+      await mutateWithdrawals();
     } catch (e) {
       console.error('Failed to reject withdrawal', e);
     }
