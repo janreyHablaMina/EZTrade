@@ -108,7 +108,7 @@ export default function DepositsPage() {
   const handleVerify = async (deposit: any) => {
     try {
       await webApi.patch(`/deposits/${deposit.dbId}`, { status: 'Approved' });
-      fetchDeposits();
+      await mutateDeposits();
     } catch (e) {
       console.error('Failed to approve deposit', e);
     }
@@ -117,7 +117,7 @@ export default function DepositsPage() {
   const handleReject = async (deposit: any) => {
     try {
       await webApi.patch(`/deposits/${deposit.dbId}`, { status: 'Rejected' });
-      fetchDeposits();
+      await mutateDeposits();
     } catch (e) {
       console.error('Failed to reject deposit', e);
     }
