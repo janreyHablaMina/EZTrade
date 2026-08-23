@@ -80,10 +80,6 @@ export function EarningDetailsModal({ earning, onClose }: EarningDetailsModalPro
                 <span className="text-[10px] text-muted-2 flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Date & Time</span>
                 <span className="text-sm font-medium text-white">{earning.dateTime}</span>
               </div>
-              <div className="bg-white/[0.02] border border-border/50 p-3 rounded-xl flex flex-col gap-1">
-                <span className="text-[10px] text-muted-2 flex items-center gap-1.5"><User className="h-3 w-3" /> Type</span>
-                <span className="text-sm font-medium text-white">{earning.type}</span>
-              </div>
             </div>
           </div>
 

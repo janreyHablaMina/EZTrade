@@ -65,7 +65,6 @@ export function EarningsTable({ earnings, vipPlans, onViewDetails }: EarningsTab
             <tr className="border-b border-border/50 text-left text-muted">
               <th className="pb-3.5 pl-5 pt-4 font-medium w-56">User</th>
               <th className="pb-3.5 pt-4 font-medium">VIP Level</th>
-              <th className="pb-3.5 pt-4 font-medium">Type</th>
               <th className="pb-3.5 pt-4 font-medium">Source</th>
               <th className="pb-3.5 pt-4 font-medium text-right pr-3">Gross Profit</th>
               <th className="pb-3.5 pt-4 font-medium text-right pr-3">Admin Cut</th>
@@ -106,18 +105,6 @@ export function EarningsTable({ earnings, vipPlans, onViewDetails }: EarningsTab
                         </span>
                       );
                     })()}
-                  </td>
-
-                  {/* Type */}
-                  <td className="py-3.5">
-                    <div className="flex items-center gap-1.5">
-                      {er.type === "Trading Profit" ? (
-                        <TrendingUp className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                      ) : (
-                        <Share2 className="h-3.5 w-3.5 text-sky-400 shrink-0" />
-                      )}
-                      <span className="text-white font-medium">{er.type}</span>
-                    </div>
                   </td>
 
                   {/* Source */}

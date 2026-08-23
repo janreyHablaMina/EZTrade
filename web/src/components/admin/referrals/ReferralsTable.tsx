@@ -45,7 +45,7 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[idx];
 }
 
-export function ReferralsTable({ referrals, vipPlans }: ReferralsTableProps) {
+export function ReferralsTable({ referrals, vipPlans, onViewDetails }: ReferralsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
@@ -176,10 +176,13 @@ export function ReferralsTable({ referrals, vipPlans }: ReferralsTableProps) {
                               >
                                 <button
                                   type="button"
-                                  onClick={() => setActiveDropdownId(null)}
+                                  onClick={() => {
+                                    setActiveDropdownId(null);
+                                    onViewDetails?.(ref);
+                                  }}
                                   className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer font-medium"
                                 >
-                                  <Eye className="h-3.5 w-3.5" />
+                                  <Eye className="h-4 w-4" />
                                   View Details
                                 </button>
                               </div>

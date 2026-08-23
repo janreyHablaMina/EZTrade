@@ -7,11 +7,13 @@ import { Users, UserCheck, DollarSign, TrendingUp, BadgePercent, Download, Calen
 import type { ReferralRecord } from "@/types/admin";
 import { GenericFilters, FilterConfig } from "@/components/admin/GenericFilters";
 import { ReferralsTable } from "@/components/admin/referrals/ReferralsTable";
+import { ReferralDetailsModal } from "@/components/admin/referrals/ReferralDetailsModal";
 import { useApi } from "@/hooks/useApi";
 import { useAdminFilters } from "@/hooks/useAdminFilters";
 
 export default function ReferralsPage() {
   const { data: vipPlansData } = useApi('/vip-plans');
+  const [viewingReferral, setViewingReferral] = useState<ReferralRecord | null>(null);
 
   const { data: rawReferrals, isLoading, params, updateFilter, resetFilters } = useAdminFilters('/admin/referrals', {
     search: '',
@@ -115,9 +117,20 @@ export default function ReferralsPage() {
 
         {/* Table */}
         <div className="mt-5">
-          <ReferralsTable referrals={referrals} vipPlans={vipPlansData || []} />
+          <ReferralsTable 
+            referrals={referrals} 
+            vipPlans={vipPlansData || []} 
+            onViewDetails={setViewingReferral}
+          />
         </div>
       </div>
+
+      {viewingReferral && (
+        <ReferralDetailsModal
+          referral={viewingReferral}
+          onClose={() => setViewingReferral(null)}
+        />
+      )}
     </AdminShell>
   );
 }

@@ -31,7 +31,7 @@ export default function EarningsPage() {
         userEmail: e.user ? e.user.email : 'Unknown',
         vipLevel: e.user ? e.user.vip_plan_id : 1,
         type: 'Daily Trading Profit',
-        source: `VIP Capital ($${parseFloat(e.deposit_amount || 0).toFixed(2)})`,
+        source: `$${parseFloat(e.deposit_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         amount: parseFloat(e.gross_amount),
         userCut: parseFloat(e.user_cut || 0),
         adminCut: parseFloat(e.admin_cut),
