@@ -20,6 +20,7 @@ export interface UserRecord {
   downlineCount: number;
   totalDownlineAssets: number;
   dailyEarnings: number;
+  cutPercent?: number;
 }
 
 export interface VipPlan {

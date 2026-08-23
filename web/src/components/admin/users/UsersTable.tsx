@@ -154,11 +154,11 @@ export function UsersTable({
                       <>
                         <td className="py-3.5">
                           <span className="inline-flex rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400">
-                            10%
+                            {user.cutPercent || 10}%
                           </span>
                         </td>
                         <td className="py-3.5 font-bold text-emerald-400">
-                          +${((user.deposited || 0) * 0.1).toFixed(2)}
+                          +${((user.deposited || 0) * ((user.cutPercent || 10) / 100)).toFixed(2)}
                         </td>
                       </>
                     )}

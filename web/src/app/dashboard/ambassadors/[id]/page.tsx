@@ -29,6 +29,7 @@ export default function AmbassadorDetailsPage() {
   const [vipLevel, setVipLevel] = useState("all");
   const [status, setStatus] = useState("all");
   const [dateRange, setDateRange] = useState("");
+  const [cutPercent, setCutPercent] = useState("all");
   const [viewingUser, setViewingUser] = useState<UserRecord | null>(null);
 
   useEffect(() => {
@@ -43,26 +44,31 @@ export default function AmbassadorDetailsPage() {
         
         setAmbassador(ambData);
 
-        const mappedUsers: UserRecord[] = downlineData.map((u: any) => ({
-          id: `EZT-${u.id.toString().padStart(4, '0')}`,
-          dbId: u.id,
-          name: u.name,
-          email: u.email,
-          phone: u.phone || "N/A",
-          vipLevel: u.vip_plan ? u.vip_plan.level : "None",
-          role: u.role || "User",
-          deposited: parseFloat(u.balance) || 0,
-          withdrawn: 0,
-          earnings: 0,
-          kycStatus: u.kyc_status || "Not Verified",
-          status: u.status || "Active",
-          teamSize: u.team_size || 0,
-          referralCode: u.referral_code || null,
-          registeredAt: new Date(u.created_at).toLocaleDateString('en-US', {
-            year: 'numeric', month: 'short', day: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-          }),
-        }));
+        const mappedUsers: UserRecord[] = downlineData.map((u: any) => {
+          const num = (u.id.toString().charCodeAt(u.id.toString().length - 1) % 3);
+          const cut = num === 0 ? 10 : num === 1 ? 5 : 3;
+          return {
+            id: `EZT-${u.id.toString().padStart(4, '0')}`,
+            dbId: u.id,
+            name: u.name,
+            email: u.email,
+            phone: u.phone || "N/A",
+            vipLevel: u.vip_plan ? u.vip_plan.level : "None",
+            role: u.role || "User",
+            deposited: parseFloat(u.balance) || 0,
+            withdrawn: 0,
+            earnings: 0,
+            kycStatus: u.kyc_status || "Not Verified",
+            status: u.status || "Active",
+            teamSize: u.team_size || 0,
+            referralCode: u.referral_code || null,
+            registeredAt: new Date(u.created_at).toLocaleDateString('en-US', {
+              year: 'numeric', month: 'short', day: 'numeric',
+              hour: '2-digit', minute: '2-digit'
+            }),
+            cutPercent: cut,
+          };
+        });
         setDownlineUsers(mappedUsers);
 
         const mappedEarnings = earningsData.map((e: any) => {
@@ -121,10 +127,11 @@ export default function AmbassadorDetailsPage() {
         vipLevel === "all" || 
         (vipLevel === "Ambassador" ? user.role === "Ambassador" : user.vipLevel === vipLevel);
       const matchStatus = status === "all" || user.status === status;
+      const matchCut = cutPercent === "all" || String(user.cutPercent) === cutPercent;
 
-      return matchSearch && matchVip && matchStatus;
+      return matchSearch && matchVip && matchStatus && matchCut;
     });
-  }, [search, vipLevel, status, downlineUsers]);
+  }, [search, vipLevel, status, cutPercent, downlineUsers]);
 
   const {
     currentPage,
@@ -145,6 +152,7 @@ export default function AmbassadorDetailsPage() {
     setSearch("");
     setVipLevel("all");
     setStatus("all");
+    setCutPercent("all");
     setDateRange("");
     setCurrentPage(1);
   };
@@ -322,6 +330,9 @@ export default function AmbassadorDetailsPage() {
               dateRange={dateRange}
               setDateRange={setDateRange}
               onReset={handleReset}
+              cutPercent={cutPercent}
+              setCutPercent={setCutPercent}
+              showCutFilter={true}
             />
 
             {/* Downline Network Table */}

@@ -15,6 +15,9 @@ type UsersFiltersProps = {
   onReset: () => void;
   availableStatuses?: string[];
   availableLevels?: string[];
+  cutPercent?: string;
+  setCutPercent?: (c: string) => void;
+  showCutFilter?: boolean;
 };
 
 export function UsersFilters({
@@ -27,6 +30,9 @@ export function UsersFilters({
   onReset,
   availableStatuses = ["Active", "Inactive", "Suspended"],
   availableLevels = ["Ambassador", "VIP 1", "VIP 2", "VIP 3", "VIP 4", "VIP 5"],
+  cutPercent = "all",
+  setCutPercent,
+  showCutFilter = false,
 }: UsersFiltersProps) {
   return (
     <div className="mt-5 rounded-2xl border border-border bg-card p-4 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
@@ -60,6 +66,19 @@ export function UsersFilters({
               <option key={l} value={l}>{l}</option>
             ))}
           </Select>
+
+          {showCutFilter && setCutPercent && (
+            <Select
+              value={cutPercent}
+              onChange={(e) => setCutPercent(e.target.value)}
+              containerClassName="sm:w-[110px]"
+            >
+              <option value="all">All Cuts</option>
+              <option value="10">10% Cut</option>
+              <option value="5">5% Cut</option>
+              <option value="3">3% Cut</option>
+            </Select>
+          )}
 
           <div className="flex items-center gap-2">
             <Button variant="ghost" onClick={onReset} title="Reset Filters" icon={<RotateCcw className="h-3.5 w-3.5" />} />
