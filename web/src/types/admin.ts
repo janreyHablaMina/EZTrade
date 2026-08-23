@@ -153,6 +153,8 @@ export interface ReferralRecord {
   registeredAt: string;
   totalDeposited: number;
   totalEarnings: number;
+  totalBonusGiven?: number;
+  ambassadorDeduction?: number;
 }
 
 export type NotificationCategory =

@@ -66,6 +66,11 @@ class User extends Authenticatable
         return $this->hasMany(Deposit::class);
     }
 
+    public function tradingCodeRedemptions()
+    {
+        return $this->hasMany(TradingCodeRedemption::class);
+    }
+
     protected $appends = ['team_size'];
 
     public function getTeamSizeAttribute()

@@ -3,11 +3,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { Users, UserCheck, DollarSign, TrendingUp, BadgePercent, Download, Calendar } from "lucide-react";
+import { Users, UserCheck, DollarSign, TrendingUp, BadgePercent, Download, Calendar, Wallet, Coins } from "lucide-react";
 import type { ReferralRecord } from "@/types/admin";
 import { ReferralsFilters } from "@/components/admin/referrals/ReferralsFilters";
 import { ReferralsTable } from "@/components/admin/referrals/ReferralsTable";
 import { webApi } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 
 export default function ReferralsPage() {
   const [referrals, setReferrals] = useState<ReferralRecord[]>([]);
@@ -15,12 +16,21 @@ export default function ReferralsPage() {
   const [search, setSearch] = useState("");
   const [vipLevel, setVipLevel] = useState("all");
   const [status, setStatus] = useState("all");
-  const [dateRange, setDateRange] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const { data: vipPlansData } = useApi('/vip-plans');
 
   const fetchReferrals = async () => {
     setIsLoading(true);
     try {
-      const data = await webApi.get('/admin/referrals');
+      const params = new URLSearchParams();
+      if (search) params.append("search", search);
+      if (vipLevel !== "all") params.append("vipLevel", vipLevel);
+      if (status !== "all") params.append("status", status);
+      if (dateFrom) params.append("dateFrom", dateFrom);
+      if (dateTo) params.append("dateTo", dateTo);
+
+      const data = await webApi.get(`/admin/referrals?${params.toString()}`);
       const mapped = data.map((r: any) => ({
         ...r,
         registeredAt: new Date(r.registeredAt).toLocaleString('en-US', {
@@ -38,37 +48,27 @@ export default function ReferralsPage() {
 
   useEffect(() => {
     fetchReferrals();
-  }, []);
-
-  const filteredReferrals = useMemo(() => {
-    return referrals.filter((ref) => {
-      const matchesSearch =
-        search === "" ||
-        ref.userName.toLowerCase().includes(search.toLowerCase()) ||
-        ref.userEmail.toLowerCase().includes(search.toLowerCase()) ||
-        ref.id.toLowerCase().includes(search.toLowerCase());
-
-      const matchesVip = vipLevel === "all" || ref.vipLevel.toString() === vipLevel;
-      const matchesStatus = status === "all" || ref.status.toLowerCase() === status.toLowerCase();
-
-      return matchesSearch && matchesVip && matchesStatus;
-    });
-  }, [referrals, search, vipLevel, status]);
+  }, [search, vipLevel, status, dateFrom, dateTo]);
 
   const handleReset = () => {
     setSearch("");
     setVipLevel("all");
     setStatus("all");
-    setDateRange("");
+    setDateFrom("");
+    setDateTo("");
   };
 
   const totalReferrals = referrals.length;
   const activeReferrals = referrals.filter(r => r.status === 'Active').length;
-  const totalCommission = referrals.reduce((sum, r) => sum + r.yourCommission, 0);
+  const totalDeposited = referrals.reduce((sum, r) => sum + (r.totalDeposited || 0), 0);
+  const totalBonuses = referrals.reduce((sum, r) => sum + (r.totalBonusGiven || 0), 0);
+  const totalAmbassadorDeductions = referrals.reduce((sum, r) => sum + (r.ambassadorDeduction || 0), 0);
+  const totalAdminDeductions = totalBonuses - totalAmbassadorDeductions;
+  const totalAdminEarnings = totalDeposited - totalAdminDeductions;
 
   return (
     <AdminShell>
-      <div className="mx-auto max-w-7xl">
+      <div className="w-full">
         {/* Header Options */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -96,46 +96,38 @@ export default function ReferralsPage() {
         </div>
 
         {/* KPI Row */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard
-            label="Total Referrals"
-            value={totalReferrals.toLocaleString()}
+            label="Total Deposited"
+            value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalDeposited)}
             change=""
             positive={true}
-            icon={Users}
-            iconClassName="text-purple-bright"
-            subtext=""
-          />
-          <KpiCard
-            label="Active Referrals"
-            value={activeReferrals.toLocaleString()}
-            change=""
-            positive={true}
-            icon={UserCheck}
-            iconClassName="text-sky-400"
-          />
-          <KpiCard
-            label="Total Commission Earned"
-            value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalCommission)}
-            change=""
-            positive={true}
-            icon={DollarSign}
-            iconClassName="text-emerald-400"
-          />
-          <KpiCard
-            label="Pending Commission"
-            value="$0.00"
-            change=""
-            positive={true}
-            icon={TrendingUp}
+            icon={Wallet}
             iconClassName="text-amber-400"
           />
           <KpiCard
-            label="Commission Rate"
-            value="10%"
-            icon={BadgePercent}
-            iconClassName="text-purple-bright"
-            subtext="Level 1 Rate"
+            label="Total Referral Bonuses Given"
+            value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalBonuses)}
+            change=""
+            positive={true}
+            icon={TrendingUp}
+            iconClassName="text-sky-400"
+          />
+          <KpiCard
+            label="Total Ambassador Deductions"
+            value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalAmbassadorDeductions)}
+            change=""
+            positive={true}
+            icon={Users}
+            iconClassName="text-danger"
+          />
+          <KpiCard
+            label="Total Admin Deductions"
+            value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalAdminDeductions)}
+            change=""
+            positive={true}
+            icon={Coins}
+            iconClassName="text-danger"
           />
         </div>
 
@@ -147,15 +139,16 @@ export default function ReferralsPage() {
           setVipLevel={setVipLevel}
           status={status}
           setStatus={setStatus}
-          dateRange={dateRange}
-          setDateRange={setDateRange}
-          onFilter={() => {}}
+          dateFrom={dateFrom}
+          setDateFrom={setDateFrom}
+          dateTo={dateTo}
+          setDateTo={setDateTo}
           onReset={handleReset}
         />
 
         {/* Table */}
         <div className="mt-5">
-          <ReferralsTable referrals={filteredReferrals} />
+          <ReferralsTable referrals={referrals} vipPlans={vipPlansData || []} />
         </div>
       </div>
     </AdminShell>

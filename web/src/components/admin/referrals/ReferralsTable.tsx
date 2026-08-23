@@ -24,6 +24,7 @@ const commissionStatusBadgeStyles: Record<string, string> = {
 
 type ReferralsTableProps = {
   referrals: ReferralRecord[];
+  vipPlans?: any[];
 };
 
 const PAGE_SIZES = [10, 20, 50];
@@ -50,7 +51,7 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[idx];
 }
 
-export function ReferralsTable({ referrals }: ReferralsTableProps) {
+export function ReferralsTable({ referrals, vipPlans }: ReferralsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
@@ -63,7 +64,7 @@ export function ReferralsTable({ referrals }: ReferralsTableProps) {
       <div className="overflow-x-auto">
         <table className="w-full text-xs" style={{ minWidth: "1150px" }}>
           <thead>
-            <tr className="border-b border-border/50 bg-white/[0.02] text-left text-muted">
+            <tr className="border-b border-border/50 text-left text-muted">
               <th className="pb-3.5 pl-5 pt-4 font-medium">ID</th>
               <th className="pb-3.5 pt-4 font-medium w-56">Referred User</th>
               <th className="pb-3.5 pt-4 font-medium">VIP Level</th>
@@ -103,9 +104,16 @@ export function ReferralsTable({ referrals }: ReferralsTableProps) {
 
                     {/* VIP Level */}
                     <td className="py-3.5">
-                      <span className={`inline-flex rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider ${vipBadgeStyles[ref.vipLevel] || ""}`}>
-                        VIP {ref.vipLevel}
-                      </span>
+                      {(() => {
+                        const levelName = vipPlans?.find((p: any) => p.id.toString() === ref.vipLevel.toString())?.level || `VIP ${ref.vipLevel}`;
+                        return (
+                          <span
+                            className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${vipBadgeStyles[levelName] || 'bg-gray-500/20 text-gray-400'}`}
+                          >
+                            {levelName}
+                          </span>
+                        );
+                      })()}
                     </td>
 
                     {/* Status */}
@@ -159,13 +167,6 @@ export function ReferralsTable({ referrals }: ReferralsTableProps) {
                     {/* Actions */}
                     <td className="py-3.5 pr-5 text-right relative">
                       <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
-                          className="inline-flex items-center justify-center h-7 w-7 rounded-lg border border-border bg-white/[0.04] hover:bg-white/[0.08] text-muted-2 hover:text-white transition cursor-pointer"
-                          title="View Details"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                        </button>
                         <div className="relative">
                           <button
                             type="button"
@@ -194,14 +195,8 @@ export function ReferralsTable({ referrals }: ReferralsTableProps) {
                                   onClick={() => setActiveDropdownId(null)}
                                   className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer font-medium"
                                 >
-                                  View Commission Details
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setActiveDropdownId(null)}
-                                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs text-muted hover:bg-white/[0.04] hover:text-white transition cursor-pointer font-medium"
-                                >
-                                  Message User
+                                  <Eye className="h-3.5 w-3.5" />
+                                  View Details
                                 </button>
                               </div>
                             </>

@@ -8,11 +8,31 @@ use Illuminate\Http\Request;
 
 class ReferralController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Fetch all users who were referred by someone
-        $referredUsers = User::whereNotNull('referred_by')
-            ->with(['deposits' => function($q) {
+        $query = User::whereNotNull('referred_by');
+
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->has('vipLevel') && $request->vipLevel !== 'all') {
+            $query->where('vip_plan_id', $request->vipLevel);
+        }
+
+        if ($request->has('dateFrom') && $request->dateFrom != '') {
+            $query->whereDate('created_at', '>=', $request->dateFrom);
+        }
+
+        if ($request->has('dateTo') && $request->dateTo != '') {
+            $query->whereDate('created_at', '<=', $request->dateTo);
+        }
+
+        $referredUsers = $query->with(['deposits' => function($q) {
                 $q->where('status', 'Approved')->orWhere('status', 'Completed');
             }, 'tradingCodeRedemptions'])
             ->orderBy('created_at', 'desc')
@@ -22,10 +42,50 @@ class ReferralController extends Controller
             $totalDeposited = $user->deposits->sum('amount');
             $totalEarnings = $user->tradingCodeRedemptions->sum('amount_earned');
             
-            // Commission paid out for this user's deposits (approx 17% max if all 3 tiers exist)
-            // We'll calculate it statically based on tiers actually existing, or just 10% for simplicity.
-            // Let's just do 10% as direct commission for display.
-            $commission = $totalDeposited * 0.10;
+            $firstDeposit = $user->deposits->where('status', 'Approved')->sortBy('created_at')->first();
+            $firstDepositAmount = $firstDeposit ? $firstDeposit->amount : 0;
+            
+            $totalBonusGiven = 0;
+            $commission = 0;
+            $ambassadorDeduction = 0;
+            
+            if ($firstDepositAmount > 0) {
+                $rates = [1 => 0.10, 2 => 0.05, 3 => 0.03];
+                $currentUserId = $user->referred_by;
+                $level = 1;
+                
+                while ($currentUserId && $level <= 3) {
+                    $referrer = User::find($currentUserId);
+                    if (!$referrer) break;
+                    
+                    $bonus = $firstDepositAmount * $rates[$level];
+                    $totalBonusGiven += $bonus;
+                    
+                    if ($level === 1) {
+                        $commission = $bonus;
+                    }
+                    
+                    $currentUserId = $referrer->referred_by;
+                    $level++;
+                }
+                
+                // Calculate Ambassador Deduction
+                $uplineId = $user->referred_by;
+                $foundAmbassador = false;
+                while ($uplineId) {
+                    $upline = User::find($uplineId);
+                    if (!$upline) break;
+                    if ($upline->role === 'Ambassador') {
+                        $foundAmbassador = true;
+                        break;
+                    }
+                    $uplineId = $upline->referred_by;
+                }
+                
+                if ($foundAmbassador) {
+                    $ambassadorDeduction = $totalBonusGiven / 2;
+                }
+            }
 
             return [
                 'id' => 'RF' . str_pad($user->id, 4, '0', STR_PAD_LEFT),
@@ -37,7 +97,9 @@ class ReferralController extends Controller
                 'registeredAt' => $user->created_at,
                 'totalDeposited' => $totalDeposited,
                 'totalEarnings' => $totalEarnings,
+                'totalBonusGiven' => $totalBonusGiven,
                 'yourCommission' => $commission,
+                'ambassadorDeduction' => $ambassadorDeduction,
                 'commissionStatus' => $commission > 0 ? 'Paid' : 'None',
             ];
         });

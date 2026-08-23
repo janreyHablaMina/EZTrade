@@ -10,9 +10,10 @@ type ReferralsFiltersProps = {
   setVipLevel: (v: string) => void;
   status: string;
   setStatus: (s: string) => void;
-  dateRange: string;
-  setDateRange: (d: string) => void;
-  onFilter: () => void;
+  dateFrom: string;
+  setDateFrom: (d: string) => void;
+  dateTo: string;
+  setDateTo: (d: string) => void;
   onReset: () => void;
 };
 
@@ -23,9 +24,10 @@ export function ReferralsFilters({
   setVipLevel,
   status,
   setStatus,
-  dateRange,
-  setDateRange,
-  onFilter,
+  dateFrom,
+  setDateFrom,
+  dateTo,
+  setDateTo,
   onReset,
 }: ReferralsFiltersProps) {
   return (
@@ -63,18 +65,31 @@ export function ReferralsFilters({
             <option value="Inactive">Inactive</option>
           </Select>
 
-          <Input
-            icon={<Calendar className="h-4 w-4" />}
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
-            placeholder="All Time"
-            className="cursor-pointer"
-          />
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-2 pointer-events-none" />
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="w-36 rounded-xl border border-border bg-card-elevated py-2.5 pl-9 pr-3 text-xs text-white outline-none focus:border-border-strong transition"
+                placeholder="From"
+              />
+            </div>
+            <span className="text-muted-2 text-xs">to</span>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-2 pointer-events-none" />
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="w-36 rounded-xl border border-border bg-card-elevated py-2.5 pl-9 pr-3 text-xs text-white outline-none focus:border-border-strong transition"
+                placeholder="To"
+              />
+            </div>
+          </div>
 
           <div className="flex items-center gap-2">
-            <Button onClick={onFilter} icon={<Filter className="h-3.5 w-3.5" />} className="flex-1 sm:flex-none">
-              Filter
-            </Button>
             <Button
               variant="outline"
               onClick={onReset}

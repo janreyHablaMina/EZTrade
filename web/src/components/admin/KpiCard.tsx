@@ -31,7 +31,7 @@ export function KpiCard({
       </p>
       {subtext ? (
         <p className="mt-2 text-[11px] text-muted-2 font-medium">{subtext}</p>
-      ) : (
+      ) : change ? (
         <div
           className={`mt-2 inline-flex items-center gap-1 text-[11px] font-medium ${
             positive ? "text-success" : "text-danger"
@@ -45,7 +45,7 @@ export function KpiCard({
           <span>{change}</span>
           <span className="font-normal text-muted-2">vs last month</span>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
