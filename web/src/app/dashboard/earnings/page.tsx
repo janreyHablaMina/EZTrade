@@ -7,6 +7,7 @@ import { Wallet, Users, Coins, Download, Calendar, User, TrendingUp, AlertCircle
 import type { EarningRecord } from "@/types/admin";
 import { GenericFilters, FilterConfig } from "@/components/admin/GenericFilters";
 import { EarningsTable } from "@/components/admin/earnings/EarningsTable";
+import { EarningDetailsModal } from "@/components/admin/earnings/EarningDetailsModal";
 import { webApi } from "@/lib/api";
 import { useApi } from "@/hooks/useApi";
 
@@ -16,6 +17,7 @@ export default function EarningsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [params, setParams] = useState<Record<string, string>>({ search: '', vipLevel: 'all', dateFrom: '', dateTo: '' });
   const { data: vipPlansData } = useApi('/vip-plans');
+  const [viewingEarning, setViewingEarning] = useState<EarningRecord | null>(null);
 
   const fetchEarnings = async () => {
     setIsLoading(true);
@@ -28,9 +30,12 @@ export default function EarningsPage() {
         userName: e.user ? e.user.name : 'Unknown',
         userEmail: e.user ? e.user.email : 'Unknown',
         vipLevel: e.user ? e.user.vip_plan_id : 1,
-        type: e.type,
-        source: `Deposit ($${e.deposit_amount})`,
-        amount: parseFloat(e.amount_earned) || 0,
+        type: 'Daily Trading Profit',
+        source: `VIP Capital ($${parseFloat(e.deposit_amount || 0).toFixed(2)})`,
+        amount: parseFloat(e.gross_amount),
+        userCut: parseFloat(e.user_cut || 0),
+        adminCut: parseFloat(e.admin_cut),
+        ambassadorCut: parseFloat(e.ambassador_cut),
         currency: 'USDT',
         network: 'N/A',
         status: 'Completed',
@@ -189,9 +194,20 @@ export default function EarningsPage() {
 
         {/* Table */}
         <div className="mt-5">
-          <EarningsTable earnings={filteredEarnings} vipPlans={vipPlansData || []} />
+          <EarningsTable 
+            earnings={filteredEarnings} 
+            vipPlans={vipPlansData || []} 
+            onViewDetails={setViewingEarning} 
+          />
         </div>
       </div>
+
+      {viewingEarning && (
+        <EarningDetailsModal
+          earning={viewingEarning}
+          onClose={() => setViewingEarning(null)}
+        />
+      )}
     </AdminShell>
   );
 }

@@ -120,7 +120,10 @@ export interface EarningRecord {
   vipLevel: string;
   type: string;
   source: string;
-  amount: number;
+  amount: number; // Gross amount
+  userCut: number;
+  adminCut: number;
+  ambassadorCut: number;
   currency: string;
   network: string;
   description: string;

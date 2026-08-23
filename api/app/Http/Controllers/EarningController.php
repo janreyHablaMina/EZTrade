@@ -42,14 +42,35 @@ class EarningController extends Controller
         $grossAssets = $earningsLogs->where('type', 'Daily Admin Cut')->sum('amount');
         $minusBonuses = $earningsLogs->where('type', 'Daily Ambassador Cut')->sum('amount');
 
-        $adminEarnings = $earningsLogs->map(function($log) {
+        $adminLogs = \App\Models\EarningsLog::with('sourceUser')
+            ->where('type', 'Daily Admin Cut')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $adminEarnings = $adminLogs->map(function($log) {
+            $ambassadorLog = \App\Models\EarningsLog::where('type', 'Daily Ambassador Cut')
+                ->where('source_user_id', $log->source_user_id)
+                ->whereDate('created_at', $log->created_at->toDateString())
+                ->first();
+
+            $userLog = \App\Models\EarningsLog::where('type', 'Daily User Cut')
+                ->where('source_user_id', $log->source_user_id)
+                ->whereDate('created_at', $log->created_at->toDateString())
+                ->first();
+
+            $ambassadorCut = $ambassadorLog ? $ambassadorLog->amount : 0;
+            $userCut = $userLog ? $userLog->amount : 0;
+            $adminCut = $log->amount;
+            $gross = $adminCut + $ambassadorCut + $userCut;
+
             return [
                 'id' => $log->id,
                 'user' => $log->sourceUser,
-                'type' => $log->type,
-                'amount_earned' => $log->amount,
-                'gross_cut' => $log->amount,
-                'deduction' => 0,
+                'type' => 'Daily Trading Profit',
+                'gross_amount' => $gross,
+                'user_cut' => $userCut,
+                'admin_cut' => $adminCut,
+                'ambassador_cut' => $ambassadorCut,
                 'deposit_amount' => $log->deposit_amount,
                 'created_at' => $log->created_at,
             ];

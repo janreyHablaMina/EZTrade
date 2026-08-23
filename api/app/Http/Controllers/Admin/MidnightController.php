@@ -31,6 +31,8 @@ class MidnightController extends Controller
 
                 $dailyCapital = $user->vipPlan->min_deposit;
                 
+                $dailyUserCut = $dailyCapital * 0.10;
+                
                 // By default, Admin gets the full 10% daily cut
                 $dailyAdminCut = $dailyCapital * 0.10;
                 $ambassadorDeduction = 0;
@@ -61,6 +63,19 @@ class MidnightController extends Controller
                         $totalAmbassadorCut += $ambassadorDeduction;
                     }
                 }
+
+                // Add to user balance
+                $user->balance += $dailyUserCut;
+                $user->save();
+                
+                // Log User Earnings
+                EarningsLog::create([
+                    'user_id' => $user->id,
+                    'source_user_id' => $user->id,
+                    'type' => 'Daily User Cut',
+                    'amount' => $dailyUserCut,
+                    'deposit_amount' => $dailyCapital,
+                ]);
 
                 $netAdminCut = $dailyAdminCut;
 

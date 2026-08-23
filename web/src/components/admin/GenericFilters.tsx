@@ -61,7 +61,7 @@ export function GenericFilters({ config, params, updateFilter, onReset }: Generi
                         type="date"
                         value={params[filter.fromKey] || ''}
                         onChange={(e) => updateFilter(filter.fromKey, e.target.value)}
-                        className="w-36 rounded-xl border border-border bg-card-elevated py-2.5 pl-9 pr-3 text-xs text-white outline-none focus:border-border-strong transition"
+                        className="w-36 rounded-xl border border-border bg-card-elevated py-2.5 pl-9 pr-3 text-xs text-white outline-none focus:border-border-strong transition [&::-webkit-calendar-picker-indicator]:hidden"
                         placeholder="From"
                       />
                     </div>
@@ -72,7 +72,7 @@ export function GenericFilters({ config, params, updateFilter, onReset }: Generi
                         type="date"
                         value={params[filter.toKey] || ''}
                         onChange={(e) => updateFilter(filter.toKey, e.target.value)}
-                        className="w-36 rounded-xl border border-border bg-card-elevated py-2.5 pl-9 pr-3 text-xs text-white outline-none focus:border-border-strong transition"
+                        className="w-36 rounded-xl border border-border bg-card-elevated py-2.5 pl-9 pr-3 text-xs text-white outline-none focus:border-border-strong transition [&::-webkit-calendar-picker-indicator]:hidden"
                         placeholder="To"
                       />
                     </div>

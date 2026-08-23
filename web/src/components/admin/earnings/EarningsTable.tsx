@@ -20,9 +20,10 @@ const typeBadgeStyles: Record<string, string> = {
   "Bonus": "bg-amber-500/15 text-amber-400 border border-amber-500/25",
 };
 
-type EarningsTableProps = {
+export type EarningsTableProps = {
   earnings: EarningRecord[];
-  vipPlans: any[];
+  vipPlans?: any[];
+  onViewDetails?: (earning: EarningRecord) => void;
 };
 
 const PAGE_SIZES = [10, 20, 50];
@@ -49,7 +50,7 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[idx];
 }
 
-export function EarningsTable({ earnings, vipPlans }: EarningsTableProps) {
+export function EarningsTable({ earnings, vipPlans, onViewDetails }: EarningsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -66,9 +67,10 @@ export function EarningsTable({ earnings, vipPlans }: EarningsTableProps) {
               <th className="pb-3.5 pt-4 font-medium">VIP Level</th>
               <th className="pb-3.5 pt-4 font-medium">Type</th>
               <th className="pb-3.5 pt-4 font-medium">Source</th>
-              <th className="pb-3.5 pt-4 font-medium text-right pr-3">Amount</th>
-              <th className="pb-3.5 pt-4 font-medium">Currency</th>
-              <th className="pb-3.5 pt-4 font-medium">Status</th>
+              <th className="pb-3.5 pt-4 font-medium text-right pr-3">Gross Profit</th>
+              <th className="pb-3.5 pt-4 font-medium text-right pr-3">Admin Cut</th>
+              <th className="pb-3.5 pt-4 font-medium text-right pr-3">Ambassador Cut</th>
+              <th className="pb-3.5 pt-4 font-medium text-center">Status</th>
               <th className="pb-3.5 pt-4 font-medium w-36">Date &amp; Time</th>
               <th className="pb-3.5 pt-4 pr-5 font-medium text-right">Actions</th>
             </tr>
@@ -121,28 +123,29 @@ export function EarningsTable({ earnings, vipPlans }: EarningsTableProps) {
                   {/* Source */}
                   <td className="py-3.5 text-muted">{er.source}</td>
 
-                  {/* Amount */}
+                  {/* Gross Profit */}
                   <td className="py-3.5 text-right pr-3">
                     <span className="font-semibold text-emerald-400">
-                      +{er.amount.toFixed(2)}
+                      +{er.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                     </span>
                   </td>
 
-                  {/* Currency */}
-                  <td className="py-3.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-400/15 text-[9px] font-bold text-teal-400 border border-teal-400/20">
-                        T
-                      </span>
-                      <div>
-                        <p className="font-medium text-white text-[11px]">{er.currency}</p>
-                        <p className="text-[9px] text-muted-2">{er.network}</p>
-                      </div>
-                    </div>
+                  {/* Admin Cut */}
+                  <td className="py-3.5 text-right pr-3">
+                    <span className="font-semibold text-purple-bright">
+                      {er.adminCut > 0 ? `+${er.adminCut.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}` : '-'}
+                    </span>
+                  </td>
+
+                  {/* Ambassador Cut */}
+                  <td className="py-3.5 text-right pr-3">
+                    <span className="font-semibold text-amber-400">
+                      {er.ambassadorCut > 0 ? `-${er.ambassadorCut.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}` : '-'}
+                    </span>
                   </td>
 
                   {/* Status */}
-                  <td className="py-3.5">
+                  <td className="py-3.5 text-center">
                     <span
                       className={`inline-flex rounded-md px-2 py-0.5 text-[9px] font-semibold tracking-wider ${statusBadgeStyles[er.status] || ""}`}
                     >
@@ -159,6 +162,7 @@ export function EarningsTable({ earnings, vipPlans }: EarningsTableProps) {
                   <td className="py-3.5 pr-5 text-right">
                     <button
                       type="button"
+                      onClick={() => onViewDetails?.(er)}
                       className="inline-flex items-center justify-center h-7 w-7 rounded-lg border border-border bg-white/[0.04] hover:bg-white/[0.08] text-muted-2 hover:text-white transition cursor-pointer"
                       title="View Details"
                     >
