@@ -73,27 +73,21 @@ export default function VipPlansPage() {
     }
   }, [toastMessage]);
 
-  // Applied filters state
-  const [filters, setFilters] = useState({
-    search: "",
-    status: "all",
-  });
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
   // Apply filters logic
   const filteredPlans = useMemo(() => {
     return plansList.filter((plan) => {
       const matchSearch =
-        !filters.search ||
-        plan.level.toString().toLowerCase().includes(filters.search.toLowerCase());
+        !search ||
+        plan.level.toString().toLowerCase().includes(search.toLowerCase());
 
-      const matchStatus = filters.status === "all" || plan.status === filters.status;
+      const matchStatus = status === "all" || plan.status === status;
 
       return matchSearch && matchStatus;
     });
-  }, [plansList, filters]);
+  }, [plansList, search, status]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Paginated plans
   const paginatedPlans = useMemo(() => {
@@ -110,11 +104,9 @@ export default function VipPlansPage() {
     clearSelection,
   } = useTableSelection(paginatedPlans);
 
-  const handleFilter = () => {
-    setFilters({
-      search,
-      status,
-    });
+  const handleClear = () => {
+    setSearch("");
+    setStatus("all");
     setCurrentPage(1);
   };
 
@@ -242,13 +234,6 @@ export default function VipPlansPage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.04] cursor-pointer"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Export
-          </button>
-          <button
-            type="button"
             onClick={handleOpenAdd}
             className="flex items-center gap-1.5 rounded-xl bg-purple hover:bg-purple-bright px-3.5 py-2 text-xs font-semibold text-white transition shadow-[0_8px_20px_rgba(123,44,255,0.3)] hover:shadow-[0_8px_20px_rgba(123,44,255,0.45)] cursor-pointer"
           >
@@ -299,7 +284,7 @@ export default function VipPlansPage() {
         setSearch={setSearch}
         status={status}
         setStatus={setStatus}
-        onFilter={handleFilter}
+        onClear={handleClear}
       />
 
       <GenericFloatingActions

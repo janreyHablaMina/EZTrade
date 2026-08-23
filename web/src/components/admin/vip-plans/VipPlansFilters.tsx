@@ -1,4 +1,4 @@
-import { Search, Filter } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
@@ -8,7 +8,7 @@ type VipPlansFiltersProps = {
   setSearch: (s: string) => void;
   status: string;
   setStatus: (s: string) => void;
-  onFilter: () => void;
+  onClear: () => void;
 };
 
 export function VipPlansFilters({
@@ -16,7 +16,7 @@ export function VipPlansFilters({
   setSearch,
   status,
   setStatus,
-  onFilter,
+  onClear,
 }: VipPlansFiltersProps) {
   return (
     <div className="mt-5 rounded-2xl border border-border bg-card p-4 shadow-[0_10px_30px_rgba(0,0,0,0.2)]">
@@ -30,9 +30,6 @@ export function VipPlansFilters({
 
         <div className="flex flex-wrap items-end gap-3">
           <div className="w-40">
-            <p className="mb-1 text-[11px] font-semibold text-muted-2 uppercase tracking-wider">
-              Status
-            </p>
             <Select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
@@ -44,8 +41,13 @@ export function VipPlansFilters({
             </Select>
           </div>
 
-          <Button onClick={onFilter} icon={<Filter className="h-3.5 w-3.5" />}>
-            Filter
+          <Button 
+            onClick={onClear} 
+            variant="outline"
+            className="text-muted-2 hover:text-white"
+          >
+            <X className="mr-1.5 h-3.5 w-3.5" />
+            Clear
           </Button>
         </div>
       </div>
