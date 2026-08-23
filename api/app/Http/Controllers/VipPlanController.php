@@ -10,7 +10,7 @@ class VipPlanController extends Controller
 {
     public function index()
     {
-        return response()->json(VipPlan::orderBy('created_at', 'desc')->get());
+        return response()->json(VipPlan::withCount('users')->orderBy('created_at', 'desc')->get());
     }
 
     public function stats()
@@ -32,6 +32,7 @@ class VipPlanController extends Controller
             'min_deposit' => 'required|numeric|min:0',
             'daily_profit_percent' => 'required|numeric|min:0',
             'duration_days' => 'required|integer|min:1',
+            'status' => 'nullable|string'
         ]);
 
         $plan = VipPlan::create($request->all());
@@ -40,6 +41,26 @@ class VipPlanController extends Controller
             'message' => 'VIP Plan created successfully',
             'plan' => $plan
         ], 201);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $plan = VipPlan::findOrFail($id);
+
+        $request->validate([
+            'level' => 'sometimes|required|string',
+            'min_deposit' => 'sometimes|required|numeric|min:0',
+            'daily_profit_percent' => 'sometimes|required|numeric|min:0',
+            'duration_days' => 'sometimes|required|integer|min:1',
+            'status' => 'sometimes|string'
+        ]);
+
+        $plan->update($request->all());
+
+        return response()->json([
+            'message' => 'VIP Plan updated successfully',
+            'plan' => $plan
+        ]);
     }
 
     public function unlock(Request $request)

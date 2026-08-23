@@ -13,4 +13,9 @@ class VipPlan extends Model
         'duration_days',
         'status',
     ];
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
 }

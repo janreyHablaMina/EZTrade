@@ -26,6 +26,7 @@ Route::post('/users/simulate-trade', [\App\Http\Controllers\Admin\SimulatorContr
 Route::get('/vip-plans/stats', [VipPlanController::class, 'stats']);
 Route::get('/vip-plans', [VipPlanController::class, 'index']);
 Route::post('/vip-plans', [VipPlanController::class, 'store']);
+Route::patch('/vip-plans/{id}', [VipPlanController::class, 'update']);
 Route::delete('/vip-plans/{id}', [VipPlanController::class, 'destroy']);
 
     // ── Deposits ─────────────────────────────────────────────────────────────────

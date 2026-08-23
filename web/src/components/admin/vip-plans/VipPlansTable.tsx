@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { PaginationFooter } from "@/components/admin/PaginationFooter";
 import { type VipPlan, vipBadgeStyles } from "@/types/admin";
+import { CustomCheckbox } from "@/components/ui/CustomCheckbox";
 
 const randomBadgeStyles = [
   "bg-blue-400/10 text-blue-400 border border-blue-400/20",
@@ -42,18 +43,24 @@ type VipPlansTableProps = {
   onEdit?: (plan: VipPlan) => void;
   onView?: (plan: VipPlan) => void;
   onDelete?: (plan: VipPlan) => void;
+  onToggleStatus?: (plan: VipPlan) => void;
+  selectedIds?: string[];
+  onSelectAll?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onSelectOne?: (id: string) => void;
 };
 
 function RowActions({ 
   plan, 
   onEdit, 
   onView, 
-  onDelete 
+  onDelete,
+  onToggleStatus
 }: { 
   plan: VipPlan; 
   onEdit?: (plan: VipPlan) => void; 
   onView?: (plan: VipPlan) => void; 
-  onDelete?: (plan: VipPlan) => void; 
+  onDelete?: (plan: VipPlan) => void;
+  onToggleStatus?: (plan: VipPlan) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, right: 0 });
@@ -133,6 +140,19 @@ function RowActions({
               <Eye className="h-3.5 w-3.5 text-blue-400" />
               View Plan
             </button>
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                onToggleStatus?.(plan);
+              }}
+              className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition hover:bg-white/[0.06] cursor-pointer ${
+                plan.status === "Active" ? "text-amber-500" : "text-success"
+              }`}
+            >
+              <Trash2 className="h-3.5 w-3.5 hidden" />
+              <div className={`h-3.5 w-3.5 rounded-full border-2 ${plan.status === "Active" ? "border-amber-500" : "border-success"}`} />
+              {plan.status === "Active" ? "Deactivate Plan" : "Activate Plan"}
+            </button>
             <div className="my-0.5 h-px bg-border/50" />
             <button
               onClick={() => {
@@ -162,13 +182,27 @@ export function VipPlansTable({
   onEdit,
   onView,
   onDelete,
+  onToggleStatus,
+  selectedIds = [],
+  onSelectAll,
+  onSelectOne,
 }: VipPlansTableProps) {
+  const isAllSelected = paginatedPlans.length > 0 && paginatedPlans.every(p => selectedIds.includes(p.id));
+  const isSomeSelected = paginatedPlans.some(p => selectedIds.includes(p.id)) && !isAllSelected;
+
   return (
     <div className="mt-5 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex flex-col">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1100px] text-left text-xs">
           <thead>
             <tr className="border-b border-border text-muted-2">
+              <th className="pb-3.5 pl-4 pr-2 font-medium w-[40px]">
+                <CustomCheckbox 
+                  checked={isAllSelected}
+                  indeterminate={isSomeSelected}
+                  onChange={onSelectAll}
+                />
+              </th>
               <th className="pb-3.5 pl-1 font-medium">Level</th>
               <th className="pb-3.5 font-medium">Deposit Amount (USDT)</th>
               <th className="pb-3.5 font-medium">Daily Profit (%)</th>
@@ -185,8 +219,14 @@ export function VipPlansTable({
                 return (
                   <tr
                     key={plan.id}
-                    className="border-b border-border/45 last:border-0 hover:bg-white/[0.01] transition"
+                    className={`border-b border-border/45 last:border-0 hover:bg-white/[0.01] transition ${selectedIds.includes(plan.id) ? 'bg-white/[0.02]' : ''}`}
                   >
+                    <td className="py-3.5 pl-4 pr-2">
+                      <CustomCheckbox 
+                        checked={selectedIds.includes(plan.id)}
+                        onChange={() => onSelectOne?.(plan.id)}
+                      />
+                    </td>
                     <td className="py-3.5 pl-1">
                       <span
                         className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold tracking-wider ${
@@ -216,19 +256,20 @@ export function VipPlansTable({
                         className={`inline-flex rounded-md px-2.5 py-0.5 text-[10px] font-semibold ${
                           plan.status === "Active"
                             ? "bg-success/15 text-success"
-                            : "bg-white/[0.06] text-muted-2"
+                            : "bg-danger/15 text-danger"
                         }`}
                       >
                         {plan.status}
                       </span>
                     </td>
                     <td className="py-3.5 text-right pr-1">
-                      <RowActions
-                        plan={plan}
-                        onEdit={onEdit}
-                        onView={onView}
-                        onDelete={onDelete}
-                      />
+                        <RowActions 
+                          plan={plan} 
+                          onEdit={onEdit} 
+                          onView={onView} 
+                          onDelete={onDelete} 
+                          onToggleStatus={onToggleStatus}
+                        />
                     </td>
                   </tr>
                 );

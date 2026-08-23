@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { webApi } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import {
   Crown,
   Percent,
@@ -21,47 +22,35 @@ import { VipPlansTable } from "@/components/admin/vip-plans/VipPlansTable";
 import { AddPlanModal } from "@/components/admin/vip-plans/AddPlanModal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ViewPlanModal } from "@/components/admin/vip-plans/ViewPlanModal";
-import { EditPlanModal } from "@/components/admin/vip-plans/EditPlanModal";
+import { useTableSelection } from "@/hooks/useTableSelection";
+import { GenericFloatingActions } from "@/components/admin/GenericFloatingActions";
 
 export default function VipPlansPage() {
-  const [plansList, setPlansList] = useState<VipPlan[]>([]);
-  const [isLoadingPlans, setIsLoadingPlans] = useState(true);
-  const [stats, setStats] = useState({ investors: 0, deposited: 0, earnings: 0 });
+  const { data: plansData, isLoading: isLoadingPlans, mutate: mutatePlans } = useApi("/vip-plans");
+  const { data: statsData, mutate: mutateStats } = useApi("/vip-plans/stats");
 
-  // Fetch plans on mount
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [data, statsData] = await Promise.all([
-          webApi.get("/vip-plans"),
-          webApi.get("/vip-plans/stats")
-        ]);
-        
-        const mappedPlans: VipPlan[] = data.map((p: any) => ({
-          id: `VP${p.id}`,
-          level: p.level,
-          minDeposit: Number(p.min_deposit),
-          dailyProfitPercent: Number(p.daily_profit_percent),
-          dailyProfitUsdtMin: Number(p.min_deposit) * (Number(p.daily_profit_percent) / 100),
-          durationDays: Number(p.duration_days),
-          totalUsers: 0,
-          status: p.status,
-        })).sort((a: VipPlan, b: VipPlan) => a.minDeposit - b.minDeposit);
-        setPlansList(mappedPlans);
-        
-        setStats({
-          investors: statsData.total_investors || 0,
-          deposited: statsData.total_deposited || 0,
-          earnings: statsData.total_earnings_paid || 0
-        });
-      } catch (err) {
-        console.error("Failed to fetch VIP plans and stats:", err);
-      } finally {
-        setIsLoadingPlans(false);
-      }
-    }
-    fetchData();
-  }, []);
+  const plansList = useMemo<VipPlan[]>(() => {
+    if (!plansData) return [];
+    return plansData.map((p: any) => ({
+      id: `VP${p.id}`,
+      level: p.level,
+      minDeposit: Number(p.min_deposit),
+      dailyProfitPercent: Number(p.daily_profit_percent),
+      dailyProfitUsdtMin: Number(p.min_deposit) * (Number(p.daily_profit_percent) / 100),
+      durationDays: Number(p.duration_days),
+      totalUsers: p.users_count || 0,
+      status: p.status,
+    })).sort((a: VipPlan, b: VipPlan) => a.minDeposit - b.minDeposit);
+  }, [plansData]);
+
+  const stats = useMemo(() => {
+    if (!statsData) return { investors: 0, deposited: 0, earnings: 0 };
+    return {
+      investors: statsData.total_investors || 0,
+      deposited: statsData.total_deposited || 0,
+      earnings: statsData.total_earnings_paid || 0
+    };
+  }, [statsData]);
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -109,8 +98,17 @@ export default function VipPlansPage() {
   // Paginated plans
   const paginatedPlans = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
-    return filteredPlans.slice(start, start + pageSize);
+    const end = start + pageSize;
+    return filteredPlans.slice(start, end);
   }, [filteredPlans, currentPage, pageSize]);
+
+  // Table selection
+  const {
+    selectedIds,
+    toggleSelectAll,
+    toggleSelectRow,
+    clearSelection,
+  } = useTableSelection(paginatedPlans);
 
   const handleFilter = () => {
     setFilters({
@@ -122,23 +120,19 @@ export default function VipPlansPage() {
 
   const handleSavePlan = (data: any) => {
     if (editingPlan) {
-      const updatedPlans = plansList.map(plan => {
-        if (plan.id === editingPlan.id) {
-          return {
-            ...plan,
-            level: data.level || plan.level,
-            minDeposit: Number(data.minDeposit),
-            maxDeposit: Number(data.maxDeposit),
-            dailyProfitPercent: Number(data.dailyProfitPercent),
-            dailyProfitUsdtMin: Number(data.minDeposit) * (Number(data.dailyProfitPercent) / 100),
-            dailyProfitUsdtMax: Number(data.maxDeposit) * (Number(data.dailyProfitPercent) / 100),
-            durationDays: Number(data.durationDays),
-          };
-        }
-        return plan;
+      const dbId = parseInt(editingPlan.id.replace('VP', ''));
+      webApi.patch(`/vip-plans/${dbId}`, {
+        level: data.level || editingPlan.level,
+        min_deposit: Number(data.minDeposit),
+        daily_profit_percent: Number(data.dailyProfitPercent),
+        duration_days: Number(data.durationDays),
+      }).then(async () => {
+        await mutatePlans();
+        setToastMessage("VIP Plan edited successfully");
+      }).catch(err => {
+        console.error("Failed to edit VIP plan:", err);
+        setToastMessage("Error editing plan");
       });
-      setPlansList(updatedPlans);
-      setToastMessage("Edited successfully");
     } else {
       // Create new plan via API
       webApi.post("/vip-plans", {
@@ -147,19 +141,8 @@ export default function VipPlansPage() {
         daily_profit_percent: Number(data.dailyProfitPercent),
         duration_days: Number(data.durationDays),
         status: "Active"
-      }).then(responseData => {
-        const p = responseData.plan;
-        const newPlan: VipPlan = {
-          id: `VP${p.id}`,
-          level: p.level,
-          minDeposit: Number(p.min_deposit),
-          dailyProfitPercent: Number(p.daily_profit_percent),
-          dailyProfitUsdtMin: Number(p.min_deposit) * (Number(p.daily_profit_percent) / 100),
-          durationDays: Number(p.duration_days),
-          totalUsers: 0,
-          status: p.status,
-        } as VipPlan;
-        setPlansList((prev) => [newPlan, ...prev]);
+      }).then(async () => {
+        await mutatePlans();
         setToastMessage("VIP Plan successfully created");
       }).catch(err => {
         console.error(err);
@@ -178,6 +161,19 @@ export default function VipPlansPage() {
     setEditingPlan(plan);
   };
 
+  const handleToggleStatus = async (plan: VipPlan) => {
+    try {
+      const realId = parseInt(plan.id.replace('VP', ''));
+      const newStatus = plan.status === "Active" ? "Inactive" : "Active";
+      await webApi.patch(`/vip-plans/${realId}`, { status: newStatus });
+      await mutatePlans();
+      setToastMessage(`Plan ${newStatus === "Active" ? "activated" : "deactivated"} successfully`);
+    } catch (err) {
+      console.error("Failed to toggle plan status:", err);
+      setToastMessage("Failed to update status");
+    }
+  };
+
   const handleConfirmDelete = async () => {
     if (!planToDelete) return;
     setIsDeleting(true);
@@ -186,7 +182,8 @@ export default function VipPlansPage() {
       const realId = parseInt(planToDelete.id.replace('VP', ''));
       await webApi.delete(`/vip-plans/${realId}`);
       
-      setPlansList(plansList.filter(p => p.id !== planToDelete.id));
+      await mutatePlans();
+      await mutateStats();
       setToastMessage("Deleted successfully");
     } catch (err) {
       console.error("Failed to delete plan", err);
@@ -194,6 +191,36 @@ export default function VipPlansPage() {
     } finally {
       setIsDeleting(false);
       setPlanToDelete(null);
+    }
+  };
+
+  const handleBulkAction = async (action: string) => {
+    if (selectedIds.length === 0) return;
+    
+    try {
+      const realIds = selectedIds.map(id => parseInt(id.replace('VP', '')));
+      
+      switch (action) {
+        case 'delete':
+          await Promise.all(realIds.map(id => webApi.delete(`/vip-plans/${id}`)));
+          setToastMessage(`Successfully deleted ${selectedIds.length} plans`);
+          break;
+        case 'activate':
+          await Promise.all(realIds.map(id => webApi.patch(`/vip-plans/${id}`, { status: 'Active' })));
+          setToastMessage(`Successfully activated ${selectedIds.length} plans`);
+          break;
+        case 'deactivate':
+          await Promise.all(realIds.map(id => webApi.patch(`/vip-plans/${id}`, { status: 'Inactive' })));
+          setToastMessage(`Successfully deactivated ${selectedIds.length} plans`);
+          break;
+      }
+      
+      await mutatePlans();
+      await mutateStats();
+      clearSelection();
+    } catch (err) {
+      console.error("Bulk action failed:", err);
+      setToastMessage("Failed to perform bulk action");
     }
   };
 
@@ -275,6 +302,33 @@ export default function VipPlansPage() {
         onFilter={handleFilter}
       />
 
+      <GenericFloatingActions
+        selectedCount={selectedIds.length}
+        onClearSelection={clearSelection}
+      >
+        <button
+          type="button"
+          onClick={() => handleBulkAction("activate")}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-white/[0.05] hover:bg-white/[0.08] transition cursor-pointer text-xs font-medium"
+        >
+          <span>✓</span> Activate Selected
+        </button>
+        <button
+          type="button"
+          onClick={() => handleBulkAction("deactivate")}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-white/[0.05] hover:bg-white/[0.08] transition cursor-pointer text-xs font-medium"
+        >
+          <span>⏸</span> Deactivate Selected
+        </button>
+        <button
+          type="button"
+          onClick={() => handleBulkAction("delete")}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-danger/10 text-danger hover:bg-danger/20 transition cursor-pointer text-xs font-medium"
+        >
+          <span>🗑️</span> Delete Selected
+        </button>
+      </GenericFloatingActions>
+
       {/* VIP Plans Table Card */}
       {isLoadingPlans ? (
         <div className="py-8 text-center text-muted-2">Loading plans...</div>
@@ -290,26 +344,21 @@ export default function VipPlansPage() {
           onEdit={handleOpenEdit}
           onView={(plan) => setViewingPlan(plan)}
           onDelete={(plan) => setPlanToDelete(plan)}
+          onToggleStatus={handleToggleStatus}
+          selectedIds={selectedIds}
+          onSelectAll={toggleSelectAll}
+          onSelectOne={toggleSelectRow}
         />
       )}
 
       <AddPlanModal 
-        isOpen={isAddPlanOpen && !editingPlan} 
+        isOpen={isAddPlanOpen || !!editingPlan} 
         onClose={() => {
           setIsAddPlanOpen(false);
+          setEditingPlan(null);
         }} 
         onSave={handleSavePlan}
-      />
-      
-      <EditPlanModal
-        isOpen={!!editingPlan}
-        onClose={() => setEditingPlan(null)}
-        plan={editingPlan}
-        onSave={(updatedPlan) => {
-          setPlansList(plansList.map(p => p.id === updatedPlan.id ? updatedPlan : p));
-          setToastMessage("Plan successfully updated");
-          setEditingPlan(null);
-        }}
+        initialData={editingPlan}
       />
 
       <ViewPlanModal
