@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { TableActionsMenu, TableActionsMenuItem, TableActionsMenuDivider } from "@/components/admin/TableActionsMenu";
+import { CustomCheckbox } from "@/components/ui/CustomCheckbox";
 import type { TransactionRecord } from "@/types/admin";
 
 const typeBadgeStyles: Record<string, string> = {
@@ -43,6 +44,9 @@ type TransactionsTableProps = {
   setCurrentPage: (p: number) => void;
   pageSize: number;
   setPageSize: (s: number) => void;
+  selectedIds?: string[];
+  toggleSelectAll?: () => void;
+  toggleSelectRow?: (id: string) => void;
   onViewDetails?: (tx: TransactionRecord) => void;
   onRefresh?: () => void;
 };
@@ -55,6 +59,9 @@ export function TransactionsTable({
   setCurrentPage,
   pageSize,
   setPageSize,
+  selectedIds = [],
+  toggleSelectAll,
+  toggleSelectRow,
   onViewDetails,
   onRefresh,
 }: TransactionsTableProps) {
@@ -95,7 +102,16 @@ export function TransactionsTable({
         <table className="w-full min-w-[950px] text-left text-xs">
           <thead>
             <tr className="border-b border-border text-muted-2">
-              <th className="pb-3.5 pl-1 font-medium w-24">ID</th>
+              <th className="pb-3.5 pl-1 pr-6 font-medium w-14">
+                <CustomCheckbox
+                  checked={
+                    paginatedTransactions.length > 0 &&
+                    selectedIds.length === paginatedTransactions.length
+                  }
+                  onChange={toggleSelectAll}
+                />
+              </th>
+              <th className="pb-3.5 font-medium w-24">ID</th>
               <th className="pb-3.5 font-medium w-28">Type</th>
               <th className="pb-3.5 font-medium w-64">User</th>
               <th className="pb-3.5 font-medium">Reference / TXID</th>
@@ -109,13 +125,22 @@ export function TransactionsTable({
           <tbody>
             {paginatedTransactions.length > 0 ? (
               paginatedTransactions.map((tx, index) => {
+                const isChecked = selectedIds.includes(tx.id);
                 const isPositive = tx.amount >= 0;
                 return (
                   <tr
                     key={tx.id}
-                    className="border-b border-border/45 last:border-0 hover:bg-white/[0.01] transition"
+                    className={`border-b border-border/45 last:border-0 hover:bg-white/[0.01] transition ${
+                      isChecked ? "bg-purple/5" : ""
+                    }`}
                   >
-                    <td className="py-3.5 pl-1 font-semibold text-muted-2">
+                    <td className="py-3.5 pl-1 pr-6">
+                      <CustomCheckbox
+                        checked={isChecked}
+                        onChange={() => toggleSelectRow?.(tx.id)}
+                      />
+                    </td>
+                    <td className="py-3.5 font-mono text-[10px] text-muted-2">
                       {tx.id}
                     </td>
                     <td className="py-3.5">

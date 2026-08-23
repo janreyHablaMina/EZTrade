@@ -8,6 +8,9 @@ import { TransactionsFilters } from "@/components/admin/transactions/Transaction
 import { TransactionsTable } from "@/components/admin/transactions/TransactionsTable";
 import { TransactionDetailsModal } from "@/components/admin/transactions/TransactionDetailsModal";
 import { useApi } from "@/hooks/useApi";
+import { useTableSelection } from "@/hooks/useTableSelection";
+import { GenericFloatingActions } from "@/components/admin/GenericFloatingActions";
+import { webApi } from "@/lib/api";
 
 export default function TransactionsPage() {
   const [search, setSearch] = useState("");
@@ -16,8 +19,14 @@ export default function TransactionsPage() {
   const [currency, setCurrency] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const { data: depositsData, isLoading: isDepLoading } = useApi('/deposits');
-  const { data: withdrawalsData, isLoading: isWdlLoading } = useApi('/withdrawals');
+  const [selectedTransactionForDetails, setSelectedTransactionForDetails] = useState<any | null>(null);
+  const { data: depositsData, isLoading: isDepLoading, mutate: mutateDeposits } = useApi('/deposits');
+  const { data: withdrawalsData, isLoading: isWdlLoading, mutate: mutateWithdrawals } = useApi('/withdrawals');
+  
+  const fetchTransactions = async () => {
+    await mutateDeposits();
+    await mutateWithdrawals();
+  };
   
   const isLoading = isDepLoading || isWdlLoading;
 
@@ -116,6 +125,63 @@ export default function TransactionsPage() {
     setCurrentPage(1);
   };
 
+  const {
+    selectedIds,
+    setSelectedIds,
+    toggleSelectAll,
+    toggleSelectRow,
+    clearSelection
+  } = useTableSelection(paginatedTransactions);
+
+  const handleBulkApprove = async () => {
+    const txToProcess = transactions.filter(
+      (tx) => selectedIds.includes(tx.id) && tx.status === "Pending"
+    );
+
+    if (txToProcess.length === 0) {
+      clearSelection();
+      return;
+    }
+
+    try {
+      await Promise.all(
+        txToProcess.map((tx) => {
+          const endpoint = tx.type === 'Withdrawal' ? `/withdrawals/${tx.dbId}` : `/deposits/${tx.dbId}`;
+          const status = tx.type === 'Withdrawal' ? 'Completed' : 'Approved';
+          return webApi.patch(endpoint, { status });
+        })
+      );
+      await fetchTransactions();
+      clearSelection();
+    } catch (e) {
+      console.error('Failed to bulk approve transactions', e);
+    }
+  };
+
+  const handleBulkReject = async () => {
+    const txToProcess = transactions.filter(
+      (tx) => selectedIds.includes(tx.id) && tx.status === "Pending"
+    );
+
+    if (txToProcess.length === 0) {
+      clearSelection();
+      return;
+    }
+
+    try {
+      await Promise.all(
+        txToProcess.map((tx) => {
+          const endpoint = tx.type === 'Withdrawal' ? `/withdrawals/${tx.dbId}` : `/deposits/${tx.dbId}`;
+          return webApi.patch(endpoint, { status: 'Rejected' });
+        })
+      );
+      await fetchTransactions();
+      clearSelection();
+    } catch (e) {
+      console.error('Failed to bulk reject transactions', e);
+    }
+  };
+
   return (
     <AdminShell>
       {/* Top Header section */}
@@ -153,9 +219,9 @@ export default function TransactionsPage() {
           icon={ArrowUpFromLine}
         />
         <KpiCard
-          label="Total Amount"
+          label="Total Fees Generated"
           value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
-            transactions.filter(t => t.status === 'Completed').reduce((sum, t) => sum + (t.amount || 0), 0)
+            transactions.filter(t => t.type === 'Withdrawal' && t.status === 'Completed').reduce((sum, t) => sum + ((t.amount || 0) * 0.20), 0)
           )}
           change=""
           icon={Coins}
@@ -188,8 +254,29 @@ export default function TransactionsPage() {
         setCurrentPage={setCurrentPage}
         pageSize={pageSize}
         setPageSize={setPageSize}
+        selectedIds={selectedIds}
+        toggleSelectAll={toggleSelectAll}
+        toggleSelectRow={toggleSelectRow}
         onRefresh={fetchTransactions}
         onViewDetails={(tx) => setSelectedTransactionForDetails(tx)}
+      />
+
+      <GenericFloatingActions
+        selectedCount={selectedIds.length}
+        onClearSelection={clearSelection}
+        actions={[
+          {
+            label: "Approve Selected",
+            icon: "✅",
+            onClick: handleBulkApprove,
+          },
+          {
+            label: "Reject Selected",
+            icon: "❌",
+            onClick: handleBulkReject,
+            tone: "danger",
+          },
+        ]}
       />
 
       <TransactionDetailsModal

@@ -53,8 +53,6 @@ export function TransactionsFilters({
             <option value="all">All Types</option>
             <option value="Deposit">Deposit</option>
             <option value="Withdrawal">Withdrawal</option>
-            <option value="Transfer">Transfer</option>
-            <option value="Earning">Earning</option>
           </Select>
 
           <Select
