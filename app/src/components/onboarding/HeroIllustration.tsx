@@ -111,7 +111,9 @@ function PhoneMock() {
   );
 }
 
-export function HeroIllustration() {
+export type HeroVariant = 'trade' | 'vip' | 'security' | 'network';
+
+export function HeroIllustration({ variant = 'trade' }: { variant?: HeroVariant }) {
   const floatA = useRef(new Animated.Value(0)).current;
   const floatB = useRef(new Animated.Value(0)).current;
   const floatC = useRef(new Animated.Value(0)).current;
@@ -230,32 +232,61 @@ export function HeroIllustration() {
         <PhoneMock />
       </Animated.View>
 
-      <Animated.View
-        style={[
-          styles.btc,
-          { transform: [{ translateY: lift(floatA, 10) }] },
-        ]}
-      >
-        <CryptoCoin size={58} color="#f59e0b" letter="₿" />
-      </Animated.View>
+      {variant === 'trade' && (
+        <>
+          <Animated.View style={[styles.btc, { transform: [{ translateY: lift(floatA, 10) }] }]}>
+            <CryptoCoin size={58} color="#f59e0b" letter="₿" />
+          </Animated.View>
+          <Animated.View style={[styles.eth, { transform: [{ translateY: lift(floatC, 12) }] }]}>
+            <CryptoCoin size={50} color="#3b82f6" letter="◆" />
+          </Animated.View>
+          <Animated.View style={[styles.usdt, { transform: [{ translateY: lift(floatA, 9) }] }]}>
+            <CryptoCoin size={54} color="#14b8a6" letter="₮" />
+          </Animated.View>
+        </>
+      )}
 
-      <Animated.View
-        style={[
-          styles.eth,
-          { transform: [{ translateY: lift(floatC, 12) }] },
-        ]}
-      >
-        <CryptoCoin size={50} color="#3b82f6" letter="◆" />
-      </Animated.View>
+      {variant === 'vip' && (
+        <>
+          <Animated.View style={[styles.btc, { transform: [{ translateY: lift(floatA, 10) }] }]}>
+            <CryptoCoin size={58} color="#f59e0b" letter="★" />
+          </Animated.View>
+          <Animated.View style={[styles.eth, { transform: [{ translateY: lift(floatC, 12) }] }]}>
+            <CryptoCoin size={50} color="#8b5cf6" letter="♛" />
+          </Animated.View>
+          <Animated.View style={[styles.usdt, { transform: [{ translateY: lift(floatA, 9) }] }]}>
+            <CryptoCoin size={54} color="#3b82f6" letter="💎" />
+          </Animated.View>
+        </>
+      )}
 
-      <Animated.View
-        style={[
-          styles.usdt,
-          { transform: [{ translateY: lift(floatA, 9) }] },
-        ]}
-      >
-        <CryptoCoin size={54} color="#14b8a6" letter="₮" />
-      </Animated.View>
+      {variant === 'security' && (
+        <>
+          <Animated.View style={[styles.btc, { transform: [{ translateY: lift(floatA, 10) }] }]}>
+            <CryptoCoin size={58} color="#10b981" letter="🔒" />
+          </Animated.View>
+          <Animated.View style={[styles.eth, { transform: [{ translateY: lift(floatC, 12) }] }]}>
+            <CryptoCoin size={50} color="#3b82f6" letter="🛡" />
+          </Animated.View>
+          <Animated.View style={[styles.usdt, { transform: [{ translateY: lift(floatA, 9) }] }]}>
+            <CryptoCoin size={54} color="#8b5cf6" letter="✓" />
+          </Animated.View>
+        </>
+      )}
+
+      {variant === 'network' && (
+        <>
+          <Animated.View style={[styles.btc, { transform: [{ translateY: lift(floatA, 10) }] }]}>
+            <CryptoCoin size={58} color="#3b82f6" letter="👤" />
+          </Animated.View>
+          <Animated.View style={[styles.eth, { transform: [{ translateY: lift(floatC, 12) }] }]}>
+            <CryptoCoin size={50} color="#8b5cf6" letter="👥" />
+          </Animated.View>
+          <Animated.View style={[styles.usdt, { transform: [{ translateY: lift(floatA, 9) }] }]}>
+            <CryptoCoin size={54} color="#10b981" letter="🔗" />
+          </Animated.View>
+        </>
+      )}
 
       <View style={styles.sparkA} />
       <View style={styles.sparkB} />

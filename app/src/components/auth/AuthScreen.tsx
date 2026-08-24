@@ -12,14 +12,11 @@ import {
 import { BrandLogo } from '../BrandLogo';
 import { NebulaBackground } from '../NebulaBackground';
 import { colors } from '../../theme/colors';
-import { GoogleButton } from './GoogleButton';
 
 type AuthScreenProps = {
   title: string;
   subtitle: string;
   children: ReactNode;
-  onGoogle?: () => void;
-  googleDisabled?: boolean;
   footerPrompt: string;
   footerAction: string;
   onFooterPress?: () => void;
@@ -29,8 +26,6 @@ export function AuthScreen({
   title,
   subtitle,
   children,
-  onGoogle,
-  googleDisabled,
   footerPrompt,
   footerAction,
   onFooterPress,
@@ -57,14 +52,6 @@ export function AuthScreen({
           </View>
 
           <View style={styles.form}>{children}</View>
-
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or continue with</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          <GoogleButton onPress={onGoogle} disabled={googleDisabled} />
 
           <Pressable style={styles.footer} onPress={onFooterPress}>
             <Text style={styles.footerText}>

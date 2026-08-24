@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import { AuthScreen } from '../components/auth/AuthScreen';
 import { CheckBox } from '../components/auth/CheckBox';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -8,15 +9,12 @@ import { apiClient } from '../lib/api';
 
 type LoginScreenProps = {
   onLogin?: (user: any) => void;
-
-  onGoogleLogin?: () => void;
   onForgotPassword?: () => void;
   onRegister?: () => void;
 };
 
 export function LoginScreen({
   onLogin,
-  onGoogleLogin,
   onForgotPassword,
   onRegister,
 }: LoginScreenProps) {
@@ -25,6 +23,15 @@ export function LoginScreen({
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    SecureStore.getItemAsync('saved_email').then((savedEmail) => {
+      if (savedEmail) {
+        setEmail(savedEmail);
+        setRememberMe(true);
+      }
+    }).catch(console.error);
+  }, []);
 
   const canLogin = email.trim().length > 3 && password.length > 0;
 
@@ -37,6 +44,15 @@ export function LoginScreen({
         email: email.trim(),
         password: password,
       });
+
+      if (rememberMe) {
+        await SecureStore.setItemAsync('saved_email', email.trim());
+        await SecureStore.setItemAsync('saved_user', JSON.stringify(response.user));
+      } else {
+        await SecureStore.deleteItemAsync('saved_email');
+        await SecureStore.deleteItemAsync('saved_user');
+      }
+
       onLogin?.(response.user);
     } catch (err: any) {
       setErrorMsg(err.message || 'Login failed');
@@ -50,7 +66,6 @@ export function LoginScreen({
     <AuthScreen
       title="Welcome Back"
       subtitle="Login to continue to EZTRADE"
-      onGoogle={onGoogleLogin}
       footerPrompt="Don't have an account?"
       footerAction="Register"
       onFooterPress={onRegister}

@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState, useEffect } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View, Pressable, Modal } from 'react-native';
-import { Lock, Check } from '../components/Icons';
+import { Lock, Check, Zap, CheckCircle } from '../components/Icons';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { AnimatedLoading } from '../components/AnimatedLoading';
 import { colors } from '../theme/colors';
@@ -104,24 +104,31 @@ export function VipPlansScreen({ user, onBack }: VipPlansScreenProps) {
           <View style={styles.activePlanSection}>
             <Text style={styles.sectionLabel}>Current Plan</Text>
             <LinearGradient
-                colors={['#4c1d95', '#09090b']}
+                colors={['rgba(168, 85, 247, 0.6)', 'rgba(109, 40, 217, 0.6)']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.activeCard}
               >
+              {/* Background Watermark for Emphasis */}
+              <View style={{ position: 'absolute', right: -30, bottom: -30, opacity: 0.1, transform: [{ rotate: '-15deg' }] }}>
+                <CheckCircle size={180} color="#ffffff" />
+              </View>
+              
               <View style={styles.activeCardHeader}>
                 <Text style={styles.activeCardTitle}>{activePlan.name}</Text>
-                <View style={styles.activeBadge}>
+                <View style={[styles.activeBadge, { flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
+                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#34d399' }} />
                   <Text style={styles.activeBadgeText}>ACTIVE</Text>
                 </View>
               </View>
+              
               <View style={styles.activeCardBody}>
+                <Text style={styles.activeCardLabel}>Current Deposit</Text>
                 <Text style={styles.activeCardValue}>${formatUsdt(activePlan.amount)}</Text>
-                <Text style={styles.activeCardLabel}>Deposit Required</Text>
               </View>
-              <View style={styles.activeCardFooter}>
-                <Text style={styles.activeCardLabel}>Est. Daily Yield: </Text>
-                <Text style={styles.activeCardProfit}>+${formatUsdt(activePlan.daily)}</Text>
+              
+              <View style={{ marginTop: 'auto', paddingTop: 20, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)' }}>
+                <Text style={styles.activeCardProfit}>+${formatUsdt(activePlan.daily)} / day return</Text>
               </View>
             </LinearGradient>
           </View>
@@ -132,12 +139,9 @@ export function VipPlansScreen({ user, onBack }: VipPlansScreenProps) {
             <Text style={[styles.sectionLabel, { marginTop: activePlan ? 32 : 0 }]}>Available Upgrades</Text>
             <View style={styles.list}>
               {inactivePlans.map((plan) => (
-                <LinearGradient
+                <View
                   key={plan.id}
-                  colors={['rgba(0,0,0,0.5)', 'rgba(0,0,0,0.3)']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.elegantCard}
+                  style={[styles.elegantCard, { backgroundColor: 'rgba(20, 15, 30, 0.8)' }]}
                 >
                   <View style={styles.elegantCardHeader}>
                     <View style={styles.elegantTitleRow}>
@@ -155,10 +159,11 @@ export function VipPlansScreen({ user, onBack }: VipPlansScreenProps) {
                       style={styles.elegantUnlockButton} 
                       onPress={() => handleUnlockClick(plan)}
                     >
-                      <Text style={styles.elegantUnlockText}>Upgrade</Text>
+                      <Lock size={16} color="rgba(255,255,255,0.7)" />
+                      <Text style={styles.elegantUnlockText}>Unlock</Text>
                     </Pressable>
                   </View>
-                </LinearGradient>
+                </View>
               ))}
             </View>
           </>
@@ -232,25 +237,27 @@ const styles = StyleSheet.create({
   headerSubtitle: { fontFamily: 'Outfit_400Regular', fontSize: 15, color: '#a0a0a0', marginBottom: 32 },
   sectionLabel: { fontFamily: 'Outfit_600SemiBold', fontSize: 13, color: '#888888', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 16 },
   activePlanSection: { marginBottom: 16 },
-  activeCard: { borderRadius: 20, padding: 24, borderWidth: 1, borderColor: 'rgba(139, 92, 246, 0.3)' },
+  activeCard: { borderRadius: 24, padding: 28, borderWidth: 2, borderColor: 'rgba(255, 255, 255, 0.4)', overflow: 'hidden', minHeight: 220 },
   activeCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-  activeCardTitle: { fontFamily: 'Outfit_700Bold', fontSize: 22, color: '#ffffff' },
-  activeBadge: { backgroundColor: 'rgba(139, 92, 246, 0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
-  activeBadgeText: { fontFamily: 'Outfit_700Bold', fontSize: 10, color: '#a78bfa', letterSpacing: 1 },
-  activeCardBody: { marginBottom: 24 },
-  activeCardValue: { fontFamily: 'Outfit_800ExtraBold', fontSize: 38, color: '#ffffff' },
+  activeBadge: { backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  activeBadgeText: { fontFamily: 'Outfit_800ExtraBold', fontSize: 11, color: '#ffffff', letterSpacing: 1.5 },
+  activeCardProfit: { fontFamily: 'Outfit_700Bold', fontSize: 15, color: '#34d399' },
+  activeCardBody: { alignItems: 'flex-start', flex: 1 },
+  activeCardTitle: { fontFamily: 'Outfit_800ExtraBold', fontSize: 26, color: '#ffffff' },
+  activeCardValue: { fontFamily: 'Outfit_800ExtraBold', fontSize: 44, color: '#ffffff', marginTop: 4 },
+  activeCardLabel: { fontFamily: 'Outfit_500Medium', fontSize: 13, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 1 },
   list: { gap: 16 },
-  elegantCard: { borderRadius: 20, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 5 },
+  elegantCard: { borderRadius: 24, padding: 24, borderWidth: 2, borderColor: 'rgba(255, 255, 255, 0.4)' },
   elegantCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   elegantTitleRow: { flex: 1, alignItems: 'flex-start' },
-  elegantCardTitle: { fontFamily: 'Outfit_700Bold', fontSize: 20, color: '#ffffff', marginBottom: 8 },
-  elegantBadge: { backgroundColor: 'rgba(139, 92, 246, 0.15)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(139, 92, 246, 0.3)' },
-  elegantBadgeText: { fontFamily: 'Outfit_600SemiBold', fontSize: 11, color: '#a78bfa' },
-  elegantCardPrice: { fontFamily: 'Outfit_800ExtraBold', fontSize: 26, color: '#ffffff' },
+  elegantCardTitle: { fontFamily: 'Outfit_700Bold', fontSize: 20, color: 'rgba(255,255,255,0.9)', marginBottom: 8 },
+  elegantBadge: { backgroundColor: 'rgba(255, 255, 255, 0.05)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' },
+  elegantBadgeText: { fontFamily: 'Outfit_700Bold', fontSize: 11, color: 'rgba(255,255,255,0.6)' },
+  elegantCardPrice: { fontFamily: 'Outfit_800ExtraBold', fontSize: 26, color: 'rgba(255,255,255,0.9)' },
   elegantCardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingTop: 20 },
-  elegantCardDaily: { fontFamily: 'Outfit_500Medium', fontSize: 14, color: '#9ca3af' },
-  elegantUnlockButton: { backgroundColor: '#ffffff', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, shadowColor: '#ffffff', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 },
-  elegantUnlockText: { fontFamily: 'Outfit_700Bold', fontSize: 14, color: '#000000' },
+  elegantCardDaily: { fontFamily: 'Outfit_500Medium', fontSize: 14, color: 'rgba(255,255,255,0.5)' },
+  elegantUnlockButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255, 255, 255, 0.05)', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 14, borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)' },
+  elegantUnlockText: { fontFamily: 'Outfit_700Bold', fontSize: 15, color: 'rgba(255,255,255,0.7)' },
   
   modalOverlay: { flex: 1, backgroundColor: 'rgba(5, 1, 15, 0.85)', justifyContent: 'center', alignItems: 'center', padding: 24 },
   modalContent: { backgroundColor: colors.card, borderRadius: 28, padding: 32, width: '100%', borderWidth: 1, borderColor: colors.cardBorder, shadowColor: colors.purpleBright, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 20 },

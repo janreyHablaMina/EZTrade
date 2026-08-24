@@ -7,6 +7,7 @@ import {
 } from '@expo-google-fonts/outfit';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import { MainApp } from './src/MainApp';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
@@ -31,11 +32,21 @@ export default function App() {
   useEffect(() => {
     if (!fontsLoaded) return;
 
-    const timer = setTimeout(() => {
-      setScreen('onboarding');
-    }, 2600);
-
-    return () => clearTimeout(timer);
+    SecureStore.getItemAsync('saved_user').then((savedUserStr) => {
+      const timer = setTimeout(() => {
+        if (savedUserStr) {
+          setUser(JSON.parse(savedUserStr));
+          setScreen('home');
+        } else {
+          setScreen('onboarding');
+        }
+      }, 2600);
+      return () => clearTimeout(timer);
+    }).catch(() => {
+      setTimeout(() => {
+        setScreen('onboarding');
+      }, 2600);
+    });
   }, [fontsLoaded]);
 
   if (!fontsLoaded) {
@@ -89,7 +100,8 @@ export default function App() {
   }
 
   if (screen === 'home') {
-    return <MainApp user={user} onLogout={() => {
+    return <MainApp user={user} onLogout={async () => {
+      await SecureStore.deleteItemAsync('saved_user');
       setUser(null);
       setScreen('login');
     }} />;

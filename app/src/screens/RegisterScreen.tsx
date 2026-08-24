@@ -8,13 +8,11 @@ import { apiClient } from '../lib/api';
 import { colors } from '../theme/colors';
 type RegisterScreenProps = {
   onCreateAccount?: (user: any) => void;
-  onGoogleSignUp?: () => void;
   onLogin?: () => void;
 };
 
 export function RegisterScreen({
   onCreateAccount,
-  onGoogleSignUp,
   onLogin,
 }: RegisterScreenProps) {
   const [name, setName] = useState('');
@@ -63,8 +61,6 @@ export function RegisterScreen({
     <AuthScreen
       title="Create Account"
       subtitle="Join EZTRADE and start growing your assets"
-      onGoogle={onGoogleSignUp}
-      googleDisabled={!agreed}
       footerPrompt="Already have an account?"
       footerAction="Login"
       onFooterPress={onLogin}
