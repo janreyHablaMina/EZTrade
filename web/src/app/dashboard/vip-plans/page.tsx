@@ -17,7 +17,7 @@ import {
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
 import type { VipPlan } from "@/types/admin";
-import { VipPlansFilters } from "@/components/admin/vip-plans/VipPlansFilters";
+import { GenericFilters, FilterConfig } from "@/components/admin/GenericFilters";
 import { VipPlansTable } from "@/components/admin/vip-plans/VipPlansTable";
 import { AddPlanModal } from "@/components/admin/vip-plans/AddPlanModal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
@@ -109,6 +109,19 @@ export default function VipPlansPage() {
     setStatus("all");
     setCurrentPage(1);
   };
+
+  const updateFilter = (key: string, value: string) => {
+    if (key === 'search') setSearch(value);
+    else if (key === 'status') setStatus(value);
+  };
+
+  const filterConfig: FilterConfig[] = [
+    { type: 'search', key: 'search', placeholder: "Search VIP Plans..." },
+    { type: 'select', key: 'status', defaultLabel: 'All Statuses', options: [
+      { label: 'Active', value: 'Active' },
+      { label: 'Inactive', value: 'Inactive' }
+    ]}
+  ];
 
   const handleSavePlan = (data: any) => {
     if (editingPlan) {
@@ -279,12 +292,11 @@ export default function VipPlansPage() {
       </div>
 
       {/* Filters Card */}
-      <VipPlansFilters
-        search={search}
-        setSearch={setSearch}
-        status={status}
-        setStatus={setStatus}
-        onClear={handleClear}
+      <GenericFilters
+        config={filterConfig}
+        params={{ search, status }}
+        updateFilter={updateFilter}
+        onReset={handleClear}
       />
 
       <GenericFloatingActions

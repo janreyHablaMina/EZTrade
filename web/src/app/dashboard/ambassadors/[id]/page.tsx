@@ -6,7 +6,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { ArrowLeft, Wallet, TrendingUp, AlertCircle, CheckCircle2, Users, Network, Mail, Phone, Calendar, ShieldAlert, Copy, Banknote, Clock, X, ChevronRight, User } from "lucide-react";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { UsersTable } from "@/components/admin/users/UsersTable";
-import { UsersFilters } from "@/components/admin/users/UsersFilters";
+import { GenericFilters, FilterConfig } from "@/components/admin/GenericFilters";
 import { ViewUserModal } from "@/components/admin/users/ViewUserModal";
 import { EarningsTable } from "@/components/admin/earnings/EarningsTable";
 import { usePagination } from "@/hooks/usePagination";
@@ -141,6 +141,34 @@ export default function AmbassadorDetailsPage() {
     setDateRange("");
     setCurrentPage(1);
   };
+
+  const updateFilter = (key: string, value: string) => {
+    if (key === 'search') setSearch(value);
+    else if (key === 'vipLevel') setVipLevel(value);
+    else if (key === 'status') setStatus(value);
+    else if (key === 'cutPercent') setCutPercent(value);
+  };
+
+  const filterConfig: FilterConfig[] = [
+    { type: 'search', key: 'search', placeholder: "Search downline network..." },
+    { type: 'select', key: 'vipLevel', defaultLabel: 'All VIP Levels', options: [
+      { label: 'None', value: 'None' },
+      { label: 'VIP 1', value: 'VIP 1' },
+      { label: 'VIP 2', value: 'VIP 2' },
+      { label: 'VIP 3', value: 'VIP 3' },
+      { label: 'VIP 4', value: 'VIP 4' },
+      { label: 'Ambassador', value: 'Ambassador' },
+    ]},
+    { type: 'select', key: 'status', defaultLabel: 'All Statuses', options: [
+      { label: 'Active', value: 'Active' },
+      { label: 'Suspended', value: 'Suspended' }
+    ]},
+    { type: 'select', key: 'cutPercent', defaultLabel: 'All Cuts', options: [
+      { label: 'Level 1 (10%)', value: '10' },
+      { label: 'Level 2 (5%)', value: '5' },
+      { label: 'Level 3 (3%)', value: '3' }
+    ]}
+  ];
 
   if (isLoading) {
     return (
@@ -305,19 +333,11 @@ export default function AmbassadorDetailsPage() {
 
           <div className="flex flex-col gap-2">
             {/* Downline Network Filters */}
-            <UsersFilters
-              search={search}
-              setSearch={setSearch}
-              vipLevel={vipLevel}
-              setVipLevel={setVipLevel}
-              status={status}
-              setStatus={setStatus}
-              dateRange={dateRange}
-              setDateRange={setDateRange}
+            <GenericFilters
+              config={filterConfig}
+              params={{ search, vipLevel, status, cutPercent }}
+              updateFilter={updateFilter}
               onReset={handleReset}
-              cutPercent={cutPercent}
-              setCutPercent={setCutPercent}
-              showCutFilter={true}
             />
 
             {/* Downline Network Table */}

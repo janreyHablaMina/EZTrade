@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Download, ArrowLeftRight, ArrowDownToLine, ArrowUpFromLine, RefreshCw, Coins } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { TransactionsFilters } from "@/components/admin/transactions/TransactionsFilters";
+import { GenericFilters, FilterConfig } from "@/components/admin/GenericFilters";
 import { TransactionsTable } from "@/components/admin/transactions/TransactionsTable";
 import { TransactionDetailsModal } from "@/components/admin/transactions/TransactionDetailsModal";
 import { useApi } from "@/hooks/useApi";
@@ -125,6 +125,35 @@ export default function TransactionsPage() {
     setCurrentPage(1);
   };
 
+  const updateFilter = (key: string, value: string) => {
+    if (key === 'search') setSearch(value);
+    else if (key === 'type') setType(value);
+    else if (key === 'status') setStatus(value);
+    else if (key === 'currency') setCurrency(value);
+    else if (key === 'dateFrom') setDateFrom(value);
+    else if (key === 'dateTo') setDateTo(value);
+  };
+
+  const filterConfig: FilterConfig[] = [
+    { type: 'search', key: 'search', placeholder: "Search transactions..." },
+    { type: 'select', key: 'type', defaultLabel: 'All Types', options: [
+      { label: 'Deposit', value: 'Deposit' },
+      { label: 'Withdrawal', value: 'Withdrawal' }
+    ]},
+    { type: 'select', key: 'status', defaultLabel: 'All Statuses', options: [
+      { label: 'Pending', value: 'pending' },
+      { label: 'Completed', value: 'completed' },
+      { label: 'Rejected', value: 'rejected' },
+      { label: 'Failed', value: 'failed' }
+    ]},
+    { type: 'select', key: 'currency', defaultLabel: 'All Currencies', options: [
+      { label: 'USDT', value: 'USDT' },
+      { label: 'BTC', value: 'BTC' },
+      { label: 'ETH', value: 'ETH' }
+    ]},
+    { type: 'dateRange', fromKey: 'dateFrom', toKey: 'dateTo' }
+  ];
+
   const {
     selectedIds,
     setSelectedIds,
@@ -229,19 +258,10 @@ export default function TransactionsPage() {
       </div>
 
       {/* Filters Card */}
-      <TransactionsFilters
-        search={search}
-        setSearch={setSearch}
-        type={type}
-        setType={setType}
-        status={status}
-        setStatus={setStatus}
-        currency={currency}
-        setCurrency={setCurrency}
-        dateFrom={dateFrom}
-        setDateFrom={setDateFrom}
-        dateTo={dateTo}
-        setDateTo={setDateTo}
+      <GenericFilters
+        config={filterConfig}
+        params={{ search, type, status, currency, dateFrom, dateTo }}
+        updateFilter={updateFilter}
         onReset={handleReset}
       />
 
