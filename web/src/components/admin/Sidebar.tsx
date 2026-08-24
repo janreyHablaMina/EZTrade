@@ -24,6 +24,7 @@ import {
   ExternalLink,
   Hexagon,
   Activity,
+  MessageCircle,
 } from "lucide-react";
 
 type NavItem = {
@@ -82,24 +83,32 @@ export function Sidebar() {
   const isDashboard = pathname === "/dashboard" || pathname === "/dashboard/";
   const [pendingDeposits, setPendingDeposits] = useState(0);
   const [pendingWithdrawals, setPendingWithdrawals] = useState(0);
-  const [unreadNotifications, setUnreadNotifications] = useState(0); // Assuming notifications will also be fetched later or are 0 for now
+  const [unreadNotifications, setUnreadNotifications] = useState(0); 
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   useEffect(() => {
     const fetchCounts = async () => {
       try {
-        const [deposits, withdrawals] = await Promise.all([
+        const [deposits, withdrawals, messages] = await Promise.all([
           webApi.get('/deposits'),
-          webApi.get('/withdrawals')
+          webApi.get('/withdrawals'),
+          webApi.get('/messages/unread').catch(() => ({ count: 0 }))
         ]);
         const depCount = deposits.filter((d: any) => d.status === 'Pending').length;
         const withCount = withdrawals.filter((w: any) => w.status === 'Pending').length;
         setPendingDeposits(depCount);
         setPendingWithdrawals(withCount);
+        if (messages?.count !== undefined) {
+          setUnreadMessages(messages.count);
+        }
       } catch (err) {
         console.error("Failed to fetch pending counts:", err);
       }
     };
     fetchCounts();
+    // Refresh counts periodically
+    const interval = setInterval(fetchCounts, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   const management: NavItem[] = [
@@ -110,6 +119,7 @@ export function Sidebar() {
     { label: "Transactions", href: "/dashboard/transactions", icon: ArrowLeftRight },
     { label: "Earnings", href: "/dashboard/earnings", icon: Coins },
     { label: "Referrals", href: "/dashboard/referrals", icon: Share2 },
+    { label: "Messages", href: "/dashboard/messages", icon: MessageCircle, badge: unreadMessages },
     { label: "Notifications", href: "/dashboard/notifications", icon: Bell, badge: unreadNotifications },
   ];
 

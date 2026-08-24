@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Search, Send, User, MessageSquare, Loader2 } from "lucide-react";
+import { Search, Send, User, MessageCircle, Loader2 } from "lucide-react";
 import { webApi } from "@/lib/api";
 
 type ConversationUser = {
@@ -119,7 +119,7 @@ export default function MessagesPage() {
         <div className="w-80 flex flex-col border border-border bg-card rounded-l-2xl shadow-sm">
           <div className="p-4 border-b border-border/50">
             <h2 className="font-bold text-white text-lg flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-purple-bright" />
+              <MessageCircle className="h-5 w-5 text-purple-bright" />
               Messages
             </h2>
             <div className="relative mt-4">
@@ -205,7 +205,7 @@ export default function MessagesPage() {
                 ) : messages.length === 0 ? (
                   <div className="flex h-full items-center justify-center">
                     <div className="text-center">
-                      <MessageSquare className="h-8 w-8 text-muted-2 mx-auto mb-3 opacity-50" />
+                      <MessageCircle className="h-8 w-8 text-muted-2 mx-auto mb-3 opacity-50" />
                       <p className="text-sm text-muted-2">No messages yet. Send a message to start the chat.</p>
                     </div>
                   </div>
@@ -259,7 +259,7 @@ export default function MessagesPage() {
           ) : (
             <div className="flex flex-col h-full items-center justify-center text-center p-8">
               <div className="h-16 w-16 rounded-full bg-card border border-border flex items-center justify-center mb-4">
-                <MessageSquare className="h-8 w-8 text-muted-2" />
+                <MessageCircle className="h-8 w-8 text-muted-2" />
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">Your Messages</h3>
               <p className="text-sm text-muted-2 max-w-sm">

@@ -11,7 +11,7 @@ import {
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { MarketOverview } from '../components/home/MarketOverview';
 import { colors } from '../theme/colors';
-import { Bell, MessageCircle } from '../components/Icons';
+import { Bell, MessageSquare } from 'lucide-react-native';
 import { useHomeStats } from '../hooks/useHomeStats';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -288,7 +288,7 @@ export function HomeScreen({
         style={styles.fab}
         onPress={onOpenMessages}
       >
-        <MessageCircle size={28} color="#fff" />
+        <MessageSquare size={28} color="#fff" />
       </Pressable>
     </ScrollView>
   );

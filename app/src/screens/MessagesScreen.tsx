@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { ScreenHeader } from '../components/ScreenHeader';
-import { Send } from '../components/Icons';
+import { Send } from 'lucide-react-native';
 import { apiClient } from '../lib/api';
 import { colors } from '../theme/colors';
 
