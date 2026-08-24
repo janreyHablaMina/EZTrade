@@ -27,6 +27,7 @@ type HomeScreenProps = {
   onOpenWithdraw?: () => void;
   onOpenAssets?: () => void;
   onOpenTransactions?: () => void;
+  onOpenMessages?: () => void;
 };
 
 function greetingForNow() {
@@ -121,6 +122,7 @@ export function HomeScreen({
   onOpenWithdraw,
   onOpenAssets,
   onOpenTransactions,
+  onOpenMessages,
 }: HomeScreenProps) {
   const { userData, stats, hasUnread, loading } = useHomeStats(user);
 
@@ -281,10 +283,34 @@ export function HomeScreen({
       </Pressable>
 
       <MarketOverview />
+
+      <Pressable 
+        style={styles.fab}
+        onPress={onOpenMessages}
+      >
+        <MessageCircle size={28} color="#fff" />
+      </Pressable>
     </ScrollView>
   );
 }
 const styles = StyleSheet.create({
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.purpleBright,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+    zIndex: 10,
+  },
   content: {
     paddingHorizontal: 20,
     paddingTop: 58,

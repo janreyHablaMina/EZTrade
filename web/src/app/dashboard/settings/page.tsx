@@ -4,14 +4,11 @@ import { useState } from "react";
 import { Lock } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { SettingsTabs } from "@/components/admin/settings/SettingsTabs";
-import { ProfileAccountCard } from "@/components/admin/settings/ProfileAccountCard";
 import { TradeAutomationCard } from "@/components/admin/settings/TradeAutomationCard";
-import { GeneralSettingsForm } from "@/components/admin/general-settings/GeneralSettingsForm";
-import { AboutCard } from "@/components/admin/general-settings/AboutCard";
-import { SecurityTipsCard } from "@/components/admin/general-settings/SecurityTipsCard";
+import { WithdrawalSettingsCard } from "@/components/admin/settings/WithdrawalSettingsCard";
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState("Profile & Account");
+  const [activeTab, setActiveTab] = useState("General Settings");
 
   return (
     <AdminShell>
@@ -41,19 +38,9 @@ export default function SettingsPage() {
           <div className="mt-6 max-w-2xl">
             <TradeAutomationCard />
           </div>
-        ) : activeTab === "General Settings" ? (
-          <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <GeneralSettingsForm />
-            </div>
-            <div className="space-y-5">
-              <AboutCard />
-              <SecurityTipsCard />
-            </div>
-          </div>
         ) : (
           <div className="mt-6 max-w-2xl">
-            <ProfileAccountCard />
+            <WithdrawalSettingsCard />
           </div>
         )}
       </div>

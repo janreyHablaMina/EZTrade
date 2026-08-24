@@ -34,12 +34,15 @@ type Overlay =
   | 'support'
   | 'about'
   | 'transactions'
+  | 'messages'
   | 'team';
 
 type WithdrawRequest = {
   amount: number;
   network: string;
 };
+
+import { MessagesScreen } from './screens/MessagesScreen';
 
 const OVERLAY_SCREENS = {
   security: SecurityScreen,
@@ -124,6 +127,7 @@ export function MainApp({
       onOpenWithdraw={() => setOverlay('withdraw')}
       onOpenAssets={() => setTab('assets')}
       onOpenTransactions={() => openTransactions()}
+      onOpenMessages={() => setOverlay('messages')}
     />
   );
 
@@ -195,6 +199,8 @@ export function MainApp({
         pendingWithdraw={withdrawRequest}
       />
     );
+  } else if (overlay === 'messages') {
+    screen = <MessagesScreen user={user} onBack={closeOverlay} />;
   } else if (overlay) {
     const OverlayScreen = OVERLAY_SCREENS[overlay];
     screen = <OverlayScreen onBack={closeOverlay} />;

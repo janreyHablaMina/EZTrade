@@ -22,6 +22,31 @@ class WithdrawalController extends Controller
             'txid' => 'nullable|string'
         ]);
 
+        // Check if withdrawals are within allowed time
+        $setting = DB::table('settings')->where('key', 'withdrawal_settings')->first();
+        if ($setting) {
+            $settings = json_decode($setting->value, true);
+            if (isset($settings['is_enabled']) && $settings['is_enabled']) {
+                $now = now()->format('H:i');
+                $startTime = $settings['start_time'];
+                $endTime = $settings['end_time'];
+                
+                // If end time is next day (e.g. 22:00 to 06:00), handle properly
+                $isWithinTime = false;
+                if ($startTime <= $endTime) {
+                    $isWithinTime = ($now >= $startTime && $now <= $endTime);
+                } else {
+                    $isWithinTime = ($now >= $startTime || $now <= $endTime);
+                }
+
+                if (!$isWithinTime) {
+                    return response()->json([
+                        'message' => "Withdrawals are only allowed between $startTime and $endTime server time."
+                    ], 400);
+                }
+            }
+        }
+
         // Verify user has enough balance
         $user = \App\Models\User::find($request->user_id);
         if ($user->balance < $request->amount) {

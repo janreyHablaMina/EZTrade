@@ -59,6 +59,16 @@ Route::post('/admin/ambassadors/{id}/simulate', [\App\Http\Controllers\Admin\Amb
 Route::get('/admin/assets', [\App\Http\Controllers\Admin\AssetController::class, 'index']);
 Route::get('/settings/trade', [\App\Http\Controllers\TradeSettingsController::class, 'getSettings']);
 Route::post('/settings/trade', [\App\Http\Controllers\TradeSettingsController::class, 'updateSettings']);
+Route::get('/settings/withdrawal', [\App\Http\Controllers\WithdrawalSettingsController::class, 'getSettings']);
+Route::post('/settings/withdrawal', [\App\Http\Controllers\WithdrawalSettingsController::class, 'updateSettings']);
+
+// Messages
+Route::get('/messages/conversations', [\App\Http\Controllers\MessageController::class, 'getConversations']);
+Route::get('/messages/unread', [\App\Http\Controllers\MessageController::class, 'getUnreadCount']);
+Route::get('/messages/{userId}', [\App\Http\Controllers\MessageController::class, 'getHistory']);
+Route::post('/messages', [\App\Http\Controllers\MessageController::class, 'send']);
+Route::post('/messages/{userId}/read', [\App\Http\Controllers\MessageController::class, 'markAsRead']);
+
 Route::post('/trading-codes/generate', [\App\Http\Controllers\TradingCodeController::class, 'generate']);
 Route::post('/trading-codes/redeem', [TradingCodeController::class, 'redeem']);
 Route::post('/admin/simulate-midnight', [\App\Http\Controllers\Admin\MidnightController::class, 'simulate']);

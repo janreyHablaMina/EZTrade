@@ -1,7 +1,6 @@
 "use client";
 
 const TABS = [
-  "Profile & Account",
   "General Settings",
   "Trade Automation",
 ];

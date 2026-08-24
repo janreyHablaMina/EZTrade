@@ -54,14 +54,35 @@ export function WithdrawScreen({
   const [address, setAddress] = useState('');
   const [networkId, setNetworkId] = useState<NetworkId>('trc20');
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [open, setOpen] = useState(isWithdrawOpen);
+  const [settings, setSettings] = useState<{ is_enabled: boolean; start_time: string; end_time: string } | null>(null);
+  const [open, setOpen] = useState(true);
   const submitted = Boolean(request);
 
   useEffect(() => {
-    const tick = () => setOpen(isWithdrawOpen());
-    tick();
-    const id = setInterval(tick, 30_000);
-    return () => clearInterval(id);
+    const fetchSettings = async () => {
+      try {
+        const { apiClient } = await import('../lib/api');
+        const data = await apiClient.get('/settings/withdrawal');
+        setSettings(data);
+        
+        if (data.is_enabled) {
+          const now = data.current_server_time || new Date().toTimeString().substring(0, 5);
+          const start = data.start_time;
+          const end = data.end_time;
+          
+          if (start <= end) {
+            setOpen(now >= start && now <= end);
+          } else {
+            setOpen(now >= start || now <= end);
+          }
+        } else {
+          setOpen(true);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch withdrawal settings:", err);
+      }
+    };
+    fetchSettings();
   }, []);
 
   const entered = parseAmount(amount);
@@ -133,16 +154,16 @@ export function WithdrawScreen({
               <View style={[styles.scheduleDot, open ? styles.dotOpen : styles.dotClosed]} />
               <View style={styles.scheduleCopy}>
                 <Text style={styles.scheduleTitle}>
-                  {ENFORCE_WITHDRAW_WINDOW
+                  {settings?.is_enabled
                     ? open
                       ? 'Withdrawals are open'
                       : 'Withdrawals are closed'
                     : 'Withdrawals are open'}
                 </Text>
                 <Text style={styles.scheduleText}>
-                  Later: request 12:00 AM –{' '}
-                  {hourClockLabel(WITHDRAW_REQUEST_UNTIL_HOUR)}. We process from{' '}
-                  {hourClockLabel(WITHDRAW_PROCESS_FROM_HOUR)} – 12:00 AM.
+                  {settings?.is_enabled 
+                    ? `Withdrawal requests are allowed between ${settings.start_time} and ${settings.end_time} server time.`
+                    : 'Withdrawals are open 24/7.'}
                 </Text>
               </View>
             </View>
@@ -215,9 +236,7 @@ export function WithdrawScreen({
               </NoteRow>
               {!open ? (
                 <Text style={styles.closedHint}>
-                  Come back between 12:00 AM and{' '}
-                  {hourClockLabel(WITHDRAW_REQUEST_UNTIL_HOUR)} to submit a
-                  request.
+                  Come back between {settings?.start_time} and {settings?.end_time} server time to submit a request.
                 </Text>
               ) : null}
             </View>
@@ -235,7 +254,7 @@ export function WithdrawScreen({
           </>
         ) : (
           <PrimaryButton
-            label={open ? 'Withdraw' : 'Opens at 12:00 AM'}
+            label={open ? 'Withdraw' : `Opens at ${settings?.start_time || ''}`}
             onPress={handleWithdraw}
             disabled={!canSubmit}
           />

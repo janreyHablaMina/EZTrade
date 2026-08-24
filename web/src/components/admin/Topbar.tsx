@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, usePathname } from "next/navigation";
-import { Bell, Maximize2, Search, Calendar, ArrowUpRight, Check, X, ChevronDown, User, Settings, LogOut, Clock } from "lucide-react";
+import Link from "next/link";
+import { Bell, Maximize2, Search, Calendar, ArrowUpRight, Check, X, ChevronDown, User, Settings, LogOut, Clock, MessageSquare } from "lucide-react";
 import { webApi } from "@/lib/api";
 import { GlobalSearchModal } from "./GlobalSearchModal";
 
@@ -107,6 +108,15 @@ export function Topbar() {
           <ArrowUpRight className="h-4 w-4" />
           {isProcessingAction ? 'Simulating...' : 'Simulate Daily Trade'}
         </button>
+
+        <Link 
+          href="/dashboard/messages"
+          className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-muted-2 hover:bg-white/[0.02] hover:text-purple-bright transition cursor-pointer"
+        >
+          <MessageSquare className="h-5 w-5" />
+          {/* We can fetch real unread count here later, hardcoding badge for visual preview */}
+          <span className="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-purple-bright"></span>
+        </Link>
 
         <div className="relative">
           <button 
