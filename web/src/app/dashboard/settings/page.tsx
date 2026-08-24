@@ -5,9 +5,6 @@ import { Lock } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { SettingsTabs } from "@/components/admin/settings/SettingsTabs";
 import { ProfileAccountCard } from "@/components/admin/settings/ProfileAccountCard";
-import { PreferencesCard } from "@/components/admin/settings/PreferencesCard";
-import { AccountSummaryCard } from "@/components/admin/settings/AccountSummaryCard";
-import { SecuritySettingsCard } from "@/components/admin/settings/SecuritySettingsCard";
 import { TradeAutomationCard } from "@/components/admin/settings/TradeAutomationCard";
 import { GeneralSettingsForm } from "@/components/admin/general-settings/GeneralSettingsForm";
 import { AboutCard } from "@/components/admin/general-settings/AboutCard";
@@ -55,18 +52,8 @@ export default function SettingsPage() {
             </div>
           </div>
         ) : (
-          <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-3">
-            {/* Left: Main Settings Forms (2 cols) */}
-            <div className="lg:col-span-2 space-y-5">
-              <ProfileAccountCard />
-              <PreferencesCard />
-            </div>
-
-            {/* Right: Summary Cards (1 col) */}
-            <div className="space-y-5">
-              <AccountSummaryCard />
-              <SecuritySettingsCard />
-            </div>
+          <div className="mt-6 max-w-2xl">
+            <ProfileAccountCard />
           </div>
         )}
       </div>
