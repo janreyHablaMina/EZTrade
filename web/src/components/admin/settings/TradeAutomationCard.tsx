@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { webApi } from "@/lib/api";
 
-export function TradeAutomationCard() {
+export function TradeAutomationCard({ onShowToast }: { onShowToast?: (msg: string) => void }) {
   const [tradesPerDay, setTradesPerDay] = useState(1);
   const [durationMinutes, setDurationMinutes] = useState(30);
   const [schedules, setSchedules] = useState<string[]>(["12:00"]);
@@ -70,9 +70,10 @@ export function TradeAutomationCard() {
         duration_minutes: durationMinutes,
         schedules: schedules
       });
-      // Optionally show a success toast here
+      if (onShowToast) onShowToast("Trade automation settings saved successfully");
     } catch (error) {
       console.error("Failed to save trade settings:", error);
+      if (onShowToast) onShowToast("Failed to save settings");
     } finally {
       setSaving(false);
     }
@@ -87,7 +88,7 @@ export function TradeAutomationCard() {
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card shadow-[0_10px_30px_rgba(0,0,0,0.25)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="rounded-2xl border border-border bg-card shadow-[0_10px_30px_rgba(0,0,0,0.25)] overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border p-5 bg-card-elevated">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple/10 text-purple-bright">

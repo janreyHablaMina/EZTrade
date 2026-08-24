@@ -61,11 +61,7 @@ class DepositController extends Controller
 
                 if ($approvedDepositsCount === 1) { // 1 because the current deposit was just saved as Approved
                     // Multi-tier referral bonus based on Deposit Amount
-                    $rates = [
-                        1 => 0.10,
-                        2 => 0.05,
-                        3 => 0.03,
-                    ];
+                    $rates = \App\Helpers\SettingsHelper::getReferralRates();
 
                     $currentUserId = $user->referred_by;
                     $level = 1;

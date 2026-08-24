@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { webApi } from "@/lib/api";
 
-export function WithdrawalSettingsCard() {
+export function WithdrawalSettingsCard({ onShowToast }: { onShowToast?: (msg: string) => void }) {
   const [isAutomationEnabled, setIsAutomationEnabled] = useState(false);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
@@ -37,9 +37,10 @@ export function WithdrawalSettingsCard() {
         start_time: startTime,
         end_time: endTime
       });
-      // Optionally trigger a success toast here
+      if (onShowToast) onShowToast("Withdrawal settings saved successfully");
     } catch (error) {
       console.error("Failed to save withdrawal settings:", error);
+      if (onShowToast) onShowToast("Failed to save settings");
     } finally {
       setSaving(false);
     }
@@ -54,7 +55,7 @@ export function WithdrawalSettingsCard() {
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card shadow-[0_10px_30px_rgba(0,0,0,0.25)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="rounded-2xl border border-border bg-card shadow-[0_10px_30px_rgba(0,0,0,0.25)] overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border p-5 bg-card-elevated">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple/10 text-purple-bright">

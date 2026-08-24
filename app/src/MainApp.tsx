@@ -69,8 +69,22 @@ export function MainApp({
   const [overlayReturn, setOverlayReturn] = useState<Overlay | null>(null);
   const [withdrawRequest, setWithdrawRequest] =
     useState<WithdrawRequest | null>(null);
+  const [systemSettings, setSystemSettings] = useState<any>(null);
+  const [isMaintenance, setIsMaintenance] = useState(false);
 
   const lastSeenNotifRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    // Fetch global system settings on boot
+    apiClient.get('/settings/system')
+      .then((data: any) => {
+        setSystemSettings(data);
+        if (data?.platform_controls?.maintenance_mode) {
+          setIsMaintenance(true);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   // Poll for real-time push notifications from Admin
   useEffect(() => {
@@ -115,9 +129,21 @@ export function MainApp({
   };
   const hideTabs = Boolean(walletStep) || overlay !== null;
 
+  if (isMaintenance) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <Text style={{ color: '#fff', fontSize: 24, fontWeight: 'bold', marginBottom: 12 }}>Under Maintenance</Text>
+        <Text style={{ color: '#A0A0A0', fontSize: 16, textAlign: 'center', lineHeight: 24 }}>
+          We are currently performing scheduled maintenance to improve the platform. Please check back later.
+        </Text>
+      </View>
+    );
+  }
+
   let screen = (
     <HomeScreen
       user={user}
+      systemSettings={systemSettings}
       onOpenPlans={() => setTab('plans')}
       onOpenNotifications={() => setTab('notifications')}
       onOpenDeposit={() => {
@@ -189,6 +215,7 @@ export function MainApp({
         request={withdrawRequest}
         onRequested={setWithdrawRequest}
         onViewStatus={() => openTransactions('withdraw')}
+        systemSettings={systemSettings}
       />
     );
   } else if (overlay === 'transactions') {

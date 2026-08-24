@@ -61,7 +61,7 @@ class DashboardController extends Controller
             if ($firstDeposit && $firstDeposit->user && $firstDeposit->user->referred_by) {
                 $hasAmbassador = false;
                 $uplineId = $firstDeposit->user->referred_by;
-                $rates = [1 => 0.10, 2 => 0.05, 3 => 0.03];
+                $rates = \App\Helpers\SettingsHelper::getReferralRates();
                 $level = 1;
                 $totalBonusPaidOut = 0;
                 $currentUplineId = $uplineId;
@@ -178,7 +178,7 @@ class DashboardController extends Controller
                 $uplineId = $firstDeposit->user->referred_by;
                 
                 // 1. Calculate the total bonus paid out
-                $rates = [1 => 0.10, 2 => 0.05, 3 => 0.03];
+                $rates = \App\Helpers\SettingsHelper::getReferralRates();
                 $level = 1;
                 $totalBonusPaidOut = 0;
                 $currentUplineId = $uplineId;

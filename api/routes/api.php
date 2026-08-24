@@ -61,6 +61,8 @@ Route::get('/settings/trade', [\App\Http\Controllers\TradeSettingsController::cl
 Route::post('/settings/trade', [\App\Http\Controllers\TradeSettingsController::class, 'updateSettings']);
 Route::get('/settings/withdrawal', [\App\Http\Controllers\WithdrawalSettingsController::class, 'getSettings']);
 Route::post('/settings/withdrawal', [\App\Http\Controllers\WithdrawalSettingsController::class, 'updateSettings']);
+Route::get('/settings/system', [\App\Http\Controllers\SystemSettingsController::class, 'getAllSettings']);
+Route::post('/settings/system/{key}', [\App\Http\Controllers\SystemSettingsController::class, 'updateSettings']);
 
 // Messages
 Route::get('/messages/conversations', [\App\Http\Controllers\MessageController::class, 'getConversations']);

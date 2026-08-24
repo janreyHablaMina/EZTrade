@@ -24,7 +24,7 @@ class UserController extends Controller
         foreach ($usersWithApprovedDeposits as $record) {
             $firstDeposit = \App\Models\Deposit::where('user_id', $record->user_id)->where('status', 'Approved')->orderBy('created_at', 'asc')->first();
             if ($firstDeposit && $firstDeposit->user && $firstDeposit->user->referred_by) {
-                $rates = [1 => 0.10, 2 => 0.05, 3 => 0.03];
+                $rates = \App\Helpers\SettingsHelper::getReferralRates();
                 $level = 1;
                 $currentUplineId = $firstDeposit->user->referred_by;
                 while ($currentUplineId && $level <= 3) {

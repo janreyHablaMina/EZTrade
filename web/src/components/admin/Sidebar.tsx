@@ -124,7 +124,6 @@ export function Sidebar() {
   ];
 
   const settings: NavItem[] = [
-    { label: "App Release", href: "/dashboard/app-release", icon: ArrowDownToLine },
     { label: "System Settings", href: "/dashboard/settings", icon: Settings },
   ];
 

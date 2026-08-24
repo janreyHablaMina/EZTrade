@@ -21,6 +21,7 @@ const BG_BAR_HEIGHTS = [34, 48, 40, 62, 52, 74, 58, 80, 66, 88, 70, 92];
 
 type HomeScreenProps = {
   user?: any;
+  systemSettings?: any;
   onOpenPlans?: () => void;
   onOpenNotifications?: () => void;
   onOpenDeposit?: () => void;
@@ -116,6 +117,7 @@ import { AnimatedLoading } from '../components/AnimatedLoading';
 
 export function HomeScreen({
   user,
+  systemSettings,
   onOpenPlans,
   onOpenNotifications,
   onOpenDeposit,
@@ -132,6 +134,8 @@ export function HomeScreen({
   const activePlanName = activePlan ? activePlan.level.toUpperCase() : 'None';
   const estDailyProfit = stats.daily_profit;
   const totalProfit = stats.total_profit;
+  const isBannerEnabled = systemSettings?.app_announcements?.banner_enabled;
+  const bannerText = systemSettings?.app_announcements?.banner_text;
 
   const greeting = useMemo(() => greetingForNow(), []);
   const initials = userName
@@ -158,6 +162,13 @@ export function HomeScreen({
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.header}>
+        {isBannerEnabled && bannerText && (
+          <View style={{ backgroundColor: 'rgba(123, 44, 255, 0.15)', borderColor: 'rgba(123, 44, 255, 0.4)', borderWidth: 1, padding: 12, borderRadius: 12, marginBottom: 16 }}>
+            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600', textAlign: 'center' }}>
+              {bannerText}
+            </Text>
+          </View>
+        )}
         <View style={styles.userRow}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initials}</Text>

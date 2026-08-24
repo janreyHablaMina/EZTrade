@@ -50,7 +50,7 @@ class ReferralController extends Controller
             $ambassadorDeduction = 0;
             
             if ($firstDepositAmount > 0) {
-                $rates = [1 => 0.10, 2 => 0.05, 3 => 0.03];
+                $rates = \App\Helpers\SettingsHelper::getReferralRates();
                 $currentUserId = $user->referred_by;
                 $level = 1;
                 

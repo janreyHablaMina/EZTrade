@@ -99,7 +99,7 @@ class AmbassadorController extends Controller
             $firstDeposit = \App\Models\Deposit::where('user_id', $record->user_id)->where('status', 'Approved')->orderBy('created_at', 'asc')->first();
             if ($firstDeposit && $firstDeposit->user && $firstDeposit->user->referred_by) {
                 
-                $rates = [1 => 0.10, 2 => 0.05, 3 => 0.03];
+                $rates = \App\Helpers\SettingsHelper::getReferralRates();
                 $level = 1;
                 $totalBonusPaidOut = 0;
                 $currentUplineId = $firstDeposit->user->referred_by;
@@ -211,7 +211,8 @@ class AmbassadorController extends Controller
 
         foreach ($usersWithPlans as $user) {
             if ($user->vipPlan && in_array($user->id, $downlineIds)) {
-                $directBonus = $user->vipPlan->min_deposit * 0.10;
+                $rates = \App\Helpers\SettingsHelper::getReferralRates();
+                $directBonus = $user->vipPlan->min_deposit * $rates[1];
                 $earnings[] = [
                     'id' => 'D'.$user->id,
                     'user' => $user,

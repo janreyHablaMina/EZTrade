@@ -1,14 +1,18 @@
 "use client";
 
-const TABS = [
-  "General Settings",
-  "Trade Automation",
-];
-
 type SettingsTabsProps = {
   activeTab: string;
   onTabChange: (tab: string) => void;
 };
+
+const TABS = [
+  "Platform Controls",
+  "App Announcements",
+  "Security & KYC",
+  "Referral Program",
+  "Withdrawal Settings",
+  "Trade Automation"
+];
 
 export function SettingsTabs({ activeTab, onTabChange }: SettingsTabsProps) {
   return (

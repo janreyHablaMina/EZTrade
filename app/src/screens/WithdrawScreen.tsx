@@ -38,17 +38,19 @@ type WithdrawRequest = {
 };
 
 type WithdrawScreenProps = {
-  onBack?: () => void;
+  onBack: () => void;
   onViewStatus?: () => void;
-  request?: WithdrawRequest | null;
-  onRequested?: (request: WithdrawRequest) => void;
+  request?: { amount: number; network: string } | null;
+  onRequested?: (req: { amount: number; network: string } | null) => void;
+  systemSettings?: any;
 };
 
 export function WithdrawScreen({
   onBack,
   onViewStatus,
-  request = null,
+  request,
   onRequested,
+  systemSettings,
 }: WithdrawScreenProps) {
   const [amount, setAmount] = useState('');
   const [address, setAddress] = useState('');
@@ -97,9 +99,20 @@ export function WithdrawScreen({
   const amountError = amount.trim().length > 0 && !validAmount;
   const canSubmit = open && validAmount && address.trim().length > 0;
 
-  const handleWithdraw = () => {
-    if (!canSubmit) return;
-    onRequested?.({ amount: entered, network: getNetwork(networkId).label });
+  const handleRequestWithdraw = () => {
+    const numAmount = parseFloat(amount.replace(/[^0-9.]/g, '') || '0');
+    if (!numAmount || numAmount <= 0) {
+      Alert.alert('Invalid Amount', 'Please enter a valid amount.');
+      return;
+    }
+    const minWithdrawal = systemSettings?.platform_controls?.min_withdrawal ?? 20;
+    if (numAmount < minWithdrawal) {
+      Alert.alert('Minimum Limit', `The minimum withdrawal amount is $${minWithdrawal}.`);
+      return;
+    }
+
+    if (!address) return;
+    onRequested?.({ amount: numAmount, network: getNetwork(networkId).label });
   };
 
   return (
@@ -255,7 +268,7 @@ export function WithdrawScreen({
         ) : (
           <PrimaryButton
             label={open ? 'Withdraw' : `Opens at ${settings?.start_time || ''}`}
-            onPress={handleWithdraw}
+            onPress={handleRequestWithdraw}
             disabled={!canSubmit}
           />
         )}
