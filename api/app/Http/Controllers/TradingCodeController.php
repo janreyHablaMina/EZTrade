@@ -33,14 +33,17 @@ class TradingCodeController extends Controller
             'expires_at' => Carbon::now()->addMinutes($expiresInMinutes),
         ]);
 
-        // 3. Create a broadcast notification
-        Notification::create([
-            'user_id' => null,
-            'title' => 'New Trading Code Available!',
-            'message' => "Hurry! Paste this code in the Trade tab to earn {$profitPercentage}% of your VIP plan limit. Code: {$code} (Expires in {$expiresInMinutes} mins)",
-            'type' => 'Promotion',
-            'is_read' => false,
-        ]);
+        // 3. Create a broadcast notification (unless skipped)
+        $skipNotification = $request->input('skip_notification', false);
+        if (!$skipNotification) {
+            Notification::create([
+                'user_id' => null,
+                'title' => 'New Trading Code Available!',
+                'message' => "Hurry! Paste this code in the Trade tab to earn {$profitPercentage}% of your VIP plan limit. Code: {$code} (Expires in {$expiresInMinutes} mins)",
+                'type' => 'Promotion',
+                'is_read' => false,
+            ]);
+        }
 
         return response()->json([
             'message' => 'Trading code generated and broadcasted successfully',

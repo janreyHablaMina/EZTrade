@@ -71,6 +71,7 @@ Route::post('/settings/system/{key}', [\App\Http\Controllers\SystemSettingsContr
 // Messages
 Route::get('/messages/conversations', [\App\Http\Controllers\MessageController::class, 'getConversations']);
 Route::get('/messages/unread', [\App\Http\Controllers\MessageController::class, 'getUnreadCount']);
+Route::get('/messages/global', [\App\Http\Controllers\MessageController::class, 'getGlobalHistory']);
 Route::get('/messages/{userId}', [\App\Http\Controllers\MessageController::class, 'getHistory']);
 Route::post('/messages', [\App\Http\Controllers\MessageController::class, 'send']);
 Route::post('/messages/{userId}/read', [\App\Http\Controllers\MessageController::class, 'markAsRead']);

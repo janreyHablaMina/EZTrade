@@ -2,15 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Search, Send, User, MessageCircle, Loader2, Paperclip, X, Image as ImageIcon } from "lucide-react";
+import { Search, Send, User, MessageCircle, Loader2, Paperclip, X, Image as ImageIcon, Gift } from "lucide-react";
 import { webApi } from "@/lib/api";
 
 type ConversationUser = {
   user: {
     id: number;
     email: string;
-    first_name: string;
-    last_name: string;
+    name?: string;
   };
   last_message: {
     id: number;
@@ -28,6 +27,12 @@ type ChatMessage = {
   images: string[] | null;
   created_at: string;
   is_read: boolean;
+};
+
+const GLOBAL_ROOM = {
+  id: 0,
+  email: 'Broadcast to all users',
+  name: 'Global Announcements'
 };
 
 export default function MessagesPage() {
@@ -78,7 +83,8 @@ export default function MessagesPage() {
   const fetchMessages = async (userId: number) => {
     if (!chatLoading) setChatLoading(true);
     try {
-      const data = await webApi.get(`/messages/${userId}`);
+      const endpoint = userId === 0 ? "/messages/global" : `/messages/${userId}`;
+      const data = await webApi.get(endpoint);
       setMessages(data);
     } catch (err) {
       console.error(err);
@@ -117,15 +123,13 @@ export default function MessagesPage() {
       if (imagesToSend.length > 0) {
         const formData = new FormData();
         formData.append('sender_id', '22');
-        formData.append('receiver_id', String(activeUser.id));
+        if (activeUser.id !== 0) formData.append('receiver_id', String(activeUser.id));
         if (textToSend.trim()) formData.append('content', textToSend);
         
         imagesToSend.forEach((img, index) => {
           formData.append(`images[${index}]`, img);
         });
 
-        // Use standard fetch for FormData to avoid default JSON headers from webApi wrapper if it enforces it,
-        // or if webApi supports FormData, just pass it. Let's assume standard fetch to be safe.
         const token = localStorage.getItem('token');
         const fetchRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/messages`, {
           method: 'POST',
@@ -141,7 +145,7 @@ export default function MessagesPage() {
       } else {
         res = await webApi.post("/messages", {
           sender_id: 22,
-          receiver_id: activeUser.id,
+          receiver_id: activeUser.id === 0 ? null : activeUser.id,
           content: textToSend,
         });
       }
@@ -151,6 +155,33 @@ export default function MessagesPage() {
       console.error(err);
       setInputText(textToSend); // Restore if failed
       setSelectedImages(imagesToSend);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleGenerateCode = async () => {
+    if (isSending) return;
+    setIsSending(true);
+    try {
+      // Pass skip_notification=true so we can send it via Announcement instead
+      const res = await webApi.post("/trading-codes/generate", { skip_notification: true });
+      const code = res.trading_code?.code;
+      if (code && activeUser) {
+        const dateStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        const generatedText = `🚨 New Trading Code Available! 🚨\n\n📅 Generated on: ${dateStr}\n\nHurry! Paste this code in the Trade tab to earn a bonus on your VIP plan limit.\n\n🎟️ Code: ${code}\n⏳ Expires in: 30 minutes`;
+        
+        const msgRes = await webApi.post("/messages", {
+          sender_id: 22,
+          receiver_id: activeUser.id === 0 ? null : activeUser.id,
+          content: generatedText,
+        });
+        
+        setMessages([...messages, msgRes.data]);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate code.");
     } finally {
       setIsSending(false);
     }
@@ -187,7 +218,23 @@ export default function MessagesPage() {
                 No conversations yet.
               </div>
             ) : (
-              conversations.map((c) => (
+              <>
+                {/* Global Announcements Room */}
+                <button
+                  onClick={() => setActiveUser(GLOBAL_ROOM)}
+                  className={`w-full flex items-start gap-3 p-4 border-b border-border/30 hover:bg-white/[0.02] transition-colors text-left ${activeUser?.id === 0 ? 'bg-purple-bright/20 border-l-2 border-l-purple-bright' : ''}`}
+                >
+                  <div className="h-10 w-10 shrink-0 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-white font-bold text-sm">
+                    GA
+                  </div>
+                  <div className="flex-1 min-w-0 flex items-center h-10">
+                    <span className={`text-sm truncate ${activeUser?.id === 0 ? 'text-white font-semibold' : 'text-white/80 font-medium'}`}>
+                      Global Announcements
+                    </span>
+                  </div>
+                </button>
+
+                {conversations.map((c) => (
                 <button
                   key={c.user.id}
                   onClick={() => setActiveUser(c.user)}
@@ -217,7 +264,8 @@ export default function MessagesPage() {
                     </div>
                   )}
                 </button>
-              ))
+                ))}
+              </>
             )}
           </div>
         </div>
@@ -256,9 +304,8 @@ export default function MessagesPage() {
                   </div>
                 ) : (
                   messages.map((msg) => {
-                    // If the sender is the active user we're chatting with, it's an incoming message.
-                    // Otherwise, it's an outgoing message from the admin.
-                    const isOutgoing = msg.sender_id !== activeUser.id;
+                    // If it's a global message, it's always outgoing from admin
+                    const isOutgoing = msg.sender_id === 22;
                     return (
                       <div key={msg.id} className={`flex ${isOutgoing ? 'justify-end' : 'justify-start'}`}>
                         <div 
@@ -330,8 +377,17 @@ export default function MessagesPage() {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="h-11 w-11 shrink-0 rounded-xl bg-bg-deep border border-border flex items-center justify-center text-muted-2 hover:text-purple-bright hover:border-purple-bright/30 transition-colors"
+                    title="Attach Image"
                   >
                     <Paperclip className="h-5 w-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGenerateCode}
+                    className="h-11 w-11 shrink-0 rounded-xl bg-bg-deep border border-border flex items-center justify-center text-yellow-500 hover:text-yellow-400 hover:border-yellow-500/30 transition-colors"
+                    title="Generate Promo Code"
+                  >
+                    <Gift className="h-5 w-5" />
                   </button>
                   <input
                     type="text"

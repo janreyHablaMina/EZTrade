@@ -11,7 +11,8 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import { ScreenHeader } from '../components/ScreenHeader';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ScreenHeader } from '../components';
 import { Send, Paperclip, X } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { apiClient } from '../lib/api';
@@ -41,15 +42,18 @@ export function MessagesScreen({ onBack, user }: MessagesScreenProps) {
   const [selectedImages, setSelectedImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const scrollRef = useRef<ScrollView>(null);
 
+  const [activeTab, setActiveTab] = useState<'announcements' | 'support'>('announcements');
+
   useEffect(() => {
     fetchMessages();
     const interval = setInterval(fetchMessages, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [activeTab]);
 
   const fetchMessages = async () => {
     try {
-      const data = await apiClient.get(`/messages/${user.id}`);
+      const endpoint = activeTab === 'announcements' ? '/messages/global' : `/messages/${user.id}`;
+      const data = await apiClient.get(endpoint);
       setMessages(data);
     } catch (err) {
       console.warn("Failed to fetch messages:", err);
@@ -138,7 +142,24 @@ export function MessagesScreen({ onBack, user }: MessagesScreenProps) {
       style={styles.root}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScreenHeader title="Live Support" onBack={onBack} />
+      <ScreenHeader title="Messages" onBack={onBack} />
+
+      <View style={styles.tabContainer}>
+        <View style={styles.tabWrapper}>
+          <Pressable 
+            style={[styles.tab, activeTab === 'announcements' && styles.activeTab]}
+            onPress={() => { setLoading(true); setActiveTab('announcements'); }}
+          >
+            <Text style={[styles.tabText, activeTab === 'announcements' && styles.activeTabText]}>Announcements</Text>
+          </Pressable>
+          <Pressable 
+            style={[styles.tab, activeTab === 'support' && styles.activeTab]}
+            onPress={() => { setLoading(true); setActiveTab('support'); }}
+          >
+            <Text style={[styles.tabText, activeTab === 'support' && styles.activeTabText]}>Live Support</Text>
+          </Pressable>
+        </View>
+      </View>
 
       <ScrollView
         ref={scrollRef}
@@ -152,21 +173,23 @@ export function MessagesScreen({ onBack, user }: MessagesScreenProps) {
           </View>
         ) : messages.length === 0 ? (
           <View style={styles.center}>
-            <Text style={styles.emptyTitle}>How can we help?</Text>
+            <Text style={styles.emptyTitle}>No messages yet</Text>
             <Text style={styles.emptyDesc}>
-              Send a message below and one of our support agents will reply shortly.
+              {activeTab === 'announcements' 
+                ? 'Check back later for important updates and announcements.' 
+                : 'Send a message below and one of our support agents will reply shortly.'}
             </Text>
           </View>
         ) : (
           messages.map((msg) => {
             const isOutgoing = msg.sender_id === user.id;
-            return (
-              <View
+            return isOutgoing ? (
+              <LinearGradient
                 key={msg.id}
-                style={[
-                  styles.messageBubble,
-                  isOutgoing ? styles.outgoingBubble : styles.incomingBubble,
-                ]}
+                colors={['#9b5cff', '#6d28d9']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.messageBubble, styles.outgoingBubble]}
               >
                 {msg.images && msg.images.length > 0 && (
                   <View style={[styles.imageGrid, msg.images.length > 1 ? styles.imageGridMulti : null]}>
@@ -181,11 +204,37 @@ export function MessagesScreen({ onBack, user }: MessagesScreenProps) {
                   </View>
                 )}
                 {msg.content && (
-                  <Text style={[styles.messageText, !isOutgoing && styles.incomingText]}>
+                  <Text style={styles.messageText} selectable={true}>
                     {msg.content}
                   </Text>
                 )}
-                <Text style={[styles.timeText, !isOutgoing && styles.incomingTimeText]}>
+                <Text style={styles.timeText}>
+                  {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              </LinearGradient>
+            ) : (
+              <View
+                key={msg.id}
+                style={[styles.messageBubble, styles.incomingBubble]}
+              >
+                {msg.images && msg.images.length > 0 && (
+                  <View style={[styles.imageGrid, msg.images.length > 1 ? styles.imageGridMulti : null]}>
+                    {msg.images.map((img, i) => (
+                      <Image 
+                        key={i}
+                        source={{ uri: `${SERVER_URL.replace('/api', '')}/${img}` }}
+                        style={[styles.messageImage, msg.images!.length > 1 ? styles.messageImageMulti : null]}
+                        resizeMode="cover"
+                      />
+                    ))}
+                  </View>
+                )}
+                {msg.content && (
+                  <Text style={[styles.messageText, styles.incomingText]} selectable={true}>
+                    {msg.content}
+                  </Text>
+                )}
+                <Text style={[styles.timeText, styles.incomingTimeText]}>
                   {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </View>
@@ -194,7 +243,8 @@ export function MessagesScreen({ onBack, user }: MessagesScreenProps) {
         )}
       </ScrollView>
 
-      <View style={styles.inputContainerWrapper}>
+      {activeTab === 'support' && (
+        <View style={styles.inputContainerWrapper}>
         {selectedImages.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imagePreviewContainer}>
             {selectedImages.map((img, index) => (
@@ -232,6 +282,7 @@ export function MessagesScreen({ onBack, user }: MessagesScreenProps) {
           </Pressable>
         </View>
       </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -245,6 +296,35 @@ const styles = StyleSheet.create({
     padding: 16,
     flexGrow: 1,
     gap: 12,
+  },
+  tabContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: colors.bg,
+  },
+  tabWrapper: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    padding: 4,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  activeTab: {
+    backgroundColor: colors.purpleBright,
+  },
+  tabText: {
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.5)',
+  },
+  activeTabText: {
+    color: colors.white,
+    fontFamily: 'Outfit_600SemiBold',
   },
   center: {
     flex: 1,
@@ -266,22 +346,26 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   messageBubble: {
-    maxWidth: '80%',
+    maxWidth: '82%',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   outgoingBubble: {
     alignSelf: 'flex-end',
-    backgroundColor: colors.purpleBright,
-    borderBottomRightRadius: 4,
+    borderBottomRightRadius: 6,
   },
   incomingBubble: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.cardFill,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderBottomLeftRadius: 4,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderBottomLeftRadius: 6,
   },
   messageText: {
     fontFamily: 'Outfit_400Regular',

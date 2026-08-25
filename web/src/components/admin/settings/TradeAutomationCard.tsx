@@ -9,6 +9,8 @@ export function TradeAutomationCard({ onShowToast }: { onShowToast?: (msg: strin
   const [durationMinutes, setDurationMinutes] = useState(30);
   const [schedules, setSchedules] = useState<string[]>(["12:00"]);
   const [isAutomationEnabled, setIsAutomationEnabled] = useState(true);
+  const [messageTitle, setMessageTitle] = useState("New Trading Signal Active!");
+  const [messageContent, setMessageContent] = useState("🚨 New Trading Code Available! 🚨\n\n📅 Generated on: {dateStr}\n\nHurry! Paste this code in the Trade tab to earn {profit}% of your VIP plan limit.\n\n🎟️ Code: {code}\n⏳ Expires in: {duration} minutes");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -20,6 +22,8 @@ export function TradeAutomationCard({ onShowToast }: { onShowToast?: (msg: strin
           setTradesPerDay(data.trades_per_day || 1);
           setDurationMinutes(data.duration_minutes || 30);
           setSchedules(data.schedules || ["12:00"]);
+          if (data.message_title) setMessageTitle(data.message_title);
+          if (data.message_content) setMessageContent(data.message_content);
         }
       } catch (error) {
         console.error("Failed to fetch trade settings:", error);
@@ -68,7 +72,9 @@ export function TradeAutomationCard({ onShowToast }: { onShowToast?: (msg: strin
       await webApi.post('/settings/trade', {
         trades_per_day: tradesPerDay,
         duration_minutes: durationMinutes,
-        schedules: schedules
+        schedules: schedules,
+        message_title: messageTitle,
+        message_content: messageContent
       });
       if (onShowToast) onShowToast("Trade automation settings saved successfully");
     } catch (error) {
@@ -163,22 +169,58 @@ export function TradeAutomationCard({ onShowToast }: { onShowToast?: (msg: strin
         {/* Dynamic Schedules */}
         <div className="pt-6 border-t border-border/50">
            <label className="block text-sm font-semibold text-white mb-4">
-             Execution Schedule (Server Time)
+             Auto-Send Message Schedule (Server Time)
            </label>
            
            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
              {schedules.map((time, index) => (
                <div key={index} className="flex flex-col gap-1">
-                 <span className="text-xs font-medium text-muted">Trade {index + 1} Time</span>
-                 <Input
-                   type="time"
-                   value={time}
-                   onChange={(e) => handleScheduleChange(index, e.target.value)}
-                   disabled={!isAutomationEnabled}
-                   className="[&::-webkit-calendar-picker-indicator]:filter-[invert(1)]"
-                 />
+                 <span className="text-xs font-medium text-muted">Auto-Send Time {index + 1}</span>
+                   <Input
+                     type="time"
+                     value={time}
+                     onChange={(e) => handleScheduleChange(index, e.target.value)}
+                     disabled={!isAutomationEnabled}
+                     className="[&::-webkit-calendar-picker-indicator]:filter-[invert(1)]"
+                   />
                </div>
              ))}
+           </div>
+        </div>
+
+        {/* Dynamic Message Content */}
+        <div className="pt-6 border-t border-border/50">
+           <label className="block text-sm font-semibold text-white mb-2">
+             Announcement Template
+           </label>
+           <p className="text-xs text-muted-2 mb-4">
+             Customize the message sent for automated trading codes. Use these exact placeholders in your text to inject the real values:<br/>
+             <span className="text-purple-bright font-mono">{'{code}'}</span> (Trading Code),{' '}
+             <span className="text-purple-bright font-mono">{'{profit}'}</span> (Profit % limit),{' '}
+             <span className="text-purple-bright font-mono">{'{duration}'}</span> (Expiry Minutes),{' '}
+             <span className="text-purple-bright font-mono">{'{dateStr}'}</span> (Current Date)
+           </p>
+           
+           <div className="space-y-4">
+             <div>
+               <label className="block text-xs font-medium text-muted mb-1">Message Title</label>
+               <Input
+                 type="text"
+                 value={messageTitle}
+                 onChange={(e) => setMessageTitle(e.target.value)}
+                 disabled={!isAutomationEnabled}
+               />
+             </div>
+             <div>
+               <label className="block text-xs font-medium text-muted mb-1">Message Content</label>
+               <textarea
+                 value={messageContent}
+                 onChange={(e) => setMessageContent(e.target.value)}
+                 disabled={!isAutomationEnabled}
+                 rows={6}
+                 className="w-full bg-bg-deep border border-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-bright/50 transition-colors resize-none disabled:opacity-50"
+               />
+             </div>
            </div>
         </div>
       </div>

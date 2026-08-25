@@ -58,6 +58,21 @@ class MessageController extends Controller
     }
 
     /**
+     * Get global announcements (sent by admin, receiver is null).
+     */
+    public function getGlobalHistory()
+    {
+        $adminUserId = 22; // Based on known admin ID
+        $messages = Message::where('sender_id', $adminUserId)
+            ->whereNull('receiver_id')
+            ->with(['sender'])
+            ->orderBy('created_at', 'asc')
+            ->get();
+            
+        return response()->json($messages);
+    }
+
+    /**
      * Get chat history with a specific user.
      */
     public function getHistory($userId)

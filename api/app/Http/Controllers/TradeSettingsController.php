@@ -15,7 +15,9 @@ class TradeSettingsController extends Controller
             return response()->json([
                 'trades_per_day' => 1,
                 'duration_minutes' => 30,
-                'schedules' => []
+                'schedules' => [],
+                'message_title' => 'New Trading Signal Active!',
+                'message_content' => "🚨 New Trading Code Available! 🚨\n\n📅 Generated on: {dateStr}\n\nHurry! Paste this code in the Trade tab to earn {profit}% of your VIP plan limit.\n\n🎟️ Code: {code}\n⏳ Expires in: {duration} minutes"
             ]);
         }
 
@@ -28,13 +30,17 @@ class TradeSettingsController extends Controller
             'trades_per_day' => 'required|integer|min:1',
             'duration_minutes' => 'required|integer|min:1',
             'schedules' => 'required|array',
-            'schedules.*' => 'string|regex:/^\d{2}:\d{2}$/'
+            'schedules.*' => 'string|regex:/^\d{2}:\d{2}$/',
+            'message_title' => 'nullable|string',
+            'message_content' => 'nullable|string'
         ]);
 
         $payload = [
             'trades_per_day' => $request->trades_per_day,
             'duration_minutes' => $request->duration_minutes,
-            'schedules' => $request->schedules
+            'schedules' => $request->schedules,
+            'message_title' => $request->message_title,
+            'message_content' => $request->message_content
         ];
 
         DB::table('settings')->updateOrInsert(

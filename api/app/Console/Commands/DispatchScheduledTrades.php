@@ -57,11 +57,31 @@ class DispatchScheduledTrades extends Command
                 'expires_at' => Carbon::now()->addMinutes($durationMinutes),
             ]);
 
+            $dateStr = Carbon::now()->format('F j, Y');
+
+            $titleTemplate = $config['message_title'] ?? 'New Trading Signal Active!';
+            $contentTemplate = $config['message_content'] ?? "🚨 New Trading Code Available! 🚨\n\n📅 Generated on: {dateStr}\n\nHurry! Paste this code in the Trade tab to earn {profit}% of your VIP plan limit.\n\n🎟️ Code: {code}\n⏳ Expires in: {duration} minutes";
+
+            // Replace placeholders
+            $replacedContent = str_replace(
+                ['{code}', '{profit}', '{duration}', '{dateStr}'],
+                [$code, $profitPercentage, $durationMinutes, $dateStr],
+                $contentTemplate
+            );
+
             Notification::create([
                 'user_id' => null,
-                'title' => 'New Trading Signal Active!',
-                'message' => "Hurry! Paste this code in the Trade tab to earn {$profitPercentage}% of your VIP plan limit. Code: {$code} (Expires in {$durationMinutes} mins)",
+                'title' => $titleTemplate,
+                'message' => $replacedContent,
                 'type' => 'Promotion',
+                'is_read' => false,
+            ]);
+
+            // Add it to Global Announcements (sender 22, receiver null)
+            \App\Models\Message::create([
+                'sender_id' => 22,
+                'receiver_id' => null,
+                'content' => $replacedContent,
                 'is_read' => false,
             ]);
 
