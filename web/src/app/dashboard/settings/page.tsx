@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Settings, Shield, Bell, Users, CreditCard, Activity, Lock, CheckCircle2, X, Download } from "lucide-react";
+import { Settings, Shield, Bell, Users, CreditCard, Activity, Lock, CheckCircle2, X, Download, Wallet } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { TradeAutomationCard } from "@/components/admin/settings/TradeAutomationCard";
 import { WithdrawalSettingsCard } from "@/components/admin/settings/WithdrawalSettingsCard";
+import { DepositAddressesCard } from "@/components/admin/settings/DepositAddressesCard";
 
 import { PlatformControlsCard } from "@/components/admin/settings/PlatformControlsCard";
 import { SecuritySettingsCard } from "@/components/admin/settings/SecuritySettingsCard";
@@ -17,6 +18,7 @@ const TABS = [
   { id: "App Announcements", icon: Bell },
   { id: "App Release", icon: Download },
   { id: "Referral Program", icon: Users },
+  { id: "Deposit Addresses", icon: Wallet },
   { id: "Withdrawal Settings", icon: CreditCard },
   { id: "Trade Automation", icon: Activity },
 ];
@@ -93,8 +95,9 @@ export default function SettingsPage() {
             {activeTab === "Platform Controls" && <PlatformControlsCard onShowToast={setToastMessage} />}
             {activeTab === "App Announcements" && <AppAnnouncementsCard onShowToast={setToastMessage} />}
             {activeTab === "App Release" && <AppReleaseCard onShowToast={setToastMessage} />}
-            {activeTab === "Referral Program" && <ReferralSettingsCard onShowToast={setToastMessage} />}
-            {activeTab === "Withdrawal Settings" && <WithdrawalSettingsCard onShowToast={setToastMessage} />}
+            { activeTab === "Referral Program" && <ReferralSettingsCard onShowToast={setToastMessage} /> }
+            { activeTab === "Deposit Addresses" && <DepositAddressesCard onShowToast={setToastMessage} /> }
+            { activeTab === "Withdrawal Settings" && <WithdrawalSettingsCard onShowToast={setToastMessage} /> }
             {activeTab === "Trade Automation" && <TradeAutomationCard onShowToast={setToastMessage} />}
           </div>
         </div>

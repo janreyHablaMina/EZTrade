@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   View,
+  Image,
 } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
 import { AmountField } from '../components/AmountField';
@@ -23,6 +24,7 @@ import {
   parseAmount,
 } from '../lib/wallet';
 import { colors } from '../theme/colors';
+import { SERVER_URL } from '../lib/api';
 
 const STEPS = [
   'Send payment to the address',
@@ -33,6 +35,7 @@ const STEPS = [
 type DepositScreenProps = {
   amount?: string;
   planName?: string;
+  systemSettings?: any;
   onBack?: () => void;
   onSentPayment?: (networkLabel: string, amount: string) => void;
 };
@@ -107,6 +110,7 @@ function shortenAddress(address: string) {
 export function DepositScreen({
   amount: initialAmount = '',
   planName = 'VIP 1',
+  systemSettings,
   onBack,
   onSentPayment,
 }: DepositScreenProps) {
@@ -116,6 +120,10 @@ export function DepositScreen({
   const [amount, setAmount] = useState(initialAmount);
 
   const network = getNetwork(networkId);
+  const dynamicAddress = systemSettings?.deposit_addresses?.[`${networkId}_address`];
+  const dynamicQr = systemSettings?.deposit_addresses?.[`${networkId}_qr`];
+  const finalAddress = dynamicAddress || network.address;
+
   const parsed = parseAmount(amount);
   const hasAmount = amount.trim().length > 0;
   const validAmount = Number.isFinite(parsed) && parsed >= MIN_USDT;
@@ -123,7 +131,7 @@ export function DepositScreen({
   const displayAmount = validAmount ? parsed.toFixed(2) : null;
 
   const copyAddress = async () => {
-    await copyToClipboard(network.address);
+    await copyToClipboard(finalAddress);
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
   };
@@ -164,7 +172,7 @@ export function DepositScreen({
           <Text style={styles.fieldLabel}>Receiving Address</Text>
           <View style={styles.field}>
             <Text style={styles.addressText} numberOfLines={1}>
-              {shortenAddress(network.address)}
+              {shortenAddress(finalAddress)}
             </Text>
             <Pressable onPress={copyAddress} hitSlop={10} style={styles.copyBtn}>
               <Copy size={16} color="rgba(255,255,255,0.6)" strokeWidth={2} />
@@ -172,7 +180,15 @@ export function DepositScreen({
           </View>
           {copied ? <Text style={styles.copied}>Address copied</Text> : null}
 
-          <AddressQr value={network.address} />
+          {dynamicQr ? (
+            <Image 
+              source={{ uri: `${SERVER_URL.replace('/api', '')}/${dynamicQr}` }} 
+              style={styles.qrImage} 
+              resizeMode="contain" 
+            />
+          ) : (
+            <AddressQr value={finalAddress} />
+          )}
 
           <NoteRow>
             Minimum {MIN_USDT} USDT. Send exactly{' '}
@@ -279,6 +295,15 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 18,
     padding: 8,
+    borderRadius: 16,
+    backgroundColor: colors.white,
+  },
+  qrImage: {
+    alignSelf: 'center',
+    marginTop: 6,
+    marginBottom: 18,
+    width: 200,
+    height: 200,
     borderRadius: 16,
     backgroundColor: colors.white,
   },

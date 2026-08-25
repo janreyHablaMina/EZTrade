@@ -11,7 +11,9 @@ class SystemSettingsController extends Controller
         'platform_controls',
         'security_kyc',
         'app_announcements',
-        'referral_program'
+        'app_announcements',
+        'referral_program',
+        'deposit_addresses'
     ];
 
     private function getDefaultSettings($key)
@@ -43,6 +45,13 @@ class SystemSettingsController extends Controller
                     'level_3_percent' => 1,
                     'flat_bonus_amount' => 0
                 ];
+            case 'deposit_addresses':
+                return [
+                    'trc20_address' => 'TYourTRC20DepositAddressHere123',
+                    'erc20_address' => '0xYourERC20DepositAddressHere123',
+                    'polygon_address' => '0xYourPolygonDepositAddressHere123',
+                    'bep20_address' => '0xYourBEP20DepositAddressHere123'
+                ];
             default:
                 return [];
         }
@@ -73,7 +82,20 @@ class SystemSettingsController extends Controller
             return response()->json(['message' => 'Invalid setting key'], 400);
         }
 
-        $payload = $request->all();
+        $payload = $request->except(array_keys($request->allFiles()));
+
+        foreach ($request->allFiles() as $fileKey => $file) {
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/settings'), $filename);
+            $payload[$fileKey] = 'uploads/settings/' . $filename;
+        }
+
+        // Get existing settings to merge, so we don't overwrite files if they weren't re-uploaded
+        $existing = DB::table('settings')->where('key', $key)->first();
+        if ($existing) {
+            $existingData = json_decode($existing->value, true) ?: [];
+            $payload = array_merge($existingData, $payload);
+        }
 
         DB::table('settings')->updateOrInsert(
             ['key' => $key],

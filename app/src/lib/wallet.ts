@@ -16,6 +16,11 @@ export const NETWORKS = [
     address: '0x8f3a21c9e4b7d0a1c6e5f92b4d8a7c3e1f0b9d62',
   },
   {
+    id: 'polygon',
+    label: 'Polygon (USDT)',
+    address: '0x3c1d95e7a2b8f0d6c3e9a1b7f5d2c8e4a0b6d193',
+  },
+  {
     id: 'bep20',
     label: 'BEP20 (USDT)',
     address: '0x4c1d95e7a2b8f0d6c3e9a1b7f5d2c8e4a0b6d193',

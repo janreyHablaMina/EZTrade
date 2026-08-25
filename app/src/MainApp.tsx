@@ -161,6 +161,7 @@ export function MainApp({
     screen = (
       <DepositScreen
         amount={depositAmount}
+        systemSettings={systemSettings}
         onBack={() => setWalletStep(null)}
         onSentPayment={(networkLabel, amount) => {
           setDepositNetwork(networkLabel);

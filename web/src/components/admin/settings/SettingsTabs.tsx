@@ -11,6 +11,7 @@ const TABS = [
   "Security & KYC",
   "Referral Program",
   "Withdrawal Settings",
+  "Deposit Addresses",
   "Trade Automation"
 ];
 
