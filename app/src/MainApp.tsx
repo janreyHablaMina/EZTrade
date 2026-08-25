@@ -244,7 +244,7 @@ export function MainApp({
           if (key === 'plans') setTab('plans');
           if (key === 'transactions') openTransactions();
           if (key === 'security') setOverlay('security');
-          if (key === 'support') setOverlay('support');
+          if (key === 'support') setOverlay('messages');
           if (key === 'about') setOverlay('about');
           if (key === 'referral') setOverlay('team');
         }}

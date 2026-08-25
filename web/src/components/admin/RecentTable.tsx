@@ -43,8 +43,8 @@ export function RecentTable({ title, rows }: TableProps) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={`${row.id}-${row.txid}`} className="border-b border-border/60 last:border-0">
+            {rows.map((row, index) => (
+              <tr key={`${row.id}-${row.txid || 'notx'}-${index}`} className="border-b border-border/60 last:border-0">
                 <td className="py-3">
                   <div className="flex items-center gap-2.5">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple/25 text-[10px] font-semibold text-purple-bright">

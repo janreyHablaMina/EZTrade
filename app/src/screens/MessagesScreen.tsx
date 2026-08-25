@@ -9,17 +9,21 @@ import {
   TextInput,
   View,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { ScreenHeader } from '../components/ScreenHeader';
-import { Send } from 'lucide-react-native';
+import { Send, Paperclip, X } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { apiClient } from '../lib/api';
+import { SERVER_URL } from '../lib/api';
 import { colors } from '../theme/colors';
 
 type Message = {
   id: number;
   sender_id: number;
   receiver_id: number;
-  content: string;
+  content: string | null;
+  images: string[] | null;
   created_at: string;
   is_read: boolean;
 };
@@ -34,6 +38,7 @@ export function MessagesScreen({ onBack, user }: MessagesScreenProps) {
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -53,24 +58,76 @@ export function MessagesScreen({ onBack, user }: MessagesScreenProps) {
     }
   };
 
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      selectionLimit: 5 - selectedImages.length,
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      if (selectedImages.length + result.assets.length > 5) {
+        alert("You can only send up to 5 images per message.");
+        return;
+      }
+      setSelectedImages((prev) => [...prev, ...result.assets]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSend = async () => {
-    if (!inputText.trim() || sending) return;
+    if ((!inputText.trim() && selectedImages.length === 0) || sending) return;
     
     setSending(true);
     const textToSend = inputText;
+    const imagesToSend = [...selectedImages];
+    
     setInputText('');
+    setSelectedImages([]);
     
     try {
-      const res = await apiClient.post('/messages', {
-        sender_id: user.id,
-        receiver_id: null, // Admin
-        content: textToSend,
-      });
-      setMessages((prev) => [...prev, res.data]);
+      let res;
+      if (imagesToSend.length > 0) {
+        const formData = new FormData();
+        formData.append('sender_id', String(user.id));
+        if (textToSend.trim()) formData.append('content', textToSend);
+        
+        imagesToSend.forEach((img, index) => {
+          const filename = img.uri.split('/').pop() || `image${index}.jpg`;
+          const match = /\.(\w+)$/.exec(filename);
+          const type = match ? `image/${match[1]}` : `image`;
+          
+          formData.append(`images[${index}]`, {
+            uri: img.uri,
+            name: filename,
+            type,
+          } as any);
+        });
+
+        // Use custom multipart/form-data fetch since axios/apiClient may override headers
+        const fetchRes = await apiClient.post('/messages', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        res = { data: fetchRes }; // Since apiClient already unrolls response
+      } else {
+        const jsonRes = await apiClient.post('/messages', {
+          sender_id: user.id,
+          receiver_id: null, // Admin
+          content: textToSend,
+        });
+        res = { data: jsonRes };
+      }
+      
+      setMessages((prev) => [...prev, res.data.data ? res.data.data : res.data]);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     } catch (err) {
       console.error(err);
       setInputText(textToSend);
+      setSelectedImages(imagesToSend);
     } finally {
       setSending(false);
     }
@@ -111,9 +168,23 @@ export function MessagesScreen({ onBack, user }: MessagesScreenProps) {
                   isOutgoing ? styles.outgoingBubble : styles.incomingBubble,
                 ]}
               >
-                <Text style={[styles.messageText, !isOutgoing && styles.incomingText]}>
-                  {msg.content}
-                </Text>
+                {msg.images && msg.images.length > 0 && (
+                  <View style={[styles.imageGrid, msg.images.length > 1 ? styles.imageGridMulti : null]}>
+                    {msg.images.map((img, i) => (
+                      <Image 
+                        key={i}
+                        source={{ uri: `${SERVER_URL.replace('/api', '')}/${img}` }}
+                        style={[styles.messageImage, msg.images!.length > 1 ? styles.messageImageMulti : null]}
+                        resizeMode="cover"
+                      />
+                    ))}
+                  </View>
+                )}
+                {msg.content && (
+                  <Text style={[styles.messageText, !isOutgoing && styles.incomingText]}>
+                    {msg.content}
+                  </Text>
+                )}
                 <Text style={[styles.timeText, !isOutgoing && styles.incomingTimeText]}>
                   {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
@@ -123,26 +194,43 @@ export function MessagesScreen({ onBack, user }: MessagesScreenProps) {
         )}
       </ScrollView>
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Type your message..."
-          placeholderTextColor="rgba(255,255,255,0.4)"
-          value={inputText}
-          onChangeText={setInputText}
-          multiline
-        />
-        <Pressable
-          style={[styles.sendBtn, !inputText.trim() && styles.sendBtnDisabled]}
-          onPress={handleSend}
-          disabled={!inputText.trim() || sending}
-        >
-          {sending ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Send size={18} color="#fff" />
-          )}
-        </Pressable>
+      <View style={styles.inputContainerWrapper}>
+        {selectedImages.length > 0 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imagePreviewContainer}>
+            {selectedImages.map((img, index) => (
+              <View key={index} style={styles.imagePreviewWrapper}>
+                <Image source={{ uri: img.uri }} style={styles.imagePreview} />
+                <Pressable style={styles.removeImageBtn} onPress={() => removeImage(index)}>
+                  <X size={12} color="#fff" />
+                </Pressable>
+              </View>
+            ))}
+          </ScrollView>
+        )}
+        <View style={styles.inputContainer}>
+          <Pressable style={styles.attachBtn} onPress={pickImage}>
+            <Paperclip size={20} color="rgba(255,255,255,0.6)" />
+          </Pressable>
+          <TextInput
+            style={styles.input}
+            placeholder="Type your message..."
+            placeholderTextColor="rgba(255,255,255,0.4)"
+            value={inputText}
+            onChangeText={setInputText}
+            multiline
+          />
+          <Pressable
+            style={[styles.sendBtn, (!inputText.trim() && selectedImages.length === 0) && styles.sendBtnDisabled]}
+            onPress={handleSend}
+            disabled={(!inputText.trim() && selectedImages.length === 0) || sending}
+          >
+            {sending ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Send size={18} color="#fff" style={{ marginLeft: -2 }} />
+            )}
+          </Pressable>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -214,14 +302,51 @@ const styles = StyleSheet.create({
   incomingTimeText: {
     color: 'rgba(255,255,255,0.4)',
   },
+  inputContainerWrapper: {
+    backgroundColor: colors.bgDeep,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
+  },
+  imagePreviewContainer: {
+    padding: 12,
+    paddingBottom: 0,
+    flexDirection: 'row',
+  },
+  imagePreviewWrapper: {
+    marginRight: 10,
+    position: 'relative',
+  },
+  imagePreview: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  removeImageBtn: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 10,
+    padding: 2,
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.05)',
-    backgroundColor: colors.bgDeep,
+    padding: 12,
+    paddingBottom: 24, // safe area padding
     gap: 10,
+  },
+  attachBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   input: {
     flex: 1,
@@ -231,7 +356,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
     borderRadius: 22,
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 12,
     fontFamily: 'Outfit_400Regular',
@@ -248,5 +373,24 @@ const styles = StyleSheet.create({
   },
   sendBtnDisabled: {
     opacity: 0.5,
+  },
+  imageGrid: {
+    marginBottom: 6,
+    gap: 4,
+  },
+  imageGridMulti: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  messageImage: {
+    width: 160,
+    height: 160,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  messageImageMulti: {
+    width: 80,
+    height: 80,
   },
 });

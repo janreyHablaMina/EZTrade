@@ -226,12 +226,12 @@ export function Topbar() {
                         className={`flex items-start gap-3 p-3 border-b border-border/30 hover:bg-white/[0.04] transition ${c.unread_count > 0 ? 'bg-purple-bright/5' : ''}`}
                       >
                         <div className="h-10 w-10 shrink-0 rounded-full bg-gradient-to-br from-purple-soft to-purple-bright flex items-center justify-center text-white font-bold text-sm">
-                          {c.user.first_name[0]}{c.user.last_name[0]}
+                          {c.user?.name?.substring(0, 2).toUpperCase() || "U"}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-center mb-0.5">
                             <span className={`text-sm truncate ${c.unread_count > 0 ? 'font-semibold text-white' : 'font-medium text-white/90'}`}>
-                              {c.user.first_name} {c.user.last_name}
+                              {c.user?.name || "Unknown User"}
                             </span>
                             {c.last_message && (
                               <span className="text-[10px] text-muted-2">

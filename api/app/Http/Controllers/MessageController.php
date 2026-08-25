@@ -29,8 +29,8 @@ class MessageController extends Controller
             ->concat(Message::select('receiver_id')->whereNotNull('receiver_id')->distinct()->pluck('receiver_id'))
             ->unique()
             ->filter(function($id) { 
-                // Exclude admin if we know the admin ID, but for now we just return all users and the frontend can filter
-                return true; 
+                // Exclude admin ID 22
+                return $id !== 22; 
             });
             
         $users = User::whereIn('id', $userIds)->get()->map(function($user) {
@@ -79,13 +79,29 @@ class MessageController extends Controller
         $request->validate([
             'sender_id' => 'required|exists:users,id',
             'receiver_id' => 'nullable|exists:users,id',
-            'content' => 'required|string',
+            'content' => 'nullable|string',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // max 5MB per image
         ]);
+
+        $imagePaths = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                // Store in public/uploads/messages instead of storage folder to ensure it's accessible without symlinks
+                $path = $image->move(public_path('uploads/messages'), time() . '_' . $image->getClientOriginalName());
+                // Get relative path for the DB
+                $imagePaths[] = 'uploads/messages/' . basename($path);
+            }
+        }
+
+        if (empty($request->content) && empty($imagePaths)) {
+            return response()->json(['message' => 'Message content or images are required'], 422);
+        }
 
         $message = Message::create([
             'sender_id' => $request->sender_id,
             'receiver_id' => $request->receiver_id,
             'content' => $request->content,
+            'images' => empty($imagePaths) ? null : json_encode($imagePaths),
             'is_read' => false,
         ]);
 

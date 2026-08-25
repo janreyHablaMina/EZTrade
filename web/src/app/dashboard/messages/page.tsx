@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Search, Send, User, MessageCircle, Loader2 } from "lucide-react";
+import { Search, Send, User, MessageCircle, Loader2, Paperclip, X, Image as ImageIcon } from "lucide-react";
 import { webApi } from "@/lib/api";
 
 type ConversationUser = {
@@ -24,7 +24,8 @@ type ChatMessage = {
   id: number;
   sender_id: number;
   receiver_id: number;
-  content: string;
+  content: string | null;
+  images: string[] | null;
   created_at: string;
   is_read: boolean;
 };
@@ -37,6 +38,8 @@ export default function MessagesPage() {
   const [chatLoading, setChatLoading] = useState(false);
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
@@ -84,28 +87,70 @@ export default function MessagesPage() {
     }
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      if (selectedImages.length + filesArray.length > 5) {
+        alert("You can only send up to 5 images per message.");
+        return;
+      }
+      setSelectedImages((prev) => [...prev, ...filesArray]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSend = async () => {
-    if (!inputText.trim() || !activeUser || isSending) return;
+    if ((!inputText.trim() && selectedImages.length === 0) || !activeUser || isSending) return;
     
     setIsSending(true);
     const textToSend = inputText;
+    const imagesToSend = [...selectedImages];
+    
     setInputText("");
+    setSelectedImages([]);
     
     try {
-      // Assuming admin sender_id is not strictly needed or handled by auth token on the real backend.
-      // But we must pass sender_id according to our API. The admin might be ID 1.
-      // Let's assume the backend will default sender_id to authenticated user, but wait, our API needs sender_id.
-      // We'll hardcode sender_id = 1 for admin since this is a mockup/admin dashboard.
-      const res = await webApi.post("/messages", {
-        sender_id: 1, // Admin ID
-        receiver_id: activeUser.id,
-        content: textToSend,
-      });
+      let res;
+      if (imagesToSend.length > 0) {
+        const formData = new FormData();
+        formData.append('sender_id', '22');
+        formData.append('receiver_id', String(activeUser.id));
+        if (textToSend.trim()) formData.append('content', textToSend);
+        
+        imagesToSend.forEach((img, index) => {
+          formData.append(`images[${index}]`, img);
+        });
+
+        // Use standard fetch for FormData to avoid default JSON headers from webApi wrapper if it enforces it,
+        // or if webApi supports FormData, just pass it. Let's assume standard fetch to be safe.
+        const token = localStorage.getItem('token');
+        const fetchRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          },
+          body: formData
+        });
+        
+        if (!fetchRes.ok) throw new Error("Failed to send");
+        res = { data: (await fetchRes.json()).data };
+      } else {
+        res = await webApi.post("/messages", {
+          sender_id: 22,
+          receiver_id: activeUser.id,
+          content: textToSend,
+        });
+      }
       
       setMessages([...messages, res.data]);
     } catch (err) {
       console.error(err);
       setInputText(textToSend); // Restore if failed
+      setSelectedImages(imagesToSend);
     } finally {
       setIsSending(false);
     }
@@ -149,12 +194,12 @@ export default function MessagesPage() {
                   className={`w-full flex items-start gap-3 p-4 border-b border-border/30 hover:bg-white/[0.02] transition-colors text-left ${activeUser?.id === c.user.id ? 'bg-purple-bright/10 border-l-2 border-l-purple-bright' : ''}`}
                 >
                   <div className="h-10 w-10 shrink-0 rounded-full bg-gradient-to-br from-purple-soft to-purple-bright flex items-center justify-center text-white font-bold text-sm">
-                    {c.user.first_name[0]}{c.user.last_name[0]}
+                    {c.user?.name?.substring(0, 2).toUpperCase() || "U"}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-1">
-                      <span className="font-semibold text-white text-sm truncate">
-                        {c.user.first_name} {c.user.last_name}
+                      <span className={`text-sm truncate ${activeUser?.id === c.user?.id ? 'text-white font-semibold' : c.unread_count > 0 ? 'text-white font-bold' : 'text-white/80 font-medium'}`}>
+                        {c.user?.name || "Unknown User"}
                       </span>
                       {c.last_message && (
                         <span className="text-[10px] text-muted-2">
@@ -184,13 +229,13 @@ export default function MessagesPage() {
               {/* Chat Header */}
               <div className="h-16 border-b border-border bg-card/50 flex items-center px-6 shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-purple-soft to-purple-bright flex items-center justify-center text-white font-bold text-xs">
-                    {activeUser.first_name[0]}{activeUser.last_name[0]}
+                  <div className="h-8 w-8 shrink-0 rounded-full bg-gradient-to-br from-purple-soft to-purple-bright flex items-center justify-center text-white font-bold text-[10px]">
+                    {activeUser?.name?.substring(0, 2).toUpperCase() || "U"}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white text-sm">
-                      {activeUser.first_name} {activeUser.last_name}
-                    </h3>
+                    <h2 className="text-sm font-semibold text-white">
+                      {activeUser?.name || "Unknown User"}
+                    </h2>
                     <p className="text-xs text-muted-2">{activeUser.email}</p>
                   </div>
                 </div>
@@ -211,8 +256,9 @@ export default function MessagesPage() {
                   </div>
                 ) : (
                   messages.map((msg) => {
-                    // Admin ID is 1, so if sender_id == 1, it's outgoing
-                    const isOutgoing = msg.sender_id === 1;
+                    // If the sender is the active user we're chatting with, it's an incoming message.
+                    // Otherwise, it's an outgoing message from the admin.
+                    const isOutgoing = msg.sender_id !== activeUser.id;
                     return (
                       <div key={msg.id} className={`flex ${isOutgoing ? 'justify-end' : 'justify-start'}`}>
                         <div 
@@ -222,7 +268,20 @@ export default function MessagesPage() {
                               : 'bg-card text-white border border-border rounded-tl-sm'
                           }`}
                         >
-                          <p>{msg.content}</p>
+                          {msg.images && msg.images.length > 0 && (
+                            <div className={`grid gap-2 mb-2 ${msg.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                              {msg.images.map((img, i) => (
+                                <a key={i} href={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000'}/${img}`} target="_blank" rel="noreferrer">
+                                  <img 
+                                    src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000'}/${img}`}
+                                    alt="attachment" 
+                                    className="rounded-lg max-h-48 object-cover w-full border border-white/10"
+                                  />
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                          {msg.content && <p>{msg.content}</p>}
                           <p className={`text-[10px] mt-1 text-right ${isOutgoing ? 'text-white/70' : 'text-muted-2'}`}>
                             {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                           </p>
@@ -235,10 +294,45 @@ export default function MessagesPage() {
 
               {/* Chat Input */}
               <div className="p-4 bg-card border-t border-border mt-auto">
+                {selectedImages.length > 0 && (
+                  <div className="flex flex-wrap gap-3 mb-4 p-3 bg-bg-deep rounded-xl border border-border/50">
+                    {selectedImages.map((file, i) => (
+                      <div key={i} className="relative group rounded-lg overflow-hidden border border-border h-16 w-16">
+                        <img 
+                          src={URL.createObjectURL(file)} 
+                          alt="preview" 
+                          className="h-full w-full object-cover"
+                        />
+                        <button 
+                          onClick={() => removeImage(i)}
+                          className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-4 w-4 text-white" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
                 <form 
                   onSubmit={(e) => { e.preventDefault(); handleSend(); }}
                   className="flex items-center gap-2"
                 >
+                  <input 
+                    type="file" 
+                    multiple 
+                    accept="image/*" 
+                    className="hidden" 
+                    ref={fileInputRef}
+                    onChange={handleImageSelect}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-11 w-11 shrink-0 rounded-xl bg-bg-deep border border-border flex items-center justify-center text-muted-2 hover:text-purple-bright hover:border-purple-bright/30 transition-colors"
+                  >
+                    <Paperclip className="h-5 w-5" />
+                  </button>
                   <input
                     type="text"
                     value={inputText}
@@ -248,7 +342,7 @@ export default function MessagesPage() {
                   />
                   <button
                     type="submit"
-                    disabled={!inputText.trim() || isSending}
+                    disabled={(!inputText.trim() && selectedImages.length === 0) || isSending}
                     className="h-11 w-11 shrink-0 rounded-xl bg-purple-bright flex items-center justify-center text-white hover:bg-purple-bright/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5 -ml-1" />}
