@@ -222,6 +222,7 @@ export function MainApp({
   } else if (overlay === 'transactions') {
     screen = (
       <TransactionsScreen
+        user={user}
         onBack={closeOverlay}
         initialFilter={overlayReturn === 'withdraw' ? 'Withdraw' : 'All'}
         pendingWithdraw={withdrawRequest}

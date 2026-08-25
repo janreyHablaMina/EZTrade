@@ -7,6 +7,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VipPlanController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TradingCodeController;
+use App\Http\Controllers\TransactionController;
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 Route::post('/register', [AuthController::class, 'register']);
@@ -21,6 +22,9 @@ Route::patch('/users/{id}', [UserController::class, 'update']);
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
 Route::get('/users/{id}/stats', [UserController::class, 'stats']);
 Route::post('/users/simulate-trade', [\App\Http\Controllers\Admin\SimulatorController::class, 'simulateTrade']);
+
+// ── Transactions ─────────────────────────────────────────────────────────────
+Route::get('/transactions', [TransactionController::class, 'index']);
 
 // ── VIP Plans ─────────────────────────────────────────────────────────────────
 Route::get('/vip-plans/stats', [VipPlanController::class, 'stats']);

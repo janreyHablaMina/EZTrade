@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useState, useEffect } from 'react';
+import { ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { FilterChips } from '../components/FilterChips';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
+import { apiClient } from '../lib/api';
 
 const FILTERS = ['All', 'Deposit', 'Profit', 'Withdraw'] as const;
 type Filter = (typeof FILTERS)[number];
@@ -16,67 +17,12 @@ type Transaction = {
   subtitle: string;
   amount: string;
   positive: boolean;
-  status: 'Completed' | 'Pending';
+  status: 'Completed' | 'Pending' | 'Approved' | 'Rejected';
+  created_at: string;
 };
 
-const TRANSACTIONS: Transaction[] = [
-  {
-    id: '1',
-    type: 'deposit',
-    title: 'VIP 1 Deposit',
-    subtitle: 'Today · TRC20',
-    amount: '+10.00 USDT',
-    positive: true,
-    status: 'Completed',
-  },
-  {
-    id: '2',
-    type: 'profit',
-    title: 'Daily Profit',
-    subtitle: 'Today · Quantify',
-    amount: '+2.00 USDT',
-    positive: true,
-    status: 'Completed',
-  },
-  {
-    id: '3',
-    type: 'profit',
-    title: 'Daily Profit',
-    subtitle: 'Yesterday · Quantify',
-    amount: '+2.00 USDT',
-    positive: true,
-    status: 'Completed',
-  },
-  {
-    id: '4',
-    type: 'withdraw',
-    title: 'USDT Withdraw',
-    subtitle: 'Mar 12 · TRC20',
-    amount: '-5.00 USDT',
-    positive: false,
-    status: 'Pending',
-  },
-  {
-    id: '5',
-    type: 'deposit',
-    title: 'VIP 1 Deposit',
-    subtitle: 'Mar 10 · TRC20',
-    amount: '+10.00 USDT',
-    positive: true,
-    status: 'Completed',
-  },
-  {
-    id: '6',
-    type: 'withdraw',
-    title: 'USDT Withdraw',
-    subtitle: 'Mar 8 · TRC20',
-    amount: '-3.50 USDT',
-    positive: false,
-    status: 'Completed',
-  },
-];
-
 type TransactionsScreenProps = {
+  user: any;
   onBack?: () => void;
   initialFilter?: Filter;
   pendingWithdraw?: {
@@ -136,11 +82,27 @@ function TypeIcon({ type }: { type: TxType }) {
 }
 
 export function TransactionsScreen({
+  user,
   onBack,
   initialFilter = 'All',
   pendingWithdraw = null,
 }: TransactionsScreenProps) {
   const [filter, setFilter] = useState<Filter>(initialFilter);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.id) {
+      apiClient.get(`/transactions?user_id=${user.id}`)
+        .then((data) => {
+          setTransactions(data.transactions);
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [user?.id]);
 
   const items = useMemo(() => {
     const live: Transaction[] = pendingWithdraw
@@ -153,10 +115,11 @@ export function TransactionsScreen({
             amount: `-${pendingWithdraw.amount.toFixed(2)} USDT`,
             positive: false,
             status: 'Pending',
+            created_at: new Date().toISOString(),
           },
         ]
       : [];
-    const all = [...live, ...TRANSACTIONS];
+    const all = [...live, ...transactions];
     if (filter === 'All') return all;
     const type = filter.toLowerCase() as TxType;
     return all.filter((item) => item.type === type);
@@ -174,7 +137,11 @@ export function TransactionsScreen({
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       >
-        {items.length === 0 ? (
+        {loading ? (
+          <View style={styles.empty}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        ) : items.length === 0 ? (
           <View style={styles.empty}>
             <Text style={styles.emptyTitle}>No {filter.toLowerCase()} yet</Text>
             <Text style={styles.emptyText}>
@@ -182,12 +149,23 @@ export function TransactionsScreen({
             </Text>
           </View>
         ) : (
-          items.map((item) => (
+          items.map((item) => {
+            const date = new Date(item.created_at);
+            let dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            
+            const today = new Date();
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            if (date.toDateString() === today.toDateString()) dateStr = 'Today';
+            else if (date.toDateString() === yesterday.toDateString()) dateStr = 'Yesterday';
+
+            return (
             <View key={item.id} style={styles.row}>
               <TypeIcon type={item.type} />
               <View style={styles.rowBody}>
                 <Text style={styles.rowTitle}>{item.title}</Text>
-                <Text style={styles.rowSub}>{item.subtitle}</Text>
+                <Text style={styles.rowSub}>{dateStr} · {item.subtitle}</Text>
               </View>
               <View style={styles.rowRight}>
                 <Text
@@ -208,7 +186,8 @@ export function TransactionsScreen({
                 </Text>
               </View>
             </View>
-          ))
+            );
+          })
         )}
       </ScrollView>
     </View>
