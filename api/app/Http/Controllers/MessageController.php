@@ -143,13 +143,23 @@ class MessageController extends Controller
      */
     public function getUnreadCount()
     {
-        $count = Message::where('is_read', false)
-            ->whereNull('receiver_id') // Assuming messages TO admin have receiver_id = null
-            ->orWhereHas('receiver', function($q) {
-                $q->where('role', 'admin'); // If admin has role
-            })
+        $adminUserId = 22;
+        
+        $count = Message::where('receiver_id', $adminUserId)
+            ->where('is_read', false)
             ->count();
             
         return response()->json(['count' => $count]);
+    }
+
+    /**
+     * Delete a message (Admin only).
+     */
+    public function destroy($id)
+    {
+        $message = Message::findOrFail($id);
+        $message->delete();
+        
+        return response()->json(['message' => 'Message deleted successfully']);
     }
 }

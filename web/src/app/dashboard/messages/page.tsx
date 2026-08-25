@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Search, Send, User, MessageCircle, Loader2, Paperclip, X, Image as ImageIcon, Gift } from "lucide-react";
+import { Search, Send, User, MessageCircle, Loader2, Paperclip, X, Image as ImageIcon, Gift, Trash2, CheckCircle2 } from "lucide-react";
 import { webApi } from "@/lib/api";
 
 type ConversationUser = {
@@ -37,13 +37,15 @@ const GLOBAL_ROOM = {
 
 export default function MessagesPage() {
   const [conversations, setConversations] = useState<ConversationUser[]>([]);
-  const [activeUser, setActiveUser] = useState<ConversationUser['user'] | null>(null);
+  const [activeUser, setActiveUser] = useState<ConversationUser['user'] | null>(GLOBAL_ROOM);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [chatLoading, setChatLoading] = useState(false);
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [toastMsg, setToastMsg] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const chatScrollRef = useRef<HTMLDivElement>(null);
@@ -187,6 +189,28 @@ export default function MessagesPage() {
     }
   };
 
+  const confirmDelete = async () => {
+    if (deleteConfirmId === null) return;
+    try {
+      await webApi.delete(`/messages/${deleteConfirmId}`);
+      setMessages(messages.filter(m => m.id !== deleteConfirmId));
+      setDeleteConfirmId(null);
+      showToast("Message deleted successfully");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete message");
+    }
+  };
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(""), 3000);
+  };
+
+  const handleDeleteMessage = (msgId: number) => {
+    setDeleteConfirmId(msgId);
+  };
+
   return (
     <AdminShell>
       <div className="flex h-[calc(100vh-80px)] overflow-hidden pt-6 pb-6">
@@ -309,7 +333,7 @@ export default function MessagesPage() {
                     return (
                       <div key={msg.id} className={`flex ${isOutgoing ? 'justify-end' : 'justify-start'}`}>
                         <div 
-                          className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-sm ${
+                          className={`relative group max-w-[70%] rounded-2xl px-4 py-2.5 text-sm ${
                             isOutgoing 
                               ? 'bg-purple-bright text-white rounded-tr-sm' 
                               : 'bg-card text-white border border-border rounded-tl-sm'
@@ -332,6 +356,15 @@ export default function MessagesPage() {
                           <p className={`text-[10px] mt-1 text-right ${isOutgoing ? 'text-white/70' : 'text-muted-2'}`}>
                             {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                           </p>
+                          <button 
+                            onClick={() => handleDeleteMessage(msg.id)}
+                            className={`absolute top-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-bg-deep rounded-full border border-border shadow-md ${
+                              isOutgoing ? '-left-10 text-red-400 hover:text-red-300' : '-right-10 text-red-400 hover:text-red-300'
+                            }`}
+                            title="Delete Message"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                         </div>
                       </div>
                     );
@@ -407,18 +440,65 @@ export default function MessagesPage() {
               </div>
             </>
           ) : (
-            <div className="flex flex-col h-full items-center justify-center text-center p-8">
-              <div className="h-16 w-16 rounded-full bg-card border border-border flex items-center justify-center mb-4">
-                <MessageCircle className="h-8 w-8 text-muted-2" />
+            <div className="flex flex-col h-full items-center justify-center p-8 text-center bg-gradient-to-br from-bg-deep to-bg-dark">
+              <div className="h-20 w-20 rounded-full bg-card flex items-center justify-center border border-border/50 mb-6 shadow-xl shadow-purple-bright/5">
+                <MessageCircle className="h-10 w-10 text-purple-bright" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Your Messages</h3>
-              <p className="text-sm text-muted-2 max-w-sm">
-                Select a conversation from the left sidebar to start chatting with your users.
+              <h2 className="text-xl font-bold text-white mb-2">EZTrade Messenger</h2>
+              <p className="text-muted-2 text-sm max-w-sm">
+                Select a conversation from the left to view message history or start a new chat.
               </p>
             </div>
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-bg-deep border border-border rounded-2xl p-6 shadow-2xl max-w-sm w-full mx-4">
+            <h3 className="text-lg font-bold text-white mb-2">Delete Message?</h3>
+            <p className="text-sm text-muted-2 mb-6">
+              This action cannot be undone. The message will be permanently removed for everyone in this chat.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button 
+                onClick={() => setDeleteConfirmId(null)}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-white bg-card border border-border hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDelete}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-white bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="flex items-center gap-3 rounded-xl border border-success/20 bg-card p-4 shadow-[0_10px_40px_rgba(34,197,94,0.15)]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success/10 text-success">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Success</p>
+              <p className="text-xs text-muted-2">{toastMsg}</p>
+            </div>
+            <button 
+              onClick={() => setToastMsg("")}
+              className="ml-4 text-muted hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </AdminShell>
   );
 }

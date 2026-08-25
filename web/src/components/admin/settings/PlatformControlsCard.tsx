@@ -6,6 +6,8 @@ import { webApi } from "@/lib/api";
 
 type PlatformControls = {
   maintenance_mode: boolean;
+  maintenance_title: string;
+  maintenance_message: string;
   min_deposit: number;
   min_withdrawal: number;
   deposit_fee_percent: number;
@@ -15,6 +17,8 @@ type PlatformControls = {
 export function PlatformControlsCard({ onShowToast }: { onShowToast?: (msg: string) => void }) {
   const [controls, setControls] = useState<PlatformControls>({
     maintenance_mode: false,
+    maintenance_title: "Under Maintenance",
+    maintenance_message: "We are currently performing scheduled maintenance to improve the platform. Please check back later.",
     min_deposit: 10,
     min_withdrawal: 20,
     deposit_fee_percent: 0,
@@ -86,6 +90,31 @@ export function PlatformControlsCard({ onShowToast }: { onShowToast?: (msg: stri
             />
           </button>
         </div>
+
+        {controls.maintenance_mode && (
+          <div className="space-y-4 rounded-xl border border-border bg-bg/30 p-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-white">Maintenance Title</label>
+              <input
+                type="text"
+                value={controls.maintenance_title || ""}
+                onChange={(e) => setControls(c => ({ ...c, maintenance_title: e.target.value }))}
+                className="w-full rounded-xl border border-border bg-bg/50 px-4 py-2.5 text-sm text-white focus:border-purple-bright focus:outline-none transition-colors"
+                placeholder="e.g. Under Maintenance"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-white">Maintenance Message</label>
+              <textarea
+                value={controls.maintenance_message || ""}
+                onChange={(e) => setControls(c => ({ ...c, maintenance_message: e.target.value }))}
+                rows={3}
+                className="w-full rounded-xl border border-border bg-bg/50 px-4 py-2.5 text-sm text-white focus:border-purple-bright focus:outline-none transition-colors"
+                placeholder="Message explaining the maintenance..."
+              />
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-2">

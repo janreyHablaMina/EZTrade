@@ -22,6 +22,8 @@ class SystemSettingsController extends Controller
             case 'platform_controls':
                 return [
                     'maintenance_mode' => false,
+                    'maintenance_title' => 'Under Maintenance',
+                    'maintenance_message' => 'We are currently performing scheduled maintenance to improve the platform. Please check back later.',
                     'min_deposit' => 10,
                     'min_withdrawal' => 20,
                     'deposit_fee_percent' => 0,
@@ -105,6 +107,33 @@ class SystemSettingsController extends Controller
         return response()->json([
             'message' => 'Settings updated successfully',
             'settings' => $payload
+        ]);
+    }
+
+    public function getAppStatus()
+    {
+        $setting = DB::table('settings')->where('key', 'platform_controls')->first();
+        $maintenanceMode = false;
+        $maintenanceTitle = 'Under Maintenance';
+        $maintenanceMessage = 'We are currently performing scheduled maintenance to improve the platform. Please check back later.';
+
+        if ($setting) {
+            $data = json_decode($setting->value, true);
+            if (isset($data['maintenance_mode'])) {
+                $maintenanceMode = (bool) $data['maintenance_mode'];
+            }
+            if (!empty($data['maintenance_title'])) {
+                $maintenanceTitle = $data['maintenance_title'];
+            }
+            if (!empty($data['maintenance_message'])) {
+                $maintenanceMessage = $data['maintenance_message'];
+            }
+        }
+        
+        return response()->json([
+            'maintenance_mode' => $maintenanceMode,
+            'maintenance_title' => $maintenanceTitle,
+            'maintenance_message' => $maintenanceMessage,
         ]);
     }
 }

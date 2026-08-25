@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, Alert, Platform } from 'react-native';
+import { StyleSheet, View, Alert, Platform, Text, Modal } from 'react-native';
 import {
   BottomTabBar,
   type TabKey,
@@ -71,6 +71,8 @@ export function MainApp({
     useState<WithdrawRequest | null>(null);
   const [systemSettings, setSystemSettings] = useState<any>(null);
   const [isMaintenance, setIsMaintenance] = useState(false);
+  const [maintenanceTitle, setMaintenanceTitle] = useState('Under Maintenance');
+  const [maintenanceMessage, setMaintenanceMessage] = useState('We are currently performing scheduled maintenance to improve the platform. Please check back later.');
 
   const lastSeenNotifRef = useRef<string | null>(null);
 
@@ -98,13 +100,27 @@ export function MainApp({
 
     const intervalId = setInterval(async () => {
       try {
-        const response = await fetch(`${LOCAL_API_URL}/api/notifications`);
-        if (!response.ok) return;
+        // Poll notifications
+        const notifResponse = await fetch(`${LOCAL_API_URL}/api/notifications`);
+        if (notifResponse.ok) {
+          const data = await notifResponse.json();
+          if (data && data.id && data.id !== lastSeenNotifRef.current) {
+            lastSeenNotifRef.current = data.id;
+            Alert.alert(data.title, data.message, [{ text: 'Dismiss' }]);
+          }
+        }
         
-        const data = await response.json();
-        if (data && data.id && data.id !== lastSeenNotifRef.current) {
-          lastSeenNotifRef.current = data.id;
-          Alert.alert(data.title, data.message, [{ text: 'Dismiss' }]);
+        // Poll maintenance status
+        const statusResponse = await fetch(`${LOCAL_API_URL}/api/app-status?t=${Date.now()}`, {
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+          if (statusData && typeof statusData.maintenance_mode === 'boolean') {
+            setIsMaintenance(statusData.maintenance_mode);
+            setMaintenanceTitle(statusData.maintenance_title || 'Under Maintenance');
+            setMaintenanceMessage(statusData.maintenance_message || 'We are currently performing scheduled maintenance to improve the platform. Please check back later.');
+          }
         }
       } catch (err) {
         // Silently fail if server is down or unreachable
@@ -128,17 +144,6 @@ export function MainApp({
     setOverlay('transactions');
   };
   const hideTabs = Boolean(walletStep) || overlay !== null;
-
-  if (isMaintenance) {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-        <Text style={{ color: '#fff', fontSize: 24, fontWeight: 'bold', marginBottom: 12 }}>Under Maintenance</Text>
-        <Text style={{ color: '#A0A0A0', fontSize: 16, textAlign: 'center', lineHeight: 24 }}>
-          We are currently performing scheduled maintenance to improve the platform. Please check back later.
-        </Text>
-      </View>
-    );
-  }
 
   let screen = (
     <HomeScreen
@@ -278,6 +283,19 @@ export function MainApp({
           onChange={setTab}
         />
       )}
+      <Modal visible={isMaintenance} animationType="fade" transparent={true}>
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
+          <View style={{ height: 80, width: 80, borderRadius: 40, backgroundColor: '#3b0764', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
+            <Text style={{ fontSize: 32 }}>🚧</Text>
+          </View>
+          <Text style={{ color: '#fff', fontSize: 28, fontWeight: 'bold', marginBottom: 12, textAlign: 'center' }}>
+            {maintenanceTitle}
+          </Text>
+          <Text style={{ color: '#A0A0A0', fontSize: 16, textAlign: 'center', lineHeight: 24 }}>
+            {maintenanceMessage}
+          </Text>
+        </View>
+      </Modal>
     </View>
   );
 }
