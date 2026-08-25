@@ -6,20 +6,7 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 import { apiClient } from '../lib/api';
 
-const FILTERS = ['All', 'Deposit', 'Profit', 'Withdraw'] as const;
-type Filter = (typeof FILTERS)[number];
-type TxType = 'deposit' | 'profit' | 'withdraw';
-
-type Transaction = {
-  id: string;
-  type: TxType;
-  title: string;
-  subtitle: string;
-  amount: string;
-  positive: boolean;
-  status: 'Completed' | 'Pending' | 'Approved' | 'Rejected';
-  created_at: string;
-};
+import { Filter, TxType, Transaction } from '../types';
 
 type TransactionsScreenProps = {
   user: any;
@@ -105,10 +92,10 @@ export function TransactionsScreen({
   }, [user?.id]);
 
   const items = useMemo(() => {
-    const live: Transaction[] = pendingWithdraw
+    const live: any[] = pendingWithdraw
       ? [
           {
-            id: 'live-withdraw',
+            id: 'pending',
             type: 'withdraw',
             title: 'USDT Withdraw',
             subtitle: `Today · ${pendingWithdraw.network.split(' ')[0]}`,
@@ -121,16 +108,18 @@ export function TransactionsScreen({
       : [];
     const all = [...live, ...transactions];
     if (filter === 'All') return all;
-    const type = filter.toLowerCase() as TxType;
+    const type = filter.toLowerCase();
     return all.filter((item) => item.type === type);
-  }, [filter, pendingWithdraw]);
+  }, [filter, transactions, pendingWithdraw]);
+
+  const FILTERS_LIST = ['All', 'Deposit', 'Profit', 'Withdraw'];
 
   return (
     <View style={styles.root}>
       <ScreenHeader title="Transactions" onBack={onBack} />
 
       <View style={styles.filters}>
-        <FilterChips items={FILTERS} value={filter} onChange={setFilter} />
+        <FilterChips items={FILTERS_LIST} value={filter} onChange={setFilter} />
       </View>
 
       <ScrollView

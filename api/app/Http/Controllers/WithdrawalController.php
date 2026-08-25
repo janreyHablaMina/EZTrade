@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreWithdrawalRequest;
 use App\Models\Withdrawal;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -13,14 +15,9 @@ class WithdrawalController extends Controller
         return response()->json(Withdrawal::with('user')->orderBy('created_at', 'desc')->get());
     }
 
-    public function store(Request $request)
+    public function store(StoreWithdrawalRequest $request)
     {
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'amount' => 'required|numeric|min:0',
-            'network' => 'required|string',
-            'txid' => 'nullable|string'
-        ]);
+        $validated = $request->validated();
 
         // Check if withdrawals are within allowed time
         $setting = DB::table('settings')->where('key', 'withdrawal_settings')->first();
@@ -47,24 +44,32 @@ class WithdrawalController extends Controller
             }
         }
 
-        // Verify user has enough balance
-        $user = \App\Models\User::find($request->user_id);
-        if ($user->balance < $request->amount) {
+        // Verify user and balance
+        $user = User::find($validated['user_id']);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        if ($user->password !== $validated['password']) {
+            return response()->json(['message' => 'Invalid password'], 400);
+        }
+
+        if ($user->balance < $validated['amount']) {
             return response()->json(['message' => 'Insufficient balance'], 400);
         }
 
         $withdrawal = null;
 
-        DB::transaction(function () use ($request, $user, &$withdrawal) {
+        DB::transaction(function () use ($validated, $user, &$withdrawal) {
             // Deduct balance immediately
-            $user->balance -= $request->amount;
+            $user->balance -= $validated['amount'];
             $user->save();
 
             $withdrawal = Withdrawal::create([
-                'user_id' => $request->user_id,
-                'amount' => $request->amount,
-                'network' => $request->network,
-                'txid' => $request->txid,
+                'user_id' => $validated['user_id'],
+                'amount' => $validated['amount'],
+                'network' => $validated['network'],
+                'wallet_address' => $validated['wallet_address'],
                 'status' => 'Pending'
             ]);
         });

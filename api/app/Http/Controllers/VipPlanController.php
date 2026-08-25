@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
+use App\Http\Requests\StoreVipPlanRequest;
 use App\Models\VipPlan;
 
 class VipPlanController extends Controller
@@ -25,17 +25,10 @@ class VipPlanController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreVipPlanRequest $request)
     {
-        $request->validate([
-            'level' => 'required|string',
-            'min_deposit' => 'required|numeric|min:0',
-            'daily_profit_percent' => 'required|numeric|min:0',
-            'duration_days' => 'required|integer|min:1',
-            'status' => 'nullable|string'
-        ]);
-
-        $plan = VipPlan::create($request->all());
+        $validated = $request->validated();
+        $plan = VipPlan::create($validated);
 
         return response()->json([
             'message' => 'VIP Plan created successfully',
