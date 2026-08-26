@@ -8,9 +8,14 @@ import {
   Text,
   TextInput,
   View,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
+import { apiClient } from '../lib/api';
 import { AmountField } from '../components/AmountField';
-import { Receipt } from '../components/Icons';
+import { ConfirmModal } from '../components/ConfirmModal';
+import { Receipt, Eye, EyeOff, CheckCircle } from '../components/Icons';
 import { NetworkPicker } from '../components/NetworkPicker';
 import { NoteRow } from '../components/NoteRow';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -43,6 +48,7 @@ type WithdrawScreenProps = {
   request?: { amount: number; network: string } | null;
   onRequested?: (req: { amount: number; network: string } | null) => void;
   systemSettings?: any;
+  user?: any;
 };
 
 export function WithdrawScreen({
@@ -51,6 +57,7 @@ export function WithdrawScreen({
   request,
   onRequested,
   systemSettings,
+  user,
 }: WithdrawScreenProps) {
   const [amount, setAmount] = useState('');
   const [address, setAddress] = useState('');
@@ -58,7 +65,21 @@ export function WithdrawScreen({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [settings, setSettings] = useState<{ is_enabled: boolean; start_time: string; end_time: string } | null>(null);
   const [open, setOpen] = useState(true);
-  const submitted = Boolean(request);
+  const [withdrawalPassword, setWithdrawalPassword] = useState('');
+  const [setupPassword1, setSetupPassword1] = useState('');
+  const [setupPassword2, setSetupPassword2] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [showPwdSetup1, setShowPwdSetup1] = useState(false);
+  const [showPwdSetup2, setShowPwdSetup2] = useState(false);
+  const [showPwdWithdraw, setShowPwdWithdraw] = useState(false);
+  
+  const [passwordSetSuccess, setPasswordSetSuccess] = useState(false);
+  const [hasPasswordLocal, setHasPasswordLocal] = useState(false);
+  const [modalState, setModalState] = useState<{ visible: boolean; title: string; message: string }>({ visible: false, title: '', message: '' });
+  
+  const [submittedLocal, setSubmittedLocal] = useState(Boolean(request));
+  const submitted = submittedLocal || Boolean(request);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -87,33 +108,177 @@ export function WithdrawScreen({
     fetchSettings();
   }, []);
 
+  const minWithdrawal = systemSettings?.platform_controls?.min_withdrawal ?? MIN_USDT;
+  const withdrawFeePercent = systemSettings?.platform_controls?.withdrawal_fee_percent ?? (WITHDRAW_FEE_RATE * 100);
+  const withdrawFeeRate = withdrawFeePercent / 100;
+
   const entered = parseAmount(amount);
   const parsed = request?.amount ?? entered;
   const hasAmount = Number.isFinite(parsed) && parsed > 0;
-  const { fee: handlingFee, receive } = hasAmount
-    ? withdrawPayout(parsed)
-    : { fee: 0, receive: 0 };
+  const handlingFee = hasAmount ? parsed * withdrawFeeRate : 0;
+  const receive = hasAmount ? parsed - handlingFee : 0;
+
   const displayNetwork = request?.network ?? getNetwork(networkId).label;
   const validAmount =
-    Number.isFinite(entered) && entered >= MIN_USDT && entered <= AVAILABLE;
+    Number.isFinite(entered) && entered >= minWithdrawal && entered <= AVAILABLE;
   const amountError = amount.trim().length > 0 && !validAmount;
   const canSubmit = open && validAmount && address.trim().length > 0;
 
   const handleRequestWithdraw = () => {
     const numAmount = parseFloat(amount.replace(/[^0-9.]/g, '') || '0');
     if (!numAmount || numAmount <= 0) {
-      Alert.alert('Invalid Amount', 'Please enter a valid amount.');
+      setModalState({ visible: true, title: 'Invalid Amount', message: 'Please enter a valid amount.' });
       return;
     }
-    const minWithdrawal = systemSettings?.platform_controls?.min_withdrawal ?? 20;
     if (numAmount < minWithdrawal) {
-      Alert.alert('Minimum Limit', `The minimum withdrawal amount is $${minWithdrawal}.`);
+      setModalState({ visible: true, title: 'Minimum Limit', message: `The minimum withdrawal amount is $${minWithdrawal}.` });
       return;
     }
 
     if (!address) return;
-    onRequested?.({ amount: numAmount, network: getNetwork(networkId).label });
+    if (!withdrawalPassword) {
+      setModalState({ visible: true, title: 'Password Required', message: 'Please enter your withdrawal password.' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    apiClient.post('/withdrawals', {
+      amount: numAmount,
+      network: getNetwork(networkId).label,
+      wallet_address: address,
+      withdrawal_password: withdrawalPassword,
+      user_id: user?.id
+    }).then(() => {
+      setSubmittedLocal(true);
+      onRequested?.({ amount: numAmount, network: getNetwork(networkId).label });
+    }).catch(err => {
+      setModalState({ visible: true, title: 'Error', message: err.message || 'Failed to submit withdrawal' });
+    }).finally(() => {
+      setIsSubmitting(false);
+    });
   };
+
+  const handleSetupPassword = () => {
+    if (!setupPassword1 || setupPassword1.length < 6) {
+      setModalState({ visible: true, title: 'Error', message: 'Password must be at least 6 characters.' });
+      return;
+    }
+    if (setupPassword1 !== setupPassword2) {
+      setModalState({ visible: true, title: 'Error', message: 'Passwords do not match.' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    apiClient.post(`/users/${user?.id}/withdrawal-password`, {
+      password: setupPassword1
+    }).then((res) => {
+      setPasswordSetSuccess(true);
+    }).catch(err => {
+      setModalState({ visible: true, title: 'Error', message: err.message || 'Failed to set password.' });
+    }).finally(() => {
+      setIsSubmitting(false);
+    });
+  };
+
+  if (passwordSetSuccess) {
+    return (
+      <View style={[styles.root, { padding: 24, justifyContent: 'center', alignItems: 'center' }]}>
+        <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(34, 197, 94, 0.15)', alignItems: 'center', justifyContent: 'center', marginBottom: 28, borderWidth: 1, borderColor: 'rgba(74, 222, 128, 0.3)' }}>
+          <CheckCircle size={40} color="#4ade80" />
+        </View>
+        <Text style={[styles.successTitle, { textAlign: 'center', fontSize: 28, color: '#4ade80' }]}>Secured!</Text>
+        <Text style={[styles.intro, { textAlign: 'center', paddingHorizontal: 10, marginTop: 8, fontSize: 15 }]}>
+          Your withdrawal password has been set successfully. Keep it safe, as it cannot be recovered!
+        </Text>
+        <View style={{ width: '100%', marginTop: 40 }}>
+          <PrimaryButton 
+            label="Continue to Withdraw"
+            onPress={() => {
+              if (user) {
+                user.has_withdrawal_password = true; // Mutate for parent cache
+                SecureStore.setItemAsync('saved_user', JSON.stringify(user)).catch(console.warn);
+              }
+              setHasPasswordLocal(true);
+              setPasswordSetSuccess(false);
+            }}
+          />
+        </View>
+      </View>
+    );
+  }
+
+  const hasPassword = user?.has_withdrawal_password || hasPasswordLocal;
+
+  if (user && !hasPassword) {
+    return (
+      <>
+        <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScreenHeader title="Setup Password" onBack={onBack} />
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <View style={[styles.card, { borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.05)' }]}>
+            <Text style={[styles.successTitle, { color: '#ef4444', fontSize: 18 }]}>Important Notice</Text>
+            <Text style={[styles.intro, { color: '#fca5a5' }]}>
+              You must set a withdrawal password before you can withdraw funds. {'\n\n'}
+              <Text style={{ fontFamily: 'Outfit_800ExtraBold' }}>WARNING:</Text> This password CANNOT be changed or recovered if you forget it. Please write it down and store it securely.
+            </Text>
+          </View>
+
+          <Text style={styles.fieldLabel}>Withdrawal Password</Text>
+          <View style={styles.field}>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter 6+ characters"
+              placeholderTextColor="rgba(255,255,255,0.32)"
+              secureTextEntry={!showPwdSetup1}
+              value={setupPassword1}
+              onChangeText={setSetupPassword1}
+            />
+            <Pressable
+              onPress={() => setShowPwdSetup1(!showPwdSetup1)}
+              style={styles.eyeBtn}
+            >
+              {showPwdSetup1 ? <EyeOff size={20} color="rgba(255,255,255,0.4)" /> : <Eye size={20} color="rgba(255,255,255,0.4)" />}
+            </Pressable>
+          </View>
+
+          <Text style={styles.fieldLabel}>Confirm Password</Text>
+          <View style={styles.field}>
+            <TextInput
+              style={styles.input}
+              placeholder="Re-enter password"
+              placeholderTextColor="rgba(255,255,255,0.32)"
+              secureTextEntry={!showPwdSetup2}
+              value={setupPassword2}
+              onChangeText={setSetupPassword2}
+            />
+            <Pressable
+              onPress={() => setShowPwdSetup2(!showPwdSetup2)}
+              style={styles.eyeBtn}
+            >
+                {showPwdSetup2 ? <EyeOff size={20} color="rgba(255,255,255,0.4)" /> : <Eye size={20} color="rgba(255,255,255,0.4)" />}
+              </Pressable>
+            </View>
+          </ScrollView>
+          <View style={styles.footer}>
+            <PrimaryButton
+              label={isSubmitting ? 'Setting up...' : 'Set Password'}
+              onPress={handleSetupPassword}
+              disabled={isSubmitting || !setupPassword1 || !setupPassword2}
+            />
+          </View>
+        </KeyboardAvoidingView>
+        <ConfirmModal
+          visible={modalState.visible}
+          title={modalState.title}
+          message={modalState.message}
+          hideCancel
+          confirmLabel="OK"
+          onConfirm={() => setModalState({ ...modalState, visible: false })}
+          onCancel={() => setModalState({ ...modalState, visible: false })}
+        />
+      </>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -147,7 +312,7 @@ export function WithdrawScreen({
             <Text style={styles.successTitle}>Withdraw requested</Text>
             <Text style={styles.intro}>
               You will receive {receive.toFixed(2)} USDT on {displayNetwork}{' '}
-              after the {WITHDRAW_FEE_RATE * 100}% handling fee. We process
+              after the {withdrawFeePercent}% handling fee. We process
               withdrawals from {hourClockLabel(WITHDRAW_PROCESS_FROM_HOUR)} to
               12:00 AM.
             </Text>
@@ -191,7 +356,7 @@ export function WithdrawScreen({
                   amountError
                     ? entered > AVAILABLE
                       ? 'Not enough available balance.'
-                      : `Minimum withdraw is ${MIN_USDT} USDT.`
+                      : `Minimum withdraw is ${minWithdrawal} USDT.`
                     : null
                 }
               />
@@ -206,7 +371,7 @@ export function WithdrawScreen({
                   </View>
                   <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>
-                      Handling fee ({WITHDRAW_FEE_RATE * 100}%)
+                      Handling fee ({withdrawFeePercent}%)
                     </Text>
                     <Text style={styles.summaryFee}>
                       -{handlingFee.toFixed(2)} USDT
@@ -244,9 +409,28 @@ export function WithdrawScreen({
               </View>
 
               <NoteRow>
-                Minimum {MIN_USDT} USDT. A {WITHDRAW_FEE_RATE * 100}% handling
+                Minimum {minWithdrawal} USDT. A {withdrawFeePercent}% handling
                 fee is deducted from the amount you withdraw.
               </NoteRow>
+
+              <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Withdrawal Password</Text>
+              <View style={styles.field}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your withdrawal password"
+                  placeholderTextColor="rgba(255,255,255,0.32)"
+                  secureTextEntry={!showPwdWithdraw}
+                  editable={open}
+                  value={withdrawalPassword}
+                  onChangeText={setWithdrawalPassword}
+                />
+                <Pressable
+                  onPress={() => setShowPwdWithdraw(!showPwdWithdraw)}
+                  style={styles.eyeBtn}
+                >
+                  {showPwdWithdraw ? <EyeOff size={20} color="rgba(255,255,255,0.4)" /> : <Eye size={20} color="rgba(255,255,255,0.4)" />}
+                </Pressable>
+              </View>
               {!open ? (
                 <Text style={styles.closedHint}>
                   Come back between {settings?.start_time} and {settings?.end_time} server time to submit a request.
@@ -267,12 +451,22 @@ export function WithdrawScreen({
           </>
         ) : (
           <PrimaryButton
-            label={open ? 'Withdraw' : `Opens at ${settings?.start_time || ''}`}
+            label={open ? (isSubmitting ? 'Submitting...' : 'Withdraw') : `Opens at ${settings?.start_time || ''}`}
             onPress={handleRequestWithdraw}
-            disabled={!canSubmit}
+            disabled={!canSubmit || isSubmitting}
           />
         )}
       </View>
+
+      <ConfirmModal
+        visible={modalState.visible}
+        title={modalState.title}
+        message={modalState.message}
+        hideCancel
+        confirmLabel="OK"
+        onConfirm={() => setModalState({ ...modalState, visible: false })}
+        onCancel={() => setModalState({ ...modalState, visible: false })}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -466,6 +660,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.white,
     paddingVertical: 12,
+  },
+  eyeBtn: {
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   footer: {
     paddingHorizontal: 20,

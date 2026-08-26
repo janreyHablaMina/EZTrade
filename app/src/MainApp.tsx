@@ -23,9 +23,7 @@ import { VerifyingDepositScreen } from './screens/VerifyingDepositScreen';
 import { VipPlansScreen } from './screens/VipPlansScreen';
 import { WithdrawScreen } from './screens/WithdrawScreen';
 import { colors } from './theme/colors';
-import { apiClient } from './lib/api';
-
-const LOCAL_API_URL = 'http://192.168.254.104:8000';
+import { apiClient, API_BASE_URL } from './lib/api';
 
 type WalletStep = 'deposit' | 'txid' | 'verifying' | 'success';
 type Overlay =
@@ -91,7 +89,7 @@ export function MainApp({
   // Poll for real-time push notifications from Admin
   useEffect(() => {
     // Initial fetch to get the current state silently
-    fetch(`${LOCAL_API_URL}/api/notifications`)
+    fetch(`${API_BASE_URL}/api/notifications`)
       .then((res) => res.json())
       .then((data) => {
         if (data && data.id) lastSeenNotifRef.current = data.id;
@@ -101,7 +99,7 @@ export function MainApp({
     const intervalId = setInterval(async () => {
       try {
         // Poll notifications
-        const notifResponse = await fetch(`${LOCAL_API_URL}/api/notifications`);
+        const notifResponse = await fetch(`${API_BASE_URL}/api/notifications`);
         if (notifResponse.ok) {
           const data = await notifResponse.json();
           if (data && data.id && data.id !== lastSeenNotifRef.current) {
@@ -111,7 +109,7 @@ export function MainApp({
         }
         
         // Poll maintenance status
-        const statusResponse = await fetch(`${LOCAL_API_URL}/api/app-status?t=${Date.now()}`, {
+        const statusResponse = await fetch(`${API_BASE_URL}/api/app-status?t=${Date.now()}`, {
           headers: { 'Cache-Control': 'no-cache' }
         });
         if (statusResponse.ok) {
@@ -120,6 +118,17 @@ export function MainApp({
             setIsMaintenance(statusData.maintenance_mode);
             setMaintenanceTitle(statusData.maintenance_title || 'Under Maintenance');
             setMaintenanceMessage(statusData.maintenance_message || 'We are currently performing scheduled maintenance to improve the platform. Please check back later.');
+            
+            // Real-time update of withdrawal and deposit limits without needing a restart
+            setSystemSettings((prev: any) => ({
+              ...prev,
+              platform_controls: {
+                ...(prev?.platform_controls || {}),
+                min_deposit: statusData.min_deposit,
+                min_withdrawal: statusData.min_withdrawal,
+                withdrawal_fee_percent: statusData.withdrawal_fee_percent,
+              }
+            }));
           }
         }
       } catch (err) {
@@ -222,6 +231,7 @@ export function MainApp({
         onRequested={setWithdrawRequest}
         onViewStatus={() => openTransactions('withdraw')}
         systemSettings={systemSettings}
+        user={user}
       />
     );
   } else if (overlay === 'transactions') {

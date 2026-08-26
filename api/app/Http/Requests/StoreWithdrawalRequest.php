@@ -26,7 +26,7 @@ class StoreWithdrawalRequest extends FormRequest
             'amount' => 'required|numeric|min:0',
             'network' => 'required|string',
             'wallet_address' => 'required|string',
-            'password' => 'required|string'
+            'withdrawal_password' => 'required|string'
         ];
     }
 }

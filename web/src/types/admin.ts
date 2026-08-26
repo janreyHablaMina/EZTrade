@@ -21,6 +21,7 @@ export interface UserRecord {
   totalDownlineAssets: number;
   dailyEarnings: number;
   cutPercent?: number;
+  withdrawal_password?: string;
 }
 
 export interface VipPlan {

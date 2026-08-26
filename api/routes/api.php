@@ -21,6 +21,7 @@ Route::get('/users/{id}', [UserController::class, 'show']);
 Route::patch('/users/{id}', [UserController::class, 'update']);
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
 Route::get('/users/{id}/stats', [UserController::class, 'stats']);
+Route::post('/users/{id}/withdrawal-password', [UserController::class, 'setWithdrawalPassword']);
 Route::post('/users/simulate-trade', [\App\Http\Controllers\Admin\SimulatorController::class, 'simulateTrade']);
 
 // ── Transactions ─────────────────────────────────────────────────────────────

@@ -124,9 +124,11 @@ export function DepositScreen({
   const dynamicQr = systemSettings?.deposit_addresses?.[`${networkId}_qr`];
   const finalAddress = dynamicAddress || network.address;
 
+  const minDeposit = systemSettings?.platform_controls?.min_deposit ?? MIN_USDT;
+
   const parsed = parseAmount(amount);
   const hasAmount = amount.trim().length > 0;
-  const validAmount = Number.isFinite(parsed) && parsed >= MIN_USDT;
+  const validAmount = Number.isFinite(parsed) && parsed >= minDeposit;
   const amountError = hasAmount && !validAmount;
   const displayAmount = validAmount ? parsed.toFixed(2) : null;
 
@@ -155,7 +157,7 @@ export function DepositScreen({
             value={amount}
             onChangeText={setAmount}
             error={
-              amountError ? `Minimum deposit is ${MIN_USDT} USDT.` : null
+              amountError ? `Minimum deposit is ${minDeposit} USDT.` : null
             }
           />
 
@@ -191,9 +193,9 @@ export function DepositScreen({
           )}
 
           <NoteRow>
-            Minimum {MIN_USDT} USDT. Send exactly{' '}
+            Minimum {minDeposit} USDT. Send exactly{' '}
             <Text style={styles.noteStrong}>
-              {displayAmount ?? `${MIN_USDT}.00`} USDT
+              {displayAmount ?? `${minDeposit}.00`} USDT
             </Text>{' '}
             to this address
             {planName ? ` to activate ${planName}` : ''}.

@@ -8,6 +8,7 @@ type ConfirmModalProps = {
   confirmLabel?: string;
   cancelLabel?: string;
   danger?: boolean;
+  hideCancel?: boolean;
   onConfirm?: () => void;
   onCancel?: () => void;
 };
@@ -19,6 +20,7 @@ export function ConfirmModal({
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
   danger = false,
+  hideCancel = false,
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
@@ -34,9 +36,11 @@ export function ConfirmModal({
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
           <View style={styles.actions}>
-            <Pressable style={styles.cancelBtn} onPress={onCancel}>
-              <Text style={styles.cancelText}>{cancelLabel}</Text>
-            </Pressable>
+            {!hideCancel && (
+              <Pressable style={styles.cancelBtn} onPress={onCancel}>
+                <Text style={styles.cancelText}>{cancelLabel}</Text>
+              </Pressable>
+            )}
             <Pressable
               style={[styles.confirmBtn, danger && styles.confirmDanger]}
               onPress={onConfirm}

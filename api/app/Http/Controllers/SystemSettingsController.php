@@ -113,9 +113,13 @@ class SystemSettingsController extends Controller
     public function getAppStatus()
     {
         $setting = DB::table('settings')->where('key', 'platform_controls')->first();
+        
         $maintenanceMode = false;
         $maintenanceTitle = 'Under Maintenance';
         $maintenanceMessage = 'We are currently performing scheduled maintenance to improve the platform. Please check back later.';
+        $minDeposit = 10;
+        $minWithdrawal = 20;
+        $withdrawalFeePercent = 1;
 
         if ($setting) {
             $data = json_decode($setting->value, true);
@@ -128,12 +132,24 @@ class SystemSettingsController extends Controller
             if (!empty($data['maintenance_message'])) {
                 $maintenanceMessage = $data['maintenance_message'];
             }
+            if (isset($data['min_deposit'])) {
+                $minDeposit = (float) $data['min_deposit'];
+            }
+            if (isset($data['min_withdrawal'])) {
+                $minWithdrawal = (float) $data['min_withdrawal'];
+            }
+            if (isset($data['withdrawal_fee_percent'])) {
+                $withdrawalFeePercent = (float) $data['withdrawal_fee_percent'];
+            }
         }
         
         return response()->json([
             'maintenance_mode' => $maintenanceMode,
             'maintenance_title' => $maintenanceTitle,
             'maintenance_message' => $maintenanceMessage,
+            'min_deposit' => $minDeposit,
+            'min_withdrawal' => $minWithdrawal,
+            'withdrawal_fee_percent' => $withdrawalFeePercent,
         ]);
     }
 }

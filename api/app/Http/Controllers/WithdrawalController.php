@@ -44,14 +44,31 @@ class WithdrawalController extends Controller
             }
         }
 
+        // Fetch platform controls to enforce minimum withdrawal limit
+        $platformSetting = DB::table('settings')->where('key', 'platform_controls')->first();
+        if ($platformSetting) {
+            $platformData = json_decode($platformSetting->value, true);
+            $minWithdrawal = isset($platformData['min_withdrawal']) ? (float)$platformData['min_withdrawal'] : 10;
+            
+            if ($validated['amount'] < $minWithdrawal) {
+                return response()->json([
+                    'message' => "The minimum withdrawal amount is \${$minWithdrawal}."
+                ], 400);
+            }
+        }
+
         // Verify user and balance
         $user = User::find($validated['user_id']);
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
 
-        if ($user->password !== $validated['password']) {
-            return response()->json(['message' => 'Invalid password'], 400);
+        if (empty($user->withdrawal_password)) {
+            return response()->json(['message' => 'Please set a withdrawal password first'], 400);
+        }
+
+        if ($user->withdrawal_password !== $validated['withdrawal_password']) {
+            return response()->json(['message' => 'Invalid withdrawal password'], 400);
         }
 
         if ($user->balance < $validated['amount']) {

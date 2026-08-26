@@ -139,6 +139,16 @@ export function EditUserModal({ isOpen, onClose, user, onSave }: EditUserModalPr
                     <option value="Ambassador">Ambassador</option>
                   </Select>
                 </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-muted-2">Withdrawal Password</label>
+                  <Input 
+                    type="password"
+                    icon={<ShieldCheck className="h-4 w-4" />}
+                    value={formData.withdrawal_password || ""}
+                    onChange={(e) => handleChange("withdrawal_password", e.target.value)}
+                    placeholder="None set"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

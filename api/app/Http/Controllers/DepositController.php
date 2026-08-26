@@ -18,6 +18,19 @@ class DepositController extends Controller
     {
         $validated = $request->validated();
 
+        // Fetch platform controls to enforce minimum deposit limit
+        $platformSetting = DB::table('settings')->where('key', 'platform_controls')->first();
+        if ($platformSetting) {
+            $platformData = json_decode($platformSetting->value, true);
+            $minDeposit = isset($platformData['min_deposit']) ? (float)$platformData['min_deposit'] : 10;
+            
+            if ($validated['amount'] < $minDeposit) {
+                return response()->json([
+                    'message' => "The minimum deposit amount is \${$minDeposit}."
+                ], 400);
+            }
+        }
+
         $deposit = Deposit::create([
             'user_id' => $validated['user_id'],
             'amount' => $validated['amount'],

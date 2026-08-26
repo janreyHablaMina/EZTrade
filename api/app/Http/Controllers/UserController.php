@@ -10,7 +10,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        return response()->json(User::with('vipPlan')->orderBy('created_at', 'desc')->get());
+        return response()->json(User::with('vipPlan')->orderBy('created_at', 'desc')->get()->makeVisible('withdrawal_password'));
     }
     public function globalStats()
     {
@@ -50,7 +50,7 @@ class UserController extends Controller
 
     public function show($id)
     {
-        return User::with('vipPlan')->findOrFail($id);
+        return User::with('vipPlan')->findOrFail($id)->makeVisible('withdrawal_password');
     }
 
     public function stats($id)
@@ -105,7 +105,8 @@ class UserController extends Controller
             'role' => 'sometimes|in:User,Ambassador',
             'status' => 'sometimes|in:Active,Inactive,Suspended',
             'kyc_status' => 'sometimes|in:Verified,Not Verified',
-            'vipLevel' => 'nullable|string'
+            'vipLevel' => 'nullable|string',
+            'withdrawal_password' => 'nullable|string'
         ]);
 
         // Map vipLevel to vip_plan_id
@@ -137,5 +138,29 @@ class UserController extends Controller
         $user->delete();
 
         return response()->json(['message' => 'User deleted successfully']);
+    }
+
+    public function setWithdrawalPassword(Request $request, $id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        if (!empty($user->withdrawal_password)) {
+            return response()->json(['message' => 'Withdrawal password has already been set and cannot be changed.'], 403);
+        }
+
+        $validated = $request->validate([
+            'password' => 'required|string|min:6'
+        ]);
+
+        $user->withdrawal_password = $validated['password'];
+        $user->save();
+
+        return response()->json([
+            'message' => 'Withdrawal password set successfully',
+            'user' => $user->load('vipPlan')
+        ]);
     }
 }

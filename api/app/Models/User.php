@@ -29,8 +29,9 @@ class User extends Authenticatable
         'kyc_status',
         'referral_code',
         'referred_by',
+        'withdrawal_password',
     ];
-    protected $hidden = ['password', 'remember_token', 'otp'];
+    protected $hidden = ['password', 'remember_token', 'otp', 'withdrawal_password'];
 
     /**
      * Get the attributes that should be cast.
@@ -71,7 +72,7 @@ class User extends Authenticatable
         return $this->hasMany(TradingCodeRedemption::class);
     }
 
-    protected $appends = ['team_size'];
+    protected $appends = ['team_size', 'has_withdrawal_password'];
 
     public function getTeamSizeAttribute()
     {
@@ -91,5 +92,10 @@ class User extends Authenticatable
         }
         
         return $size;
+    }
+
+    public function getHasWithdrawalPasswordAttribute()
+    {
+        return !empty($this->withdrawal_password);
     }
 }

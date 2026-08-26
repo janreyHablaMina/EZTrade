@@ -55,6 +55,7 @@ export default function UsersPage() {
       status: u.status || "Active",
       teamSize: u.team_size || 0,
       referralCode: u.referral_code || null,
+      withdrawal_password: u.withdrawal_password || "",
       registeredAt: new Date(u.created_at).toLocaleDateString('en-US', {
         year: 'numeric', month: 'short', day: 'numeric',
         hour: '2-digit', minute: '2-digit'
@@ -208,7 +209,8 @@ export default function UsersPage() {
         vipLevel: updatedUser.vipLevel,
         role: updatedUser.role,
         status: updatedUser.status,
-        kyc_status: updatedUser.kycStatus
+        kyc_status: updatedUser.kycStatus,
+        withdrawal_password: updatedUser.withdrawal_password
       });
       await mutateUsers();
       setEditingUser(null);
