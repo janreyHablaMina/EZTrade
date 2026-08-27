@@ -16,7 +16,7 @@ import { ScreenHeader } from '../components';
 import { Send, Paperclip, X } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { apiClient } from '../lib/api';
-import { SERVER_URL } from '../lib/api';
+import { API_BASE_URL } from '../lib/api';
 import { colors } from '../theme/colors';
 
 type Message = {
@@ -196,7 +196,7 @@ export function MessagesScreen({ onBack, user }: MessagesScreenProps) {
                     {msg.images.map((img, i) => (
                       <Image 
                         key={i}
-                        source={{ uri: `${SERVER_URL.replace('/api', '')}/${img}` }}
+                        source={{ uri: `${API_BASE_URL.replace('/api', '')}/${img}` }}
                         style={[styles.messageImage, msg.images!.length > 1 ? styles.messageImageMulti : null]}
                         resizeMode="cover"
                       />
@@ -222,7 +222,7 @@ export function MessagesScreen({ onBack, user }: MessagesScreenProps) {
                     {msg.images.map((img, i) => (
                       <Image 
                         key={i}
-                        source={{ uri: `${SERVER_URL.replace('/api', '')}/${img}` }}
+                        source={{ uri: `${API_BASE_URL.replace('/api', '')}/${img}` }}
                         style={[styles.messageImage, msg.images!.length > 1 ? styles.messageImageMulti : null]}
                         resizeMode="cover"
                       />

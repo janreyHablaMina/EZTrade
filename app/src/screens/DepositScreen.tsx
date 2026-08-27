@@ -6,13 +6,12 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
   Image,
 } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
-import { AmountField } from '../components/AmountField';
 import { Copy } from '../components/Icons';
-import { NetworkPicker } from '../components/NetworkPicker';
 import { NoteRow } from '../components/NoteRow';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -21,15 +20,16 @@ import {
   MIN_USDT,
   type NetworkId,
   getNetwork,
+  NETWORKS,
   parseAmount,
 } from '../lib/wallet';
 import { colors } from '../theme/colors';
-import { SERVER_URL } from '../lib/api';
+import { API_BASE_URL } from '../lib/api';
 
 const STEPS = [
-  'Send payment to the address',
-  'Get the Transaction ID (TXID)',
-  'Enter TXID in the next step',
+  'Send payment to the address below',
+  'Get the Transaction ID (TXID) from your wallet',
+  'Enter the TXID in the next step to verify',
 ] as const;
 
 type DepositScreenProps = {
@@ -115,9 +115,9 @@ export function DepositScreen({
   onSentPayment,
 }: DepositScreenProps) {
   const [networkId, setNetworkId] = useState<NetworkId>('trc20');
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [amount, setAmount] = useState(initialAmount);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const network = getNetwork(networkId);
   const dynamicAddress = systemSettings?.deposit_addresses?.[`${networkId}_address`];
@@ -149,28 +149,68 @@ export function DepositScreen({
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        bounces={true}
       >
+        {/* Network Selection Tabs (Exchange Style) */}
+        <Text style={styles.sectionTitle}>Select Network</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.networkTabs}>
+          {NETWORKS.map((net) => {
+            const isSelected = networkId === net.id;
+            return (
+              <Pressable
+                key={net.id}
+                onPress={() => {
+                  setNetworkId(net.id as NetworkId);
+                  setCopied(false);
+                }}
+                style={[
+                  styles.networkTab,
+                  isSelected && styles.networkTabSelected,
+                ]}
+              >
+                <Text style={[
+                  styles.networkTabText,
+                  isSelected && styles.networkTabTextSelected
+                ]}>
+                  {net.label.split(' ')[0]} {/* e.g. TRC20 */}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+
+        {/* Massive Amount Input Area */}
+        <View style={styles.amountArea}>
+          <Text style={styles.sectionTitle}>Deposit Amount</Text>
+          <View style={[styles.massiveInputContainer, focusedField === 'amount' && styles.massiveInputFocused]}>
+            <TextInput
+              style={styles.massiveInput}
+              placeholder="0.00"
+              placeholderTextColor="rgba(255,255,255,0.2)"
+              keyboardType="numeric"
+              value={amount}
+              onChangeText={setAmount}
+              onFocus={() => setFocusedField('amount')}
+              onBlur={() => setFocusedField(null)}
+            />
+            <View style={styles.amountAddons}>
+              <Text style={styles.currencySuffix}>USDT</Text>
+            </View>
+          </View>
+          
+          <View style={styles.balanceInfoRow}>
+            <Text style={styles.availableText}>{planName ? `Plan: ${planName}` : 'Enter amount to deposit'}</Text>
+            {amountError && (
+              <Text style={styles.errorText}>
+                Min. {minDeposit} USDT
+              </Text>
+            )}
+          </View>
+        </View>
+
+        {/* Transfer Details Card */}
+        <Text style={[styles.sectionTitle, { marginTop: 8 }]}>Transfer Details</Text>
         <View style={styles.card}>
-          <Text style={styles.intro}>Send USDT to the address below</Text>
-
-          <AmountField
-            value={amount}
-            onChangeText={setAmount}
-            error={
-              amountError ? `Minimum deposit is ${minDeposit} USDT.` : null
-            }
-          />
-
-          <NetworkPicker
-            value={networkId}
-            open={pickerOpen}
-            onOpenChange={setPickerOpen}
-            onChange={(id) => {
-              setNetworkId(id);
-              setCopied(false);
-            }}
-          />
-
           <Text style={styles.fieldLabel}>Receiving Address</Text>
           <View style={styles.field}>
             <Text style={styles.addressText} numberOfLines={1}>
@@ -180,11 +220,11 @@ export function DepositScreen({
               <Copy size={16} color="rgba(255,255,255,0.6)" strokeWidth={2} />
             </Pressable>
           </View>
-          {copied ? <Text style={styles.copied}>Address copied</Text> : null}
+          {copied ? <Text style={styles.copied}>Address copied!</Text> : null}
 
           {dynamicQr ? (
             <Image 
-              source={{ uri: `${SERVER_URL.replace('/api', '')}/${dynamicQr}` }} 
+              source={{ uri: `${API_BASE_URL.replace('/api', '')}/${dynamicQr}` }} 
               style={styles.qrImage} 
               resizeMode="contain" 
             />
@@ -231,44 +271,126 @@ export function DepositScreen({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    backgroundColor: colors.bgDeep,
   },
   content: {
     paddingHorizontal: 20,
-    paddingBottom: 16,
-    gap: 16,
+    paddingTop: 10,
+    paddingBottom: 40,
   },
-  card: {
-    backgroundColor: colors.cardFill,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 24,
-    padding: 18,
-    overflow: 'visible',
-    zIndex: 2,
+  sectionTitle: {
+    fontFamily: 'Outfit_600SemiBold',
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.85)',
+    marginBottom: 12,
+    letterSpacing: 0.3,
   },
-  intro: {
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.58)',
-    marginBottom: 16,
+  
+  /* --- Network Selection Tabs --- */
+  networkTabs: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingRight: 20,
+    marginBottom: 28,
   },
-  fieldLabel: {
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.45)',
-    marginBottom: 8,
-  },
-  field: {
-    minHeight: 52,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(167, 139, 250, 0.22)',
+  networkTab: {
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 12,
     backgroundColor: 'rgba(255,255,255,0.04)',
-    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  networkTabSelected: {
+    backgroundColor: 'rgba(168, 85, 247, 0.15)',
+    borderColor: colors.purpleBright,
+  },
+  networkTabText: {
+    fontFamily: 'Outfit_600SemiBold',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.5)',
+  },
+  networkTabTextSelected: {
+    color: colors.purpleBright,
+  },
+
+  /* --- Massive Amount Area --- */
+  amountArea: {
+    marginBottom: 24,
+  },
+  massiveInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+    paddingBottom: 12,
+    marginBottom: 12,
+  },
+  massiveInputFocused: {
+    borderBottomColor: colors.purpleBright,
+  },
+  massiveInput: {
+    flex: 1,
+    fontFamily: 'Outfit_800ExtraBold',
+    fontSize: 48,
+    color: colors.white,
+    paddingVertical: 0,
+    includeFontPadding: false,
+    lineHeight: 56,
+  },
+  amountAddons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  currencySuffix: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 18,
+    color: 'rgba(255,255,255,0.6)',
+  },
+  balanceInfoRow: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    alignItems: 'center',
+  },
+  availableText: {
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.5)',
+  },
+  errorText: {
+    fontFamily: 'Outfit_600SemiBold',
+    fontSize: 13,
+    color: '#ef4444',
+  },
+
+  /* --- Form Card --- */
+  card: {
+    backgroundColor: 'rgba(18, 16, 31, 0.7)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 24,
+  },
+  fieldLabel: {
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.55)',
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  field: {
+    minHeight: 56,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   addressText: {
     flex: 1,
@@ -286,37 +408,43 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(124, 58, 237, 0.16)',
   },
   copied: {
-    marginTop: -8,
-    marginBottom: 10,
+    marginTop: -4,
+    marginBottom: 12,
     fontFamily: 'Outfit_500Medium',
     fontSize: 12,
     color: colors.green,
   },
   qrFrame: {
     alignSelf: 'center',
-    marginTop: 6,
-    marginBottom: 18,
-    padding: 8,
-    borderRadius: 16,
-    backgroundColor: colors.white,
+    marginTop: 8,
+    marginBottom: 20,
+    padding: 12,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    shadowColor: '#fff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
   },
   qrImage: {
     alignSelf: 'center',
-    marginTop: 6,
-    marginBottom: 18,
-    width: 200,
-    height: 200,
-    borderRadius: 16,
-    backgroundColor: colors.white,
+    marginTop: 8,
+    marginBottom: 20,
+    width: 180,
+    height: 180,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.95)',
   },
   noteStrong: {
     fontFamily: 'Outfit_700Bold',
     color: colors.white,
   },
+
+  /* --- Steps --- */
   steps: {
     gap: 14,
     paddingHorizontal: 4,
-    paddingBottom: 8,
   },
   stepRow: {
     flexDirection: 'row',
@@ -329,22 +457,28 @@ const styles = StyleSheet.create({
     borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(124, 58, 237, 0.4)',
+    backgroundColor: 'rgba(124, 58, 237, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(124, 58, 237, 0.5)',
   },
   stepBadgeText: {
     fontFamily: 'Outfit_700Bold',
     fontSize: 12,
-    color: colors.white,
+    color: colors.purpleBright,
   },
   stepText: {
     flex: 1,
     fontFamily: 'Outfit_500Medium',
     fontSize: 14,
-    color: 'rgba(255,255,255,0.82)',
+    color: 'rgba(255,255,255,0.6)',
   },
+
   footer: {
     paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 24,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 32 : 24,
+    backgroundColor: colors.bgDeep,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
   },
 });
