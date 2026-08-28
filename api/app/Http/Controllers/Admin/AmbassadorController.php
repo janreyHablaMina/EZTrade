@@ -4,24 +4,30 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Deposit;
+use App\Models\EarningsLog;
+use App\Helpers\SettingsHelper;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AmbassadorController extends Controller
 {
-    protected function getAllDownlineIds($userId)
+    /**
+     * Get all downline IDs using an in-memory collection to avoid N+1 queries.
+     */
+    protected function getAllDownlineIds(int $userId, $allUsers): array
     {
         $allDownlineIds = [];
         $currentLevelIds = [$userId];
 
         while (!empty($currentLevelIds)) {
-            $nextLevelIds = \App\Models\User::whereIn('referred_by', $currentLevelIds)
+            $nextLevelIds = $allUsers
+                ->whereIn('referred_by', $currentLevelIds)
                 ->pluck('id')
                 ->toArray();
-                
-            if (empty($nextLevelIds)) {
-                break;
-            }
-            
+
+            if (empty($nextLevelIds)) break;
+
             $allDownlineIds = array_merge($allDownlineIds, $nextLevelIds);
             $currentLevelIds = $nextLevelIds;
         }
@@ -31,37 +37,29 @@ class AmbassadorController extends Controller
 
     public function index()
     {
-        // Fetch all users with role 'Ambassador'
-        $ambassadors = User::where('role', 'Ambassador')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // Load all users once to avoid N+1 inside map
+        $allUsers = User::all();
+        $ambassadors = $allUsers->where('role', 'Ambassador')->sortByDesc('created_at');
 
-        $data = $ambassadors->map(function ($ambassador) {
-            // Get all downline users recursively
-            $downlineIds = $this->getAllDownlineIds($ambassador->id);
-            $downline = User::whereIn('id', $downlineIds)->get();
-            $downlineCount = count($downlineIds);
-            
-            // Total assets (balance) of downline
-            $totalDownlineAssets = $downline->sum('balance');
-            
-            // "Daily Earnings (5%)" - as requested in mock, calculate 5% of downline assets as a placeholder admin earnings metric
+        $data = $ambassadors->map(function ($ambassador) use ($allUsers) {
+            $downlineIds = $this->getAllDownlineIds($ambassador->id, $allUsers);
+            $totalDownlineAssets = $allUsers->whereIn('id', $downlineIds)->sum('balance');
             $dailyEarnings = $totalDownlineAssets * 0.05;
 
             return [
-                'id' => 'AMB' . str_pad($ambassador->id, 4, '0', STR_PAD_LEFT),
-                'dbId' => $ambassador->id,
-                'name' => $ambassador->name,
-                'email' => $ambassador->email,
-                'status' => $ambassador->status ?? 'Active',
-                'registeredAt' => $ambassador->created_at,
-                'teamSize' => $downlineCount + 1,
-                'downlineCount' => $downlineCount,
+                'id'                  => 'AMB' . str_pad($ambassador->id, 4, '0', STR_PAD_LEFT),
+                'dbId'                => $ambassador->id,
+                'name'                => $ambassador->name,
+                'email'               => $ambassador->email,
+                'status'              => $ambassador->status ?? 'Active',
+                'registeredAt'        => $ambassador->created_at,
+                'teamSize'            => count($downlineIds) + 1,
+                'downlineCount'       => count($downlineIds),
                 'totalDownlineAssets' => $totalDownlineAssets,
-                'dailyEarnings' => $dailyEarnings,
-                'referralCode' => $ambassador->referral_code ?? 'N/A',
+                'dailyEarnings'       => $dailyEarnings,
+                'referralCode'        => $ambassador->referral_code ?? 'N/A',
             ];
-        });
+        })->values();
 
         return response()->json($data);
     }
@@ -69,139 +67,128 @@ class AmbassadorController extends Controller
     public function show($id)
     {
         $ambassador = User::findOrFail($id);
-        
-        $downlineIds = $this->getAllDownlineIds($ambassador->id);
-        $downline = User::whereIn('id', $downlineIds)->get();
-        $downlineCount = count($downlineIds);
-        $totalDownlineAssets = $downline->sum('balance');
-        $deposits = \App\Models\Deposit::whereIn('user_id', $downlineIds)
-            ->where('status', 'Approved')
-            ->get();
-        
-        $totalDownlineDeposits = $deposits->sum('amount');
-        
-        // Calculate Active Trade Capital (only users with active VIP plans)
-        $usersWithPlans = User::with('vipPlan')
+
+        // Pre-load all users once for tree traversal — eliminates N+1
+        $allUsers = User::all()->keyBy('id');
+        $downlineIds = $this->getAllDownlineIds($ambassador->id, User::all());
+
+        $totalDownlineAssets = $allUsers->whereIn('id', $downlineIds)->sum('balance');
+        $totalDownlineDeposits = Deposit::whereIn('user_id', $downlineIds)->where('status', 'Approved')->sum('amount');
+
+        $activeTradeCapital = User::with('vipPlan')
             ->whereIn('id', $downlineIds)
             ->where('status', 'Active')
             ->whereNotNull('vip_plan_id')
-            ->get();
-            
-        $activeTradeCapital = $usersWithPlans->sum(fn($u) => $u->vipPlan->min_deposit ?? 0);
-        
+            ->get()
+            ->sum(fn($u) => $u->vipPlan->min_deposit ?? 0);
+
         $directReferralEarnings = 0;
         $minusBonuses = 0;
         $totalReferralGiven = 0;
-        
-        $usersWithApprovedDeposits = \App\Models\Deposit::with('user')->where('status', 'Approved')->select('user_id')->distinct()->get();
-        
-        foreach ($usersWithApprovedDeposits as $record) {
-            $firstDeposit = \App\Models\Deposit::where('user_id', $record->user_id)->where('status', 'Approved')->orderBy('created_at', 'asc')->first();
-            if ($firstDeposit && $firstDeposit->user && $firstDeposit->user->referred_by) {
-                
-                $rates = \App\Helpers\SettingsHelper::getReferralRates();
-                $level = 1;
-                $totalBonusPaidOut = 0;
-                $currentUplineId = $firstDeposit->user->referred_by;
-                
-                while ($currentUplineId && $level <= 3) {
-                    $upline = \App\Models\User::find($currentUplineId);
-                    if (!$upline) break;
-                    
-                    $bonus = $firstDeposit->amount * $rates[$level];
-                    $totalBonusPaidOut += $bonus;
-                    
-                    if ($upline->id === $ambassador->id) {
-                        $directReferralEarnings += $bonus;
-                    }
-                    
-                    $currentUplineId = $upline->referred_by;
-                    $level++;
-                }
-                
-                $uplineId = $firstDeposit->user->referred_by;
-                $foundAmbassadorId = null;
-                while ($uplineId) {
-                    $upline = \App\Models\User::find($uplineId);
-                    if (!$upline) break;
-                    if ($upline->role === 'Ambassador') {
-                        $foundAmbassadorId = $upline->id;
-                        break;
-                    }
-                    $uplineId = $upline->referred_by;
-                }
-                
-                if ($foundAmbassadorId === $ambassador->id) {
-                    $minusBonuses += $totalBonusPaidOut / 2; // Ambassador pays 50%
-                    $totalReferralGiven += $totalBonusPaidOut;
-                }
+        $rates = SettingsHelper::getReferralRates();
+
+        // Load first approved deposit per user in one query
+        $firstDeposits = Deposit::where('status', 'Approved')
+            ->whereIn('id', function($q) {
+                $q->select(DB::raw('MIN(id)'))->from('deposits')->where('status', 'Approved')->groupBy('user_id');
+            })->get();
+
+        foreach ($firstDeposits as $firstDeposit) {
+            $user = $allUsers->get($firstDeposit->user_id);
+            if (!$user || !$user->referred_by) continue;
+
+            $level = 1;
+            $totalBonusPaidOut = 0;
+            $currentUplineId = $user->referred_by;
+
+            while ($currentUplineId && $level <= 3) {
+                $upline = $allUsers->get($currentUplineId);
+                if (!$upline) break;
+                $bonus = $firstDeposit->amount * ($rates[$level] ?? 0);
+                $totalBonusPaidOut += $bonus;
+                if ($upline->id === $ambassador->id) $directReferralEarnings += $bonus;
+                $currentUplineId = $upline->referred_by;
+                $level++;
+            }
+
+            $uplineId = $user->referred_by;
+            $foundAmbassadorId = null;
+            while ($uplineId) {
+                $upline = $allUsers->get($uplineId);
+                if (!$upline) break;
+                if ($upline->role === 'Ambassador') { $foundAmbassadorId = $upline->id; break; }
+                $uplineId = $upline->referred_by;
+            }
+
+            if ($foundAmbassadorId === $ambassador->id) {
+                $minusBonuses += $totalBonusPaidOut / 2;
+                $totalReferralGiven += $totalBonusPaidOut;
             }
         }
-        
-        $earningsLogs = \App\Models\EarningsLog::where('user_id', $ambassador->id)->get();
+
+        $earningsLogs = EarningsLog::where('user_id', $ambassador->id)->get();
         $grossAssets = $earningsLogs->sum('amount') + $directReferralEarnings;
-        
-        $netBalance = $ambassador->balance;
 
         return response()->json([
-            'id' => 'EZT-' . str_pad($ambassador->id, 4, '0', STR_PAD_LEFT),
-            'dbId' => $ambassador->id,
-            'name' => $ambassador->name,
-            'email' => $ambassador->email,
-            'phone' => $ambassador->phone ?? 'N/A',
-            'status' => $ambassador->status ?? 'Active',
-            'kycStatus' => $ambassador->kyc_status ?? 'Not Verified',
-            'registeredAt' => $ambassador->created_at->format('M d, Y, h:i A'),
-            'balance' => $ambassador->balance ?? 0,
-            'teamSize' => $downlineCount + 1,
-            'downlineCount' => $downlineCount,
+            'id'               => 'EZT-' . str_pad($ambassador->id, 4, '0', STR_PAD_LEFT),
+            'dbId'             => $ambassador->id,
+            'name'             => $ambassador->name,
+            'email'            => $ambassador->email,
+            'phone'            => $ambassador->phone ?? 'N/A',
+            'status'           => $ambassador->status ?? 'Active',
+            'kycStatus'        => $ambassador->kyc_status ?? 'Not Verified',
+            'registeredAt'     => $ambassador->created_at->format('M d, Y, h:i A'),
+            'balance'          => $ambassador->balance ?? 0,
+            'teamSize'         => count($downlineIds) + 1,
+            'downlineCount'    => count($downlineIds),
             'activeTradeCapital' => $activeTradeCapital,
-            'dailyEarnings' => 0, // unused
-            'referralCode' => $ambassador->referral_code ?? 'N/A',
-            'financials' => [
+            'dailyEarnings'    => 0,
+            'referralCode'     => $ambassador->referral_code ?? 'N/A',
+            'financials'       => [
                 'totalDownlineDeposits' => $totalDownlineDeposits,
-                'activeTradeCapital' => $activeTradeCapital,
-                'grossAssets' => $grossAssets,
-                'minusBonuses' => $minusBonuses,
-                'totalReferralGiven' => $totalReferralGiven,
-                'netBalance' => $netBalance,
-            ]
+                'activeTradeCapital'    => $activeTradeCapital,
+                'grossAssets'           => $grossAssets,
+                'minusBonuses'          => $minusBonuses,
+                'totalReferralGiven'    => $totalReferralGiven,
+                'netBalance'            => $ambassador->balance,
+            ],
         ]);
     }
 
     public function downline($id)
     {
         $ambassador = User::findOrFail($id);
-        $downlineIds = $this->getAllDownlineIds($ambassador->id);
-        $users = User::with('vipPlan')
-            ->whereIn('id', $downlineIds)
-            ->orderBy('created_at', 'desc')
-            ->get();
-        return response()->json($users);
+        $allUsers = User::all();
+        $downlineIds = $this->getAllDownlineIds($ambassador->id, $allUsers);
+
+        return response()->json(
+            User::with('vipPlan')->whereIn('id', $downlineIds)->orderBy('created_at', 'desc')->get()
+        );
     }
 
     public function earnings($id)
     {
         $ambassador = User::findOrFail($id);
-        $earningsLogs = \App\Models\EarningsLog::with('sourceUser')
+        $allUsers = User::all();
+        $rates = SettingsHelper::getReferralRates();
+
+        $earningsLogs = EarningsLog::with('sourceUser')
             ->where('user_id', $ambassador->id)
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $earnings = $earningsLogs->map(function($log) {
-            return [
-                'id' => 'L'.$log->id,
-                'user' => $log->sourceUser,
-                'deposit_amount' => $log->deposit_amount,
-                'gross_cut' => $log->amount,
-                'deduction' => 0,
-                'direct_bonus' => 0,
-                'net_earnings' => $log->amount,
-                'created_at' => $log->created_at,
-            ];
-        })->toArray();
-        
-        $downlineIds = $this->getAllDownlineIds($ambassador->id);
+        $earnings = $earningsLogs->map(fn($log) => [
+            'id'             => 'L' . $log->id,
+            'user'           => $log->sourceUser,
+            'deposit_amount' => $log->deposit_amount,
+            'gross_cut'      => $log->amount,
+            'deduction'      => 0,
+            'direct_bonus'   => 0,
+            'net_earnings'   => $log->amount,
+            'created_at'     => $log->created_at,
+        ])->toArray();
+
+        $downlineIds = $this->getAllDownlineIds($ambassador->id, $allUsers);
         $usersWithPlans = User::with('vipPlan')
             ->whereIn('id', $downlineIds)
             ->where('status', 'Active')
@@ -210,25 +197,22 @@ class AmbassadorController extends Controller
             ->get();
 
         foreach ($usersWithPlans as $user) {
-            if ($user->vipPlan && in_array($user->id, $downlineIds)) {
-                $rates = \App\Helpers\SettingsHelper::getReferralRates();
-                $directBonus = $user->vipPlan->min_deposit * $rates[1];
+            if ($user->vipPlan) {
+                $directBonus = $user->vipPlan->min_deposit * ($rates[1] ?? 0);
                 $earnings[] = [
-                    'id' => 'D'.$user->id,
-                    'user' => $user,
+                    'id'             => 'D' . $user->id,
+                    'user'           => $user,
                     'deposit_amount' => $user->vipPlan->min_deposit,
-                    'gross_cut' => $directBonus,
-                    'deduction' => 0,
-                    'direct_bonus' => $directBonus,
-                    'net_earnings' => $directBonus,
-                    'created_at' => $user->updated_at,
+                    'gross_cut'      => $directBonus,
+                    'deduction'      => 0,
+                    'direct_bonus'   => $directBonus,
+                    'net_earnings'   => $directBonus,
+                    'created_at'     => $user->updated_at,
                 ];
             }
         }
-        
-        usort($earnings, function($a, $b) {
-            return strtotime($b['created_at']) - strtotime($a['created_at']);
-        });
+
+        usort($earnings, fn($a, $b) => strtotime($b['created_at']) - strtotime($a['created_at']));
 
         return response()->json($earnings);
     }
@@ -236,40 +220,30 @@ class AmbassadorController extends Controller
     public function simulateDay($id)
     {
         $ambassador = User::findOrFail($id);
-        
-        $downlineIds = $this->getAllDownlineIds($ambassador->id);
-        
+        $allUsers = User::all();
+        $downlineIds = $this->getAllDownlineIds($ambassador->id, $allUsers);
+
+        $activeTradeCapital = 0;
         $users = User::with('vipPlan')
             ->whereIn('id', $downlineIds)
             ->where('status', 'Active')
             ->whereNotNull('vip_plan_id')
             ->get();
-            
-        $activeTradeCapital = 0;
-            
+
         foreach ($users as $user) {
-            $plan = $user->vipPlan;
-            if ($plan) {
-                // User gets their profit
-                $profit = $plan->min_deposit * ($plan->daily_profit_percent / 100);
-                $user->balance += $profit;
+            if ($user->vipPlan) {
+                $user->balance += $user->vipPlan->min_deposit * ($user->vipPlan->daily_profit_percent / 100);
                 $user->save();
-                
-                $activeTradeCapital += $plan->min_deposit;
+                $activeTradeCapital += $user->vipPlan->min_deposit;
             }
         }
 
-        // 2. Ambassador and Admin get 5% of Active Trade Capital
         $ambBonus = $activeTradeCapital * 0.05;
-        $adminBonus = $activeTradeCapital * 0.05;
-
-        // NOTE: We do NOT save to DB here. This is purely for UI interaction.
-        $simulatedBalance = $ambassador->balance + $ambBonus;
 
         return response()->json([
-            'message' => 'Simulated 1 day passing.',
-            'amb_bonus' => $ambBonus,
-            'new_balance' => $simulatedBalance
+            'message'     => 'Simulated 1 day passing.',
+            'amb_bonus'   => $ambBonus,
+            'new_balance' => $ambassador->balance + $ambBonus,
         ]);
     }
 }
