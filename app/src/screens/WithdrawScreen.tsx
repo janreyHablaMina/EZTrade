@@ -69,9 +69,8 @@ export function WithdrawScreen({
   const [showPwdSetup2, setShowPwdSetup2] = useState(false);
   const [showPwdWithdraw, setShowPwdWithdraw] = useState(false);
   
-  const [passwordSetSuccess, setPasswordSetSuccess] = useState(false);
   const [hasPasswordLocal, setHasPasswordLocal] = useState(false);
-  const [modalState, setModalState] = useState<{ visible: boolean; title: string; message: string }>({ visible: false, title: '', message: '' });
+  const [modalState, setModalState] = useState<{ visible: boolean; title: string; message: string; isSuccess?: boolean }>({ visible: false, title: '', message: '' });
   
   const [submittedLocal, setSubmittedLocal] = useState(Boolean(request));
   const submitted = submittedLocal || Boolean(request);
@@ -167,7 +166,7 @@ export function WithdrawScreen({
     apiClient.post(`/users/${user?.id}/withdrawal-password`, {
       password: setupPassword1
     }).then((res) => {
-      setPasswordSetSuccess(true);
+      setModalState({ visible: true, title: 'Secured!', message: 'Your withdrawal password has been set successfully. Please keep it safe, as it cannot be recovered.', isSuccess: true });
     }).catch(err => {
       setModalState({ visible: true, title: 'Error', message: err.message || 'Failed to set password.' });
     }).finally(() => {
@@ -183,35 +182,18 @@ export function WithdrawScreen({
     ];
   };
 
-  if (passwordSetSuccess) {
-    return (
-      <View style={[styles.root, { padding: 24, justifyContent: 'center', alignItems: 'center' }]}>
-        <View style={styles.successGlow} />
-        <View style={styles.successIconContainer}>
-          <CheckCircle size={48} color="#4ade80" />
-        </View>
-        <Text style={[styles.successTitle, { textAlign: 'center', fontSize: 32, color: '#4ade80', marginTop: 24 }]}>Secured!</Text>
-        <Text style={[styles.intro, { textAlign: 'center', paddingHorizontal: 20, marginTop: 12, fontSize: 16, color: 'rgba(255,255,255,0.7)' }]}>
-          Your withdrawal password has been set successfully. Keep it safe, as it cannot be recovered!
-        </Text>
-        <View style={{ width: '100%', marginTop: 48 }}>
-          <PrimaryButton 
-            label="Continue to Withdraw"
-            onPress={() => {
-              if (user) {
-                user.has_withdrawal_password = true;
-                SecureStore.setItemAsync('saved_user', JSON.stringify(user)).catch(console.warn);
-              }
-              setHasPasswordLocal(true);
-              setPasswordSetSuccess(false);
-            }}
-          />
-        </View>
-      </View>
-    );
-  }
-
   const hasPassword = user?.has_withdrawal_password || hasPasswordLocal;
+
+  const closeAndHandleModal = () => {
+    if (modalState.isSuccess) {
+      if (user) {
+        user.has_withdrawal_password = true;
+        SecureStore.setItemAsync('saved_user', JSON.stringify(user)).catch(console.warn);
+      }
+      setHasPasswordLocal(true);
+    }
+    setModalState({ ...modalState, visible: false, isSuccess: false });
+  };
 
   if (user && !hasPassword) {
     return (
@@ -281,8 +263,8 @@ export function WithdrawScreen({
           message={modalState.message}
           hideCancel
           confirmLabel="OK"
-          onConfirm={() => setModalState({ ...modalState, visible: false })}
-          onCancel={() => setModalState({ ...modalState, visible: false })}
+          onConfirm={closeAndHandleModal}
+          onCancel={closeAndHandleModal}
         />
       </>
     );
