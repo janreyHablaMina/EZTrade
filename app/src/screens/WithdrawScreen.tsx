@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -10,28 +10,23 @@ import {
   View,
   Alert,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { apiClient } from '../lib/api';
-import { AmountField } from '../components/AmountField';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { Receipt, Eye, EyeOff, CheckCircle } from '../components/Icons';
-import { NetworkPicker } from '../components/NetworkPicker';
-import { NoteRow } from '../components/NoteRow';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
 import {
-  ENFORCE_WITHDRAW_WINDOW,
   MIN_USDT,
   WITHDRAW_FEE_RATE,
   WITHDRAW_PROCESS_FROM_HOUR,
-  WITHDRAW_REQUEST_UNTIL_HOUR,
   type NetworkId,
   getNetwork,
+  NETWORKS,
   hourClockLabel,
-  isWithdrawOpen,
   parseAmount,
-  withdrawPayout,
 } from '../lib/wallet';
 import { colors } from '../theme/colors';
 
@@ -62,13 +57,13 @@ export function WithdrawScreen({
   const [amount, setAmount] = useState('');
   const [address, setAddress] = useState('');
   const [networkId, setNetworkId] = useState<NetworkId>('trc20');
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [settings, setSettings] = useState<{ is_enabled: boolean; start_time: string; end_time: string } | null>(null);
   const [open, setOpen] = useState(true);
   const [withdrawalPassword, setWithdrawalPassword] = useState('');
   const [setupPassword1, setSetupPassword1] = useState('');
   const [setupPassword2, setSetupPassword2] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   
   const [showPwdSetup1, setShowPwdSetup1] = useState(false);
   const [showPwdSetup2, setShowPwdSetup2] = useState(false);
@@ -180,22 +175,31 @@ export function WithdrawScreen({
     });
   };
 
+  const getFieldStyle = (fieldName: string, isError: boolean = false) => {
+    return [
+      styles.field,
+      focusedField === fieldName && styles.fieldFocused,
+      isError && styles.fieldError
+    ];
+  };
+
   if (passwordSetSuccess) {
     return (
       <View style={[styles.root, { padding: 24, justifyContent: 'center', alignItems: 'center' }]}>
-        <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(34, 197, 94, 0.15)', alignItems: 'center', justifyContent: 'center', marginBottom: 28, borderWidth: 1, borderColor: 'rgba(74, 222, 128, 0.3)' }}>
-          <CheckCircle size={40} color="#4ade80" />
+        <View style={styles.successGlow} />
+        <View style={styles.successIconContainer}>
+          <CheckCircle size={48} color="#4ade80" />
         </View>
-        <Text style={[styles.successTitle, { textAlign: 'center', fontSize: 28, color: '#4ade80' }]}>Secured!</Text>
-        <Text style={[styles.intro, { textAlign: 'center', paddingHorizontal: 10, marginTop: 8, fontSize: 15 }]}>
+        <Text style={[styles.successTitle, { textAlign: 'center', fontSize: 32, color: '#4ade80', marginTop: 24 }]}>Secured!</Text>
+        <Text style={[styles.intro, { textAlign: 'center', paddingHorizontal: 20, marginTop: 12, fontSize: 16, color: 'rgba(255,255,255,0.7)' }]}>
           Your withdrawal password has been set successfully. Keep it safe, as it cannot be recovered!
         </Text>
-        <View style={{ width: '100%', marginTop: 40 }}>
+        <View style={{ width: '100%', marginTop: 48 }}>
           <PrimaryButton 
             label="Continue to Withdraw"
             onPress={() => {
               if (user) {
-                user.has_withdrawal_password = true; // Mutate for parent cache
+                user.has_withdrawal_password = true;
                 SecureStore.setItemAsync('saved_user', JSON.stringify(user)).catch(console.warn);
               }
               setHasPasswordLocal(true);
@@ -215,16 +219,16 @@ export function WithdrawScreen({
         <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScreenHeader title="Setup Password" onBack={onBack} />
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <View style={[styles.card, { borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.05)' }]}>
-            <Text style={[styles.successTitle, { color: '#ef4444', fontSize: 18 }]}>Important Notice</Text>
-            <Text style={[styles.intro, { color: '#fca5a5' }]}>
+          <View style={[styles.card, styles.alertCard]}>
+            <Text style={[styles.successTitle, { color: '#ef4444', fontSize: 20 }]}>Important Notice</Text>
+            <Text style={[styles.intro, { color: '#fca5a5', fontSize: 15 }]}>
               You must set a withdrawal password before you can withdraw funds. {'\n\n'}
-              <Text style={{ fontFamily: 'Outfit_800ExtraBold' }}>WARNING:</Text> This password CANNOT be changed or recovered if you forget it. Please write it down and store it securely.
+              <Text style={{ fontFamily: 'Outfit_800ExtraBold', color: '#ff8a8a' }}>WARNING:</Text> This password CANNOT be changed or recovered if you forget it. Please write it down and store it securely.
             </Text>
           </View>
 
           <Text style={styles.fieldLabel}>Withdrawal Password</Text>
-          <View style={styles.field}>
+          <View style={getFieldStyle('setup1')}>
             <TextInput
               style={styles.input}
               placeholder="Enter 6+ characters"
@@ -232,17 +236,19 @@ export function WithdrawScreen({
               secureTextEntry={!showPwdSetup1}
               value={setupPassword1}
               onChangeText={setSetupPassword1}
+              onFocus={() => setFocusedField('setup1')}
+              onBlur={() => setFocusedField(null)}
             />
             <Pressable
               onPress={() => setShowPwdSetup1(!showPwdSetup1)}
               style={styles.eyeBtn}
             >
-              {showPwdSetup1 ? <EyeOff size={20} color="rgba(255,255,255,0.4)" /> : <Eye size={20} color="rgba(255,255,255,0.4)" />}
+              {showPwdSetup1 ? <EyeOff size={22} color="rgba(255,255,255,0.6)" /> : <Eye size={22} color="rgba(255,255,255,0.4)" />}
             </Pressable>
           </View>
 
           <Text style={styles.fieldLabel}>Confirm Password</Text>
-          <View style={styles.field}>
+          <View style={getFieldStyle('setup2')}>
             <TextInput
               style={styles.input}
               placeholder="Re-enter password"
@@ -250,22 +256,24 @@ export function WithdrawScreen({
               secureTextEntry={!showPwdSetup2}
               value={setupPassword2}
               onChangeText={setSetupPassword2}
+              onFocus={() => setFocusedField('setup2')}
+              onBlur={() => setFocusedField(null)}
             />
             <Pressable
               onPress={() => setShowPwdSetup2(!showPwdSetup2)}
               style={styles.eyeBtn}
             >
-                {showPwdSetup2 ? <EyeOff size={20} color="rgba(255,255,255,0.4)" /> : <Eye size={20} color="rgba(255,255,255,0.4)" />}
-              </Pressable>
-            </View>
-          </ScrollView>
-          <View style={styles.footer}>
-            <PrimaryButton
-              label={isSubmitting ? 'Setting up...' : 'Set Password'}
-              onPress={handleSetupPassword}
-              disabled={isSubmitting || !setupPassword1 || !setupPassword2}
-            />
+              {showPwdSetup2 ? <EyeOff size={22} color="rgba(255,255,255,0.6)" /> : <Eye size={22} color="rgba(255,255,255,0.4)" />}
+            </Pressable>
           </View>
+        </ScrollView>
+        <View style={styles.footer}>
+          <PrimaryButton
+            label={isSubmitting ? 'Setting up...' : 'Set Password'}
+            onPress={handleSetupPassword}
+            disabled={isSubmitting || !setupPassword1 || !setupPassword2}
+          />
+        </View>
         </KeyboardAvoidingView>
         <ConfirmModal
           visible={modalState.visible}
@@ -296,162 +304,178 @@ export function WithdrawScreen({
             accessibilityLabel="View withdraw status"
             style={styles.receiptBtn}
           >
-            <Receipt size={22} color="rgba(255,255,255,0.8)" />
+            <Receipt size={24} color="rgba(255,255,255,0.9)" />
             {submitted ? <View style={styles.receiptDot} /> : null}
           </Pressable>
         }
       />
 
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {submitted ? (
-          <View style={styles.card}>
-            <Text style={styles.successTitle}>Withdraw requested</Text>
-            <Text style={styles.intro}>
-              You will receive {receive.toFixed(2)} USDT on {displayNetwork}{' '}
-              after the {withdrawFeePercent}% handling fee. We process
-              withdrawals from {hourClockLabel(WITHDRAW_PROCESS_FROM_HOUR)} to
-              12:00 AM.
+      {submitted ? (
+        <ScrollView contentContainerStyle={styles.content} bounces={false}>
+          <View style={[styles.card, { padding: 32, alignItems: 'center', marginTop: 40 }]}>
+            <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(34, 197, 94, 0.15)', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
+              <CheckCircle size={40} color="#4ade80" />
+            </View>
+            <Text style={[styles.successTitle, { textAlign: 'center' }]}>Withdraw Requested</Text>
+            <Text style={[styles.intro, { textAlign: 'center', fontSize: 16 }]}>
+              You will receive <Text style={{ color: colors.white, fontFamily: 'Outfit_700Bold' }}>{receive.toFixed(2)} USDT</Text> on {displayNetwork}{' '}
+              after the {withdrawFeePercent}% fee.
             </Text>
-            <NoteRow>
-              Status is Pending until we process it. Use View status to check
-              it, then come back here.
-            </NoteRow>
+            <View style={{ width: '100%', height: 1, backgroundColor: 'rgba(255,255,255,0.08)', marginVertical: 20 }} />
+            <Text style={{ fontFamily: 'Outfit_400Regular', color: 'rgba(255,255,255,0.5)', textAlign: 'center', lineHeight: 22 }}>
+              Status is pending until processed. Processing hours are from {hourClockLabel(WITHDRAW_PROCESS_FROM_HOUR)} to 12:00 AM.
+            </Text>
           </View>
-        ) : (
-          <>
-            <View style={styles.balanceCard}>
-              <Text style={styles.balanceLabel}>Available balance</Text>
-              <Text style={styles.balanceValue}>{AVAILABLE.toFixed(2)} USDT</Text>
-            </View>
+        </ScrollView>
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          bounces={true}
+        >
+          {/* Network Selection Tabs (Exchange Style) */}
+          <Text style={styles.sectionTitle}>Select Network</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.networkTabs}>
+            {NETWORKS.map((net) => {
+              const isSelected = networkId === net.id;
+              return (
+                <Pressable
+                  key={net.id}
+                  disabled={!open}
+                  onPress={() => setNetworkId(net.id as NetworkId)}
+                  style={[
+                    styles.networkTab,
+                    isSelected && styles.networkTabSelected,
+                    !open && { opacity: 0.5 }
+                  ]}
+                >
+                  <Text style={[
+                    styles.networkTabText,
+                    isSelected && styles.networkTabTextSelected
+                  ]}>
+                    {net.label.split(' ')[0]} {/* e.g. TRC20 */}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
 
-            <View style={[styles.scheduleCard, open ? styles.scheduleOpen : styles.scheduleClosed]}>
-              <View style={[styles.scheduleDot, open ? styles.dotOpen : styles.dotClosed]} />
-              <View style={styles.scheduleCopy}>
-                <Text style={styles.scheduleTitle}>
-                  {settings?.is_enabled
-                    ? open
-                      ? 'Withdrawals are open'
-                      : 'Withdrawals are closed'
-                    : 'Withdrawals are open'}
-                </Text>
-                <Text style={styles.scheduleText}>
-                  {settings?.is_enabled 
-                    ? `Withdrawal requests are allowed between ${settings.start_time} and ${settings.end_time} server time.`
-                    : 'Withdrawals are open 24/7.'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={[styles.card, !open && styles.cardDisabled]}>
-              <AmountField
+          {/* Massive Amount Input Area */}
+          <View style={styles.amountArea}>
+            <Text style={styles.sectionTitle}>Withdraw Amount</Text>
+            <View style={[styles.massiveInputContainer, focusedField === 'amount' && styles.massiveInputFocused]}>
+              <TextInput
+                style={styles.massiveInput}
+                placeholder="0.00"
+                placeholderTextColor="rgba(255,255,255,0.2)"
+                keyboardType="numeric"
+                editable={open}
                 value={amount}
                 onChangeText={setAmount}
-                editable={open}
-                onMax={() => setAmount(String(AVAILABLE))}
-                error={
-                  amountError
-                    ? entered > AVAILABLE
-                      ? 'Not enough available balance.'
-                      : `Minimum withdraw is ${minWithdrawal} USDT.`
-                    : null
-                }
+                onFocus={() => setFocusedField('amount')}
+                onBlur={() => setFocusedField(null)}
               />
-
-              {hasAmount && !submitted ? (
-                <View style={styles.summary}>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Amount</Text>
-                    <Text style={styles.summaryValue}>
-                      {parsed.toFixed(2)} USDT
-                    </Text>
-                  </View>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>
-                      Handling fee ({withdrawFeePercent}%)
-                    </Text>
-                    <Text style={styles.summaryFee}>
-                      -{handlingFee.toFixed(2)} USDT
-                    </Text>
-                  </View>
-                  <View style={[styles.summaryRow, styles.summaryTotalRow]}>
-                    <Text style={styles.summaryTotalLabel}>You receive</Text>
-                    <Text style={styles.summaryTotal}>
-                      {receive.toFixed(2)} USDT
-                    </Text>
-                  </View>
-                </View>
-              ) : null}
-
-              <NetworkPicker
-                value={networkId}
-                open={pickerOpen}
-                disabled={!open}
-                onOpenChange={setPickerOpen}
-                onChange={setNetworkId}
-              />
-
-              <Text style={styles.fieldLabel}>Wallet address</Text>
-              <View style={styles.field}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Paste your USDT address"
-                  placeholderTextColor="rgba(255,255,255,0.32)"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  editable={open}
-                  value={address}
-                  onChangeText={setAddress}
-                />
+              <View style={styles.amountAddons}>
+                <Text style={styles.currencySuffix}>USDT</Text>
+                {open && (
+                  <Pressable onPress={() => setAmount(String(AVAILABLE))} style={styles.maxBtn}>
+                    <Text style={styles.maxBtnText}>MAX</Text>
+                  </Pressable>
+                )}
               </View>
-
-              <NoteRow>
-                Minimum {minWithdrawal} USDT. A {withdrawFeePercent}% handling
-                fee is deducted from the amount you withdraw.
-              </NoteRow>
-
-              <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Withdrawal Password</Text>
-              <View style={styles.field}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your withdrawal password"
-                  placeholderTextColor="rgba(255,255,255,0.32)"
-                  secureTextEntry={!showPwdWithdraw}
-                  editable={open}
-                  value={withdrawalPassword}
-                  onChangeText={setWithdrawalPassword}
-                />
-                <Pressable
-                  onPress={() => setShowPwdWithdraw(!showPwdWithdraw)}
-                  style={styles.eyeBtn}
-                >
-                  {showPwdWithdraw ? <EyeOff size={20} color="rgba(255,255,255,0.4)" /> : <Eye size={20} color="rgba(255,255,255,0.4)" />}
-                </Pressable>
-              </View>
-              {!open ? (
-                <Text style={styles.closedHint}>
-                  Come back between {settings?.start_time} and {settings?.end_time} server time to submit a request.
-                </Text>
-              ) : null}
             </View>
-          </>
-        )}
-      </ScrollView>
+            
+            <View style={styles.balanceInfoRow}>
+              <Text style={styles.availableText}>Available: <Text style={{color: colors.white, fontFamily: 'Outfit_600SemiBold'}}>{AVAILABLE.toFixed(2)} USDT</Text></Text>
+              {amountError && (
+                <Text style={styles.errorText}>
+                  {entered > AVAILABLE ? 'Insufficient balance' : `Min. ${minWithdrawal} USDT`}
+                </Text>
+              )}
+            </View>
+
+            {/* Receipt / Fee Breakdown directly below amount */}
+            {hasAmount ? (
+              <View style={styles.summaryContainer}>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Handling Fee ({withdrawFeePercent}%)</Text>
+                  <Text style={styles.summaryFee}>-{handlingFee.toFixed(2)} USDT</Text>
+                </View>
+                <View style={styles.summaryDivider} />
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryTotalLabel}>Receive Amount</Text>
+                  <Text style={styles.summaryTotal}>{receive.toFixed(2)} USDT</Text>
+                </View>
+              </View>
+            ) : null}
+          </View>
+
+          {/* Address and Password Forms */}
+          <Text style={[styles.sectionTitle, { marginTop: 8 }]}>Transfer Details</Text>
+          <View style={[styles.card, !open && styles.cardDisabled]}>
+            <Text style={styles.fieldLabel}>Wallet Address</Text>
+            <View style={getFieldStyle('address')}>
+              <TextInput
+                style={styles.input}
+                placeholder={`Enter ${getNetwork(networkId).label.split(' ')[0]} address`}
+                placeholderTextColor="rgba(255,255,255,0.25)"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={open}
+                value={address}
+                onChangeText={setAddress}
+                onFocus={() => setFocusedField('address')}
+                onBlur={() => setFocusedField(null)}
+              />
+            </View>
+
+            <Text style={[styles.fieldLabel, { marginTop: 12 }]}>Security Password</Text>
+            <View style={getFieldStyle('password')}>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter withdrawal password"
+                placeholderTextColor="rgba(255,255,255,0.25)"
+                secureTextEntry={!showPwdWithdraw}
+                editable={open}
+                value={withdrawalPassword}
+                onChangeText={setWithdrawalPassword}
+                onFocus={() => setFocusedField('password')}
+                onBlur={() => setFocusedField(null)}
+              />
+              <Pressable
+                onPress={() => setShowPwdWithdraw(!showPwdWithdraw)}
+                style={styles.eyeBtn}
+              >
+                {showPwdWithdraw ? <EyeOff size={22} color="rgba(255,255,255,0.6)" /> : <Eye size={22} color="rgba(255,255,255,0.4)" />}
+              </Pressable>
+            </View>
+          </View>
+          
+          {/* Status Indicator at the very bottom */}
+          {!open && (
+            <View style={styles.closedStatusBadge}>
+              <View style={[styles.scheduleDot, styles.dotClosed]} />
+              <Text style={styles.closedHint}>
+                Withdrawals open {settings?.start_time} - {settings?.end_time}
+              </Text>
+            </View>
+          )}
+
+        </ScrollView>
+      )}
 
       <View style={styles.footer}>
         {submitted ? (
           <>
-            <PrimaryButton label="View status" onPress={onViewStatus} />
+            <PrimaryButton label="View Status" onPress={onViewStatus} />
             <Pressable onPress={onBack} style={styles.secondaryBtn}>
               <Text style={styles.secondaryText}>Back to Home</Text>
             </Pressable>
           </>
         ) : (
           <PrimaryButton
-            label={open ? (isSubmitting ? 'Submitting...' : 'Withdraw') : `Opens at ${settings?.start_time || ''}`}
+            label={open ? (isSubmitting ? 'Processing...' : 'Confirm Withdrawal') : `Opens at ${settings?.start_time || ''}`}
             onPress={handleRequestWithdraw}
             disabled={!canSubmit || isSubmitting}
           />
@@ -474,212 +498,315 @@ export function WithdrawScreen({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    backgroundColor: colors.bgDeep, // Using the deep dark background for exchange style
   },
   receiptBtn: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 22,
   },
   receiptDot: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    top: 10,
+    right: 10,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#fbbf24',
+    borderWidth: 2,
+    borderColor: colors.bg,
   },
   content: {
     paddingHorizontal: 20,
-    paddingBottom: 16,
-    gap: 14,
+    paddingTop: 10,
+    paddingBottom: 40,
   },
-  balanceCard: {
-    borderRadius: 22,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    backgroundColor: 'rgba(124, 58, 237, 0.16)',
-    borderWidth: 1,
-    borderColor: 'rgba(167, 139, 250, 0.28)',
+  sectionTitle: {
+    fontFamily: 'Outfit_600SemiBold',
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.85)',
+    marginBottom: 12,
+    letterSpacing: 0.3,
   },
-  balanceLabel: {
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.55)',
-  },
-  balanceValue: {
-    marginTop: 6,
-    fontFamily: 'Outfit_800ExtraBold',
-    fontSize: 28,
-    color: colors.white,
-  },
-  scheduleCard: {
+  
+  /* --- Network Selection Tabs --- */
+  networkTabs: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    borderRadius: 18,
-    borderWidth: 1,
-    paddingHorizontal: 14,
+    gap: 12,
+    paddingRight: 20, // allow scrolling past
+    marginBottom: 28,
+  },
+  networkTab: {
+    paddingHorizontal: 18,
     paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  scheduleOpen: {
-    backgroundColor: 'rgba(34, 197, 94, 0.12)',
-    borderColor: 'rgba(134, 239, 172, 0.28)',
+  networkTabSelected: {
+    backgroundColor: 'rgba(168, 85, 247, 0.15)',
+    borderColor: colors.purpleBright,
   },
-  scheduleClosed: {
-    backgroundColor: 'rgba(250, 204, 21, 0.1)',
-    borderColor: 'rgba(250, 204, 21, 0.28)',
-  },
-  scheduleDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginTop: 5,
-  },
-  dotOpen: {
-    backgroundColor: colors.green,
-  },
-  dotClosed: {
-    backgroundColor: '#facc15',
-  },
-  scheduleCopy: {
-    flex: 1,
-    gap: 4,
-  },
-  scheduleTitle: {
-    fontFamily: 'Outfit_700Bold',
+  networkTabText: {
+    fontFamily: 'Outfit_600SemiBold',
     fontSize: 14,
+    color: 'rgba(255,255,255,0.5)',
+  },
+  networkTabTextSelected: {
+    color: colors.purpleBright,
+  },
+
+  /* --- Massive Amount Area --- */
+  amountArea: {
+    marginBottom: 24,
+  },
+  massiveInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+    paddingBottom: 12,
+    marginBottom: 12,
+  },
+  massiveInputFocused: {
+    borderBottomColor: colors.purpleBright,
+  },
+  massiveInput: {
+    flex: 1,
+    fontFamily: 'Outfit_800ExtraBold',
+    fontSize: 48,
     color: colors.white,
+    paddingVertical: 0,
+    includeFontPadding: false,
+    lineHeight: 56, // ensure cursor doesn't jump
   },
-  scheduleText: {
-    fontFamily: 'Outfit_400Regular',
+  amountAddons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  currencySuffix: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 18,
+    color: 'rgba(255,255,255,0.6)',
+  },
+  maxBtn: {
+    backgroundColor: 'rgba(168, 85, 247, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  maxBtnText: {
+    fontFamily: 'Outfit_700Bold',
     fontSize: 12,
-    lineHeight: 18,
-    color: 'rgba(255,255,255,0.62)',
+    color: colors.purpleBright,
   },
-  cardDisabled: {
-    opacity: 0.55,
+  balanceInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  closedHint: {
-    marginTop: 12,
+  availableText: {
     fontFamily: 'Outfit_500Medium',
     fontSize: 13,
-    color: '#fde68a',
-    lineHeight: 19,
+    color: 'rgba(255,255,255,0.5)',
+  },
+  errorText: {
+    fontFamily: 'Outfit_600SemiBold',
+    fontSize: 13,
+    color: '#ef4444',
+  },
+
+  /* --- Form Card --- */
+  cardDisabled: {
+    opacity: 0.5,
   },
   card: {
-    backgroundColor: colors.cardFill,
+    backgroundColor: 'rgba(18, 16, 31, 0.7)',
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 24,
-    padding: 18,
-    overflow: 'visible',
+    padding: 20,
     zIndex: 2,
+  },
+  alertCard: {
+    borderColor: 'rgba(239, 68, 68, 0.4)', 
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 15,
+    marginBottom: 20,
   },
   intro: {
     fontFamily: 'Outfit_400Regular',
     fontSize: 14,
-    color: 'rgba(255,255,255,0.58)',
-    lineHeight: 20,
-    marginBottom: 14,
+    color: 'rgba(255,255,255,0.6)',
+    lineHeight: 22,
+    marginBottom: 16,
   },
   successTitle: {
     fontFamily: 'Outfit_800ExtraBold',
-    fontSize: 22,
+    fontSize: 24,
     color: colors.white,
     marginBottom: 8,
   },
+  
+  /* --- Sleek Inputs --- */
   fieldLabel: {
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.45)',
-    marginBottom: 8,
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.55)',
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  summary: {
-    marginTop: -4,
-    marginBottom: 14,
+  field: {
+    minHeight: 56,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(167, 139, 250, 0.22)',
+    borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  fieldFocused: {
+    borderColor: colors.purpleBright,
+    backgroundColor: 'rgba(168, 85, 247, 0.05)',
+  },
+  fieldError: {
+    borderColor: '#ef4444',
+    backgroundColor: 'rgba(239, 68, 68, 0.05)',
+  },
+  input: {
+    flex: 1,
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 16,
+    color: colors.white,
+    paddingVertical: 14,
+  },
+  eyeBtn: {
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  /* --- Receipt Summary --- */
+  summaryContainer: {
+    marginTop: 20,
+    borderRadius: 16,
     backgroundColor: 'rgba(255,255,255,0.03)',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 8,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   summaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+  },
+  summaryDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    marginVertical: 12,
   },
   summaryLabel: {
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 13,
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 14,
     color: 'rgba(255,255,255,0.5)',
   },
   summaryValue: {
-    fontFamily: 'Outfit_500Medium',
-    fontSize: 13,
+    fontFamily: 'Outfit_600SemiBold',
+    fontSize: 14,
     color: colors.white,
   },
   summaryFee: {
-    fontFamily: 'Outfit_500Medium',
-    fontSize: 13,
-    color: '#f87171',
-  },
-  summaryTotalRow: {
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
+    fontFamily: 'Outfit_600SemiBold',
+    fontSize: 14,
+    color: '#fb7185', // Rose pink for fees
   },
   summaryTotalLabel: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 13,
+    fontFamily: 'Outfit_600SemiBold',
+    fontSize: 15,
     color: colors.white,
   },
   summaryTotal: {
     fontFamily: 'Outfit_800ExtraBold',
-    fontSize: 15,
+    fontSize: 18,
     color: '#4ade80',
   },
-  field: {
-    minHeight: 52,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(167, 139, 250, 0.22)',
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    paddingHorizontal: 14,
+
+  /* --- Status Indicators --- */
+  closedStatusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
-  },
-  input: {
-    flex: 1,
-    fontFamily: 'Outfit_500Medium',
-    fontSize: 15,
-    color: colors.white,
-    paddingVertical: 12,
-  },
-  eyeBtn: {
-    padding: 4,
     justifyContent: 'center',
-    alignItems: 'center',
+    gap: 8,
+    marginTop: 24,
+    padding: 12,
+    backgroundColor: 'rgba(250, 204, 21, 0.1)',
+    borderRadius: 12,
   },
+  scheduleDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  dotClosed: {
+    backgroundColor: '#facc15',
+  },
+  closedHint: {
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 14,
+    color: '#fde68a',
+  },
+
+  /* --- Success State Styling --- */
+  successGlow: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    backgroundColor: 'rgba(74, 222, 128, 0.2)',
+    borderRadius: 100,
+    top: '30%',
+    opacity: 0.5,
+  },
+  successIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(74, 222, 128, 0.4)',
+  },
+
   footer: {
     paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 24,
-    gap: 10,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 32 : 24,
+    gap: 12,
+    backgroundColor: colors.bgDeep, // prevent scrolling beneath it looking weird
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
   },
   secondaryBtn: {
-    minHeight: 44,
+    minHeight: 52,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   secondaryText: {
     fontFamily: 'Outfit_700Bold',
-    fontSize: 15,
-    color: colors.purpleBright,
+    fontSize: 16,
+    color: colors.white,
   },
 });
