@@ -22,12 +22,7 @@ class SimulatorController extends Controller
                 $user->balance += $profit;
                 $user->save();
 
-                \App\Models\Notification::create([
-                    'user_id' => $user->id,
-                    'title' => 'Daily Trade Profit',
-                    'message' => 'You earned a ' . number_format($profit, 2) . ' USDT profit from your ' . $plan->level . ' plan!',
-                    'type' => 'success',
-                ]);
+
 
                 // Ambassador Downline Bonus (5% of the downline's deposit/trade size)
                 $currentUpline = $user->referrer;
@@ -37,12 +32,7 @@ class SimulatorController extends Controller
                         $currentUpline->balance += $ambassadorBonus;
                         $currentUpline->save();
 
-                        \App\Models\Notification::create([
-                            'user_id' => $currentUpline->id,
-                            'title' => 'Ambassador Downline Bonus',
-                            'message' => 'You earned a ' . number_format($ambassadorBonus, 4) . ' USDT bonus from your downline ' . $user->name . '!',
-                            'type' => 'success',
-                        ]);
+
                         break; // Only give to the closest Ambassador upline
                     }
                     $currentUpline = $currentUpline->referrer;
@@ -55,12 +45,7 @@ class SimulatorController extends Controller
                     $admin->balance += $adminBonus;
                     $admin->save();
 
-                    \App\Models\Notification::create([
-                        'user_id' => $admin->id,
-                        'title' => 'Admin System Profit',
-                        'message' => 'Platform earned ' . number_format($adminBonus, 4) . ' USDT from ' . $user->name . '\'s trade.',
-                        'type' => 'success',
-                    ]);
+
                 }
 
                 $processed++;

@@ -50,6 +50,7 @@ Route::post('/vip-plans/unlock', [VipPlanController::class, 'unlock']);
 Route::get('/notifications', [NotificationController::class, 'index']);
 Route::post('/notifications', [NotificationController::class, 'store']);
 Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
 
 // ── Admin Endpoints ─────────────────────────────────────────────────────────────
 Route::get('/admin/dashboard-stats', [\App\Http\Controllers\Admin\DashboardController::class, 'getStats']);
