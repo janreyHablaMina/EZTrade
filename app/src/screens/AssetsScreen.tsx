@@ -23,8 +23,6 @@ import { AnimatedLoading } from '../components/AnimatedLoading';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CHART_WIDTH = SCREEN_WIDTH - 72;
 const CHART_HEIGHT = 140;
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
-const GROWTH_POINTS = [28, 36, 42, 55, 62, 78, 92] as const;
 
 type AssetsScreenProps = {
   onBack?: () => void;
@@ -99,16 +97,17 @@ function BannerDecor() {
   );
 }
 
-function ProfitChart() {
+function ProfitChart({ chartData }: { chartData?: { labels: string[], data: number[] } }) {
   const { linePath, areaPath, points } = useMemo(() => {
-    const min = Math.min(...GROWTH_POINTS);
-    const max = Math.max(...GROWTH_POINTS);
+    const dataPoints = chartData?.data || [0,0,0,0,0,0,0];
+    const min = Math.min(...dataPoints);
+    const max = Math.max(...dataPoints);
     const range = max - min || 1;
     const padY = 16;
     const usableH = CHART_HEIGHT - padY * 2;
-    const stepX = CHART_WIDTH / (GROWTH_POINTS.length - 1);
+    const stepX = CHART_WIDTH / (dataPoints.length > 1 ? dataPoints.length - 1 : 1);
 
-    const pts = GROWTH_POINTS.map((value, index) => {
+    const pts = dataPoints.map((value, index) => {
       const x = index * stepX;
       const y = padY + usableH - ((value - min) / range) * usableH;
       return { x, y };
@@ -117,10 +116,12 @@ function ProfitChart() {
     const line = pts
       .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
       .join(' ');
-    const area = `${line} L ${pts[pts.length - 1].x.toFixed(1)} ${CHART_HEIGHT} L 0 ${CHART_HEIGHT} Z`;
+    const area = `${line} L ${pts[pts.length - 1]?.x.toFixed(1) || 0} ${CHART_HEIGHT} L 0 ${CHART_HEIGHT} Z`;
 
     return { linePath: line, areaPath: area, points: pts };
-  }, []);
+  }, [chartData]);
+
+  const labels = chartData?.labels || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   return (
     <View style={styles.chartInner}>
@@ -146,7 +147,7 @@ function ProfitChart() {
         />
         {points.map((point, index) => (
           <Circle
-            key={DAYS[index]}
+            key={labels[index] + index}
             cx={point.x}
             cy={point.y}
             r={5}
@@ -157,8 +158,8 @@ function ProfitChart() {
         ))}
       </Svg>
       <View style={styles.dayRow}>
-        {DAYS.map((day) => (
-          <Text key={day} style={styles.dayLabel}>
+        {labels.map((day, i) => (
+          <Text key={day + i} style={styles.dayLabel}>
             {day}
           </Text>
         ))}
@@ -235,7 +236,7 @@ export function AssetsScreen({ onBack, user }: AssetsScreenProps) {
           <Text style={styles.growthTitle}>Profit Growth</Text>
           <Text style={styles.growthPct}>+{planDailyPercent.toFixed(2)}%</Text>
         </View>
-        <ProfitChart />
+        <ProfitChart chartData={stats.chart_data} />
       </View>
     </ScrollView>
   );

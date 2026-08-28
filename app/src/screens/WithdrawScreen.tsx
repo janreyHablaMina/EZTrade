@@ -30,8 +30,6 @@ import {
 } from '../lib/wallet';
 import { colors } from '../theme/colors';
 
-const AVAILABLE = 12.5;
-
 type WithdrawRequest = {
   amount: number;
   network: string;
@@ -54,6 +52,8 @@ export function WithdrawScreen({
   systemSettings,
   user,
 }: WithdrawScreenProps) {
+  const [liveBalance, setLiveBalance] = useState(user ? parseFloat(user.balance || '0') : 0);
+  const AVAILABLE = liveBalance;
   const [amount, setAmount] = useState('');
   const [address, setAddress] = useState('');
   const [networkId, setNetworkId] = useState<NetworkId>('trc20');
@@ -79,6 +79,11 @@ export function WithdrawScreen({
     const fetchSettings = async () => {
       try {
         const { apiClient } = await import('../lib/api');
+        if (user?.id) {
+          const userData = await apiClient.get('/users/' + user.id);
+          setLiveBalance(parseFloat(userData.balance || '0'));
+        }
+        
         const data = await apiClient.get('/settings/withdrawal');
         setSettings(data);
         
@@ -198,7 +203,7 @@ export function WithdrawScreen({
   if (user && !hasPassword) {
     return (
       <>
-        <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardAvoidingView style={styles.root} behavior="padding">
         <ScreenHeader title="Setup Password" onBack={onBack} />
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={[styles.card, styles.alertCard]}>
@@ -273,7 +278,7 @@ export function WithdrawScreen({
   return (
     <KeyboardAvoidingView
       style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
     >
       <ScreenHeader
         title="Withdraw"

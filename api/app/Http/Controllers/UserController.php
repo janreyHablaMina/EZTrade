@@ -82,12 +82,29 @@ class UserController extends Controller
             );
         }
 
+        $chartData = [
+            'labels' => [],
+            'data' => []
+        ];
+        
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $chartData['labels'][] = $date->format('D'); // 'Mon', 'Tue', etc.
+            
+            $dayProfit = TradingCodeRedemption::where('user_id', $id)
+                ->whereDate('created_at', $date->toDateString())
+                ->sum('reward_amount');
+                
+            $chartData['data'][] = round(floatval($dayProfit), 2);
+        }
+
         return response()->json([
             'total_profit'  => round(floatval($totalProfit), 2),
             'today_profit'  => round(floatval($todayProfit), 2),
             'today_percent' => $todayPercent,
             'daily_profit'  => $dailyProfit,
             'balance'       => round($balance, 2),
+            'chart_data'    => $chartData,
         ]);
     }
 

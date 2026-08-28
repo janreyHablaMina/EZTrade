@@ -35,9 +35,11 @@ export default function WithdrawalsPage() {
       userEmail: w.user ? w.user.email : 'Unknown',
       userId: w.user ? `EZT-${w.user.id.toString().padStart(4, '0')}` : 'N/A',
       amount: parseFloat(w.amount),
+      fee: 0,
+      receiveAmount: parseFloat(w.amount),
       currency: 'USDT',
       network: w.network,
-      walletAddress: w.txid || 'Pending',
+      walletAddress: w.wallet_address || 'Pending',
       status: w.status,
       submittedAt: new Date(w.created_at).toLocaleString('en-US', {
         year: 'numeric', month: 'short', day: 'numeric',

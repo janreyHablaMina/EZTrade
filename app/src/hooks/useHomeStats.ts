@@ -7,6 +7,10 @@ interface HomeStats {
   today_percent: number;
   daily_profit: number;
   balance: number;
+  chart_data?: {
+    labels: string[];
+    data: number[];
+  };
 }
 
 const DEFAULT_STATS: HomeStats = {
@@ -15,6 +19,10 @@ const DEFAULT_STATS: HomeStats = {
   today_percent: 0,
   daily_profit: 0,
   balance: 0,
+  chart_data: {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    data: [0, 0, 0, 0, 0, 0, 0]
+  }
 };
 
 export function useHomeStats(user: any) {
