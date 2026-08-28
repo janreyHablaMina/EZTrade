@@ -35,8 +35,8 @@ export default function WithdrawalsPage() {
       userEmail: w.user ? w.user.email : 'Unknown',
       userId: w.user ? `EZT-${w.user.id.toString().padStart(4, '0')}` : 'N/A',
       amount: parseFloat(w.amount),
-      fee: 0,
-      receiveAmount: parseFloat(w.amount),
+      fee: parseFloat(w.amount) * 0.02,
+      receiveAmount: parseFloat(w.amount) * 0.98,
       currency: 'USDT',
       network: w.network,
       walletAddress: w.wallet_address || 'Pending',
@@ -176,7 +176,7 @@ export default function WithdrawalsPage() {
         <KpiCard
           label="Total Amount"
           value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
-            withdrawals.filter(w => w.status === 'Completed').reduce((sum, w) => sum + (w.amount || 0), 0)
+            withdrawals.reduce((sum, w) => sum + (w.amount || 0), 0)
           )}
           change=""
           icon={Coins}
@@ -184,7 +184,7 @@ export default function WithdrawalsPage() {
         <KpiCard
           label="Total Fees"
           value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
-            withdrawals.filter(w => w.status === 'Completed').reduce((sum, w) => sum + ((w.amount || 0) * 0.20), 0)
+            withdrawals.reduce((sum, w) => sum + ((w.amount || 0) * 0.02), 0)
           )}
           change=""
           icon={Coins}

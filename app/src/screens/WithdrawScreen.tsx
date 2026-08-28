@@ -310,7 +310,7 @@ export function WithdrawScreen({
             </Text>
             <View style={{ width: '100%', height: 1, backgroundColor: 'rgba(255,255,255,0.08)', marginVertical: 20 }} />
             <Text style={{ fontFamily: 'Outfit_400Regular', color: 'rgba(255,255,255,0.5)', textAlign: 'center', lineHeight: 22 }}>
-              Status is pending until processed. Processing hours are from {hourClockLabel(WITHDRAW_PROCESS_FROM_HOUR)} to 12:00 AM.
+              Status is pending until processed. Processing hours are from {settings?.start_time || hourClockLabel(WITHDRAW_PROCESS_FROM_HOUR)} to {settings?.end_time || '12:00 AM'}.
             </Text>
           </View>
         </ScrollView>

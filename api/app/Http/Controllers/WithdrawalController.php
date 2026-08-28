@@ -106,7 +106,17 @@ class WithdrawalController extends Controller
         ]);
 
         if ($withdrawal->status === 'Pending' && $request->status === 'Completed') {
-            $withdrawal->update(['status' => 'Completed']);
+            DB::transaction(function () use ($withdrawal) {
+                $withdrawal->update(['status' => 'Completed']);
+                
+                \App\Models\Notification::create([
+                    'user_id' => $withdrawal->user_id,
+                    'title' => 'Withdrawal Successful',
+                    'message' => 'Your withdrawal request of ' . number_format($withdrawal->amount, 2) . ' USDT was successfully processed and sent to your wallet.',
+                    'type' => 'success',
+                    'is_read' => false
+                ]);
+            });
         } elseif ($withdrawal->status === 'Pending' && $request->status === 'Rejected') {
             DB::transaction(function () use ($withdrawal) {
                 $withdrawal->status = 'Rejected';
@@ -115,6 +125,14 @@ class WithdrawalController extends Controller
                 // Refund the balance since it was deducted on request creation
                 $withdrawal->user->balance += $withdrawal->amount;
                 $withdrawal->user->save();
+
+                \App\Models\Notification::create([
+                    'user_id' => $withdrawal->user_id,
+                    'title' => 'Withdrawal Rejected',
+                    'message' => 'Your withdrawal request of ' . number_format($withdrawal->amount, 2) . ' USDT was rejected. The amount has been refunded to your balance. Please try again or contact support.',
+                    'type' => 'alert',
+                    'is_read' => false
+                ]);
             });
         } else {
             $withdrawal->update(['status' => $request->status]);

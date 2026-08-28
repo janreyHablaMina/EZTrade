@@ -82,7 +82,7 @@ export function TransactionsScreen({
     if (user?.id) {
       apiClient.get(`/transactions?user_id=${user.id}`)
         .then((data) => {
-          setTransactions(data.transactions);
+          setTransactions(data.transactions || []);
         })
         .catch(console.error)
         .finally(() => setLoading(false));
