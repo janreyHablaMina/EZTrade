@@ -45,16 +45,79 @@ class SystemSettingsController extends Controller
                 ];
             case 'deposit_addresses':
                 return [
-                    'trc20_address' => 'TYourTRC20DepositAddressHere123',
-                    'erc20_address' => '0xYourERC20DepositAddressHere123',
-                    'polygon_address' => '0xYourPolygonDepositAddressHere123',
-                    'bep20_address' => '0xYourBEP20DepositAddressHere123',
                     'min_deposit' => 10,
-                    'deposit_fee_percent' => 0
+                    'deposit_fee_percent' => 0,
+                    'wallets' => [
+                        [
+                            'id' => 'trc20',
+                            'name' => 'TRC20 (Tether/Tron)',
+                            'address' => 'TYourTRC20DepositAddressHere123',
+                            'qr_url' => null
+                        ],
+                        [
+                            'id' => 'erc20',
+                            'name' => 'ERC20 (Ethereum)',
+                            'address' => '0xYourERC20DepositAddressHere123',
+                            'qr_url' => null
+                        ],
+                        [
+                            'id' => 'polygon',
+                            'name' => 'Polygon',
+                            'address' => '0xYourPolygonDepositAddressHere123',
+                            'qr_url' => null
+                        ],
+                        [
+                            'id' => 'bep20',
+                            'name' => 'BEP20 (Binance Smart Chain)',
+                            'address' => '0xYourBEP20DepositAddressHere123',
+                            'qr_url' => null
+                        ]
+                    ]
                 ];
             default:
                 return [];
         }
+    }
+
+    private function migrateDepositAddresses($data)
+    {
+        // If it already has the new 'wallets' structure, return as is
+        if (isset($data['wallets']) && is_array($data['wallets'])) {
+            return $data;
+        }
+
+        // Migrate flat legacy keys to the dynamic 'wallets' structure
+        $wallets = [];
+        $legacyNetworks = [
+            'trc20' => 'TRC20 (Tether/Tron)',
+            'erc20' => 'ERC20 (Ethereum)',
+            'polygon' => 'Polygon',
+            'bep20' => 'BEP20 (Binance Smart Chain)'
+        ];
+
+        foreach ($legacyNetworks as $id => $name) {
+            $addressKey = $id . '_address';
+            $qrKey = $id . '_qr';
+            
+            if (isset($data[$addressKey])) {
+                $wallets[] = [
+                    'id' => $id,
+                    'name' => $name,
+                    'address' => $data[$addressKey],
+                    'qr_url' => $data[$qrKey] ?? null
+                ];
+                unset($data[$addressKey], $data[$qrKey]);
+            }
+        }
+
+        // If no legacy networks found but also no 'wallets', fallback to defaults
+        if (empty($wallets)) {
+            $defaults = $this->getDefaultSettings('deposit_addresses');
+            $wallets = $defaults['wallets'];
+        }
+
+        $data['wallets'] = $wallets;
+        return $data;
     }
 
     public function getAllSettings()
@@ -67,7 +130,11 @@ class SystemSettingsController extends Controller
         $result = [];
         foreach ($this->validKeys as $key) {
             if (isset($settings[$key])) {
-                $result[$key] = json_decode($settings[$key]->value, true);
+                $data = json_decode($settings[$key]->value, true);
+                if ($key === 'deposit_addresses') {
+                    $data = $this->migrateDepositAddresses($data);
+                }
+                $result[$key] = $data;
             } else {
                 $result[$key] = $this->getDefaultSettings($key);
             }
@@ -84,16 +151,51 @@ class SystemSettingsController extends Controller
 
         $payload = $request->except(array_keys($request->allFiles()));
 
+        // Parse JSON strings if necessary (e.g. dynamic wallets array)
+        if (isset($payload['wallets']) && is_string($payload['wallets'])) {
+            $payload['wallets'] = json_decode($payload['wallets'], true) ?? [];
+        }
+
+        // Upload files
+        $uploadedFiles = [];
         foreach ($request->allFiles() as $fileKey => $file) {
             $filename = time() . '_' . $file->getClientOriginalName();
             $file->move(public_path('uploads/settings'), $filename);
-            $payload[$fileKey] = 'uploads/settings/' . $filename;
+            $uploadedFiles[$fileKey] = 'uploads/settings/' . $filename;
+        }
+
+        // If updating deposit_addresses, map QR codes back to dynamic wallets array
+        if ($key === 'deposit_addresses' && isset($payload['wallets'])) {
+            foreach ($payload['wallets'] as &$wallet) {
+                $qrFileKey = 'qr_' . $wallet['id'];
+                if (isset($uploadedFiles[$qrFileKey])) {
+                    $wallet['qr_url'] = $uploadedFiles[$qrFileKey];
+                }
+            }
+            unset($wallet);
+        } else {
+            // For other settings, merge files to root level
+            $payload = array_merge($payload, $uploadedFiles);
         }
 
         // Get existing settings to merge, so we don't overwrite files if they weren't re-uploaded
         $existing = DB::table('settings')->where('key', $key)->first();
         if ($existing) {
             $existingData = json_decode($existing->value, true) ?: [];
+            if ($key === 'deposit_addresses') {
+                $existingData = $this->migrateDepositAddresses($existingData);
+                // Retain existing QR URLs if new ones weren't uploaded
+                if (isset($payload['wallets']) && isset($existingData['wallets'])) {
+                    $existingQrs = collect($existingData['wallets'])->pluck('qr_url', 'id')->toArray();
+                    foreach ($payload['wallets'] as &$wallet) {
+                        if (empty($wallet['qr_url']) && !empty($existingQrs[$wallet['id']])) {
+                            $wallet['qr_url'] = $existingQrs[$wallet['id']];
+                        }
+                    }
+                    unset($wallet);
+                }
+            }
+            // Merge scalar fields (min_deposit, deposit_fee_percent, etc)
             $payload = array_merge($existingData, $payload);
         }
 
@@ -120,6 +222,7 @@ class SystemSettingsController extends Controller
         $minDeposit = 10;
         $minWithdrawal = 20;
         $withdrawalFeePercent = 1;
+        $wallets = [];
 
         if ($platformControls) {
             $data = json_decode($platformControls->value, true);
@@ -136,9 +239,17 @@ class SystemSettingsController extends Controller
 
         if ($depositAddresses) {
             $data = json_decode($depositAddresses->value, true);
+            $data = $this->migrateDepositAddresses($data);
+            
             if (isset($data['min_deposit'])) {
                 $minDeposit = (float) $data['min_deposit'];
             }
+            if (isset($data['wallets'])) {
+                $wallets = $data['wallets'];
+            }
+        } else {
+            $defaults = $this->getDefaultSettings('deposit_addresses');
+            $wallets = $defaults['wallets'];
         }
 
         if ($withdrawalSettings) {
@@ -158,6 +269,7 @@ class SystemSettingsController extends Controller
             'min_deposit' => $minDeposit,
             'min_withdrawal' => $minWithdrawal,
             'withdrawal_fee_percent' => $withdrawalFeePercent,
+            'wallets' => $wallets,
         ]);
     }
 }

@@ -114,17 +114,38 @@ export function DepositScreen({
   onBack,
   onSentPayment,
 }: DepositScreenProps) {
-  const [networkId, setNetworkId] = useState<NetworkId>('trc20');
+  const [walletId, setWalletId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [amount, setAmount] = useState(initialAmount);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  const network = getNetwork(networkId);
-  const dynamicAddress = systemSettings?.deposit_addresses?.[`${networkId}_address`];
-  const dynamicQr = systemSettings?.deposit_addresses?.[`${networkId}_qr`];
-  const finalAddress = dynamicAddress || network.address;
+  // Parse wallets from system settings (if available) or fallback to static networks
+  const wallets = useMemo(() => {
+    const dynamicWallets = systemSettings?.deposit_addresses?.wallets;
+    if (Array.isArray(dynamicWallets) && dynamicWallets.length > 0) {
+      return dynamicWallets;
+    }
+    // Fallback to static if setting hasn't loaded or is missing
+    return NETWORKS.map(n => ({
+      id: n.id,
+      name: n.label,
+      address: n.address,
+      qr_url: null
+    }));
+  }, [systemSettings]);
 
-  const minDeposit = systemSettings?.platform_controls?.min_deposit ?? MIN_USDT;
+  // Set default selection when wallets load
+  useEffect(() => {
+    if (wallets.length > 0 && (!walletId || !wallets.find(w => w.id === walletId))) {
+      setWalletId(wallets[0].id);
+    }
+  }, [wallets, walletId]);
+
+  const selectedWallet = useMemo(() => {
+    return wallets.find(w => w.id === walletId) || wallets[0];
+  }, [wallets, walletId]);
+
+  const minDeposit = systemSettings?.deposit_addresses?.min_deposit ?? MIN_USDT;
 
   const parsed = parseAmount(amount);
   const hasAmount = amount.trim().length > 0;
@@ -133,7 +154,8 @@ export function DepositScreen({
   const displayAmount = validAmount ? parsed.toFixed(2) : null;
 
   const copyAddress = async () => {
-    await copyToClipboard(finalAddress);
+    if (!selectedWallet) return;
+    await copyToClipboard(selectedWallet.address);
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
   };
@@ -154,13 +176,13 @@ export function DepositScreen({
         {/* Network Selection Tabs (Exchange Style) */}
         <Text style={styles.sectionTitle}>Select Network</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.networkTabs}>
-          {NETWORKS.map((net) => {
-            const isSelected = networkId === net.id;
+          {wallets.map((wallet) => {
+            const isSelected = walletId === wallet.id;
             return (
               <Pressable
-                key={net.id}
+                key={wallet.id}
                 onPress={() => {
-                  setNetworkId(net.id as NetworkId);
+                  setWalletId(wallet.id);
                   setCopied(false);
                 }}
                 style={[
@@ -172,7 +194,7 @@ export function DepositScreen({
                   styles.networkTabText,
                   isSelected && styles.networkTabTextSelected
                 ]}>
-                  {net.label.split(' ')[0]} {/* e.g. TRC20 */}
+                  {wallet.name}
                 </Text>
               </Pressable>
             );
@@ -214,7 +236,7 @@ export function DepositScreen({
           <Text style={styles.fieldLabel}>Receiving Address</Text>
           <View style={styles.field}>
             <Text style={styles.addressText} numberOfLines={1}>
-              {shortenAddress(finalAddress)}
+              {selectedWallet ? shortenAddress(selectedWallet.address) : ''}
             </Text>
             <Pressable onPress={copyAddress} hitSlop={10} style={styles.copyBtn}>
               <Copy size={16} color="rgba(255,255,255,0.6)" strokeWidth={2} />
@@ -222,15 +244,15 @@ export function DepositScreen({
           </View>
           {copied ? <Text style={styles.copied}>Address copied!</Text> : null}
 
-          {dynamicQr ? (
+          {selectedWallet?.qr_url ? (
             <Image 
-              source={{ uri: `${API_BASE_URL.replace('/api', '')}/${dynamicQr}` }} 
+              source={{ uri: `${API_BASE_URL.replace('/api', '')}/${selectedWallet.qr_url}` }} 
               style={styles.qrImage} 
               resizeMode="contain" 
             />
-          ) : (
-            <AddressQr value={finalAddress} />
-          )}
+          ) : selectedWallet ? (
+            <AddressQr value={selectedWallet.address} />
+          ) : null}
 
           <NoteRow>
             Minimum {minDeposit} USDT. Send exactly{' '}
@@ -259,9 +281,9 @@ export function DepositScreen({
           label="I Have Sent Payment"
           onPress={() => {
             if (!validAmount) return;
-            onSentPayment?.(network.label, displayAmount ?? parsed.toFixed(2));
+            onSentPayment?.(selectedWallet?.name || 'Unknown', displayAmount ?? parsed.toFixed(2));
           }}
-          disabled={!validAmount}
+          disabled={!validAmount || !selectedWallet}
         />
       </View>
     </KeyboardAvoidingView>
