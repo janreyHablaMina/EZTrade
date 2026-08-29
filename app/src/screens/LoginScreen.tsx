@@ -93,9 +93,6 @@ export function LoginScreen({
         >
           Remember me
         </CheckBox>
-        <Pressable onPress={onForgotPassword} hitSlop={8}>
-          <Text style={styles.forgot}>Forgot Password?</Text>
-        </Pressable>
       </View>
       {errorMsg ? (
         <Text style={styles.errorText}>{errorMsg}</Text>
@@ -117,11 +114,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 2,
     marginBottom: 4,
-  },
-  forgot: {
-    fontFamily: 'Outfit_500Medium',
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.82)',
   },
   errorText: {
     fontFamily: 'Outfit_400Regular',

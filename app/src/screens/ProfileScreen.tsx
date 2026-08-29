@@ -411,9 +411,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     minHeight: 60,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(248, 113, 113, 0.3)',
-    backgroundColor: 'rgba(248, 113, 113, 0.1)',
+    backgroundColor: '#ef4444',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -422,6 +420,6 @@ const styles = StyleSheet.create({
   logoutText: {
     fontFamily: 'Outfit_700Bold',
     fontSize: 16,
-    color: '#fca5a5',
+    color: '#ffffff',
   },
 });

@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cardFill,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    borderRadius: 24,
+    borderRadius: 18,
     padding: 20,
     gap: 10,
   },
@@ -114,9 +114,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   confirmDanger: {
-    backgroundColor: 'rgba(127, 29, 29, 0.55)',
-    borderWidth: 1,
-    borderColor: 'rgba(248, 113, 113, 0.55)',
+    backgroundColor: '#ef4444',
   },
   confirmText: {
     fontFamily: 'Outfit_700Bold',
@@ -124,6 +122,6 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   confirmDangerText: {
-    color: '#f87171',
+    color: '#ffffff',
   },
 });
