@@ -137,6 +137,7 @@ export function EditUserModal({ isOpen, onClose, user, onSave }: EditUserModalPr
                   >
                     <option value="User">User</option>
                     <option value="Ambassador">Ambassador</option>
+                    <option value="Admin">Admin</option>
                   </Select>
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -149,9 +150,6 @@ export function EditUserModal({ isOpen, onClose, user, onSave }: EditUserModalPr
                     placeholder="None set"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-medium text-muted-2">Account Status</label>
                   <Select 
@@ -161,16 +159,6 @@ export function EditUserModal({ isOpen, onClose, user, onSave }: EditUserModalPr
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
                     <option value="Suspended">Suspended</option>
-                  </Select>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-muted-2">KYC Verification</label>
-                  <Select 
-                    value={formData.kycStatus}
-                    onChange={(e) => handleChange("kycStatus", e.target.value as KycStatus)}
-                  >
-                    <option value="Verified">Verified</option>
-                    <option value="Not Verified">Not Verified</option>
                   </Select>
                 </div>
               </div>
