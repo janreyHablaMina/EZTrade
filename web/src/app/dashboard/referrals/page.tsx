@@ -48,10 +48,10 @@ export default function ReferralsPage() {
   }, [vipPlansData]);
 
   const totalReferrals = referrals.length;
-  const activeReferrals = referrals.filter(r => r.status === 'Active').length;
-  const totalDeposited = referrals.reduce((sum, r) => sum + (r.totalDeposited || 0), 0);
-  const totalBonuses = referrals.reduce((sum, r) => sum + (r.totalBonusGiven || 0), 0);
-  const totalAmbassadorDeductions = referrals.reduce((sum, r) => sum + (r.ambassadorDeduction || 0), 0);
+  const activeReferrals = referrals.filter((r: ReferralRecord) => r.status === 'Active').length;
+  const totalDeposited = referrals.reduce((sum: number, r: ReferralRecord) => sum + (r.totalDeposited || 0), 0);
+  const totalBonuses = referrals.reduce((sum: number, r: ReferralRecord) => sum + (r.totalBonusGiven || 0), 0);
+  const totalAmbassadorDeductions = referrals.reduce((sum: number, r: ReferralRecord) => sum + (r.ambassadorDeduction || 0), 0);
   const totalAdminDeductions = totalBonuses - totalAmbassadorDeductions;
   const totalAdminEarnings = totalDeposited - totalAdminDeductions;
 

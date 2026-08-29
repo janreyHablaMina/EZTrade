@@ -304,7 +304,7 @@ export default function VipPlansPage() {
 
       <GenericFloatingActions
         selectedCount={selectedIds.length}
-        onClearSelection={clearSelection}
+        onClear={clearSelection}
       >
         <button
           type="button"

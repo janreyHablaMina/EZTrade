@@ -285,21 +285,23 @@ export default function TransactionsPage() {
 
       <GenericFloatingActions
         selectedCount={selectedIds.length}
-        onClearSelection={clearSelection}
-        actions={[
-          {
-            label: "Approve Selected",
-            icon: "✅",
-            onClick: handleBulkApprove,
-          },
-          {
-            label: "Reject Selected",
-            icon: "❌",
-            onClick: handleBulkReject,
-            tone: "danger",
-          },
-        ]}
-      />
+        onClear={clearSelection}
+      >
+        <button
+          type="button"
+          onClick={handleBulkApprove}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-success/10 text-success hover:bg-success/20 transition cursor-pointer text-xs font-medium"
+        >
+          <span>✅</span> Approve Selected
+        </button>
+        <button
+          type="button"
+          onClick={handleBulkReject}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-danger/10 text-danger hover:bg-danger/20 transition cursor-pointer text-xs font-medium"
+        >
+          <span>❌</span> Reject Selected
+        </button>
+      </GenericFloatingActions>
 
       <TransactionDetailsModal
         isOpen={!!selectedTransactionForDetails}

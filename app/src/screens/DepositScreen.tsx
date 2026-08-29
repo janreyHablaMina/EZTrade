@@ -175,50 +175,24 @@ export function DepositScreen({
       >
         {/* Network Selection Tabs (Exchange Style) */}
         <Text style={styles.sectionTitle}>Select Network</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.networkTabs}>
-          {wallets.map((wallet) => {
-            const isSelected = walletId === wallet.id;
-            return (
-              <Pressable
-                key={wallet.id}
-                onPress={() => {
-                  setWalletId(wallet.id);
-                  setCopied(false);
-                }}
-                style={[
-                  styles.networkTab,
-                  isSelected && styles.networkTabSelected,
-                ]}
-              >
-                <Text style={[
-                  styles.networkTabText,
-                  isSelected && styles.networkTabTextSelected
-                ]}>
-                  {wallet.name}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+        <NetworkTabs
+          networks={wallets.map(w => ({ id: w.id, label: w.name }))}
+          selectedId={walletId as NetworkId}
+          onSelect={(id) => {
+            setWalletId(id);
+            setCopied(false);
+          }}
+        />
 
         {/* Massive Amount Input Area */}
         <View style={styles.amountArea}>
           <Text style={styles.sectionTitle}>Deposit Amount</Text>
-          <View style={[styles.massiveInputContainer, focusedField === 'amount' && styles.massiveInputFocused]}>
-            <TextInput
-              style={styles.massiveInput}
-              placeholder="0.00"
-              placeholderTextColor="rgba(255,255,255,0.2)"
-              keyboardType="numeric"
-              value={amount}
-              onChangeText={setAmount}
-              onFocus={() => setFocusedField('amount')}
-              onBlur={() => setFocusedField(null)}
-            />
-            <View style={styles.amountAddons}>
-              <Text style={styles.currencySuffix}>USDT</Text>
-            </View>
-          </View>
+          <MassiveAmountInput
+            amount={amount}
+            setAmount={setAmount}
+            focusedField={focusedField}
+            setFocusedField={setFocusedField}
+          />
           
           <View style={styles.balanceInfoRow}>
             <Text style={styles.availableText}>{planName ? `Plan: ${planName}` : 'Enter amount to deposit'}</Text>
@@ -308,67 +282,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   
-  /* --- Network Selection Tabs --- */
-  networkTabs: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingRight: 20,
-    marginBottom: 28,
-  },
-  networkTab: {
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  networkTabSelected: {
-    backgroundColor: 'rgba(168, 85, 247, 0.15)',
-    borderColor: colors.purpleBright,
-  },
-  networkTabText: {
-    fontFamily: 'Outfit_600SemiBold',
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.5)',
-  },
-  networkTabTextSelected: {
-    color: colors.purpleBright,
-  },
-
   /* --- Massive Amount Area --- */
   amountArea: {
     marginBottom: 24,
-  },
-  massiveInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
-    paddingBottom: 12,
-    marginBottom: 12,
-  },
-  massiveInputFocused: {
-    borderBottomColor: colors.purpleBright,
-  },
-  massiveInput: {
-    flex: 1,
-    fontFamily: 'Outfit_800ExtraBold',
-    fontSize: 48,
-    color: colors.white,
-    paddingVertical: 0,
-    includeFontPadding: false,
-    lineHeight: 56,
-  },
-  amountAddons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  currencySuffix: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 18,
-    color: 'rgba(255,255,255,0.6)',
   },
   balanceInfoRow: {
     flexDirection: 'row',

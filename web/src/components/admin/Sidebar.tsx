@@ -90,12 +90,12 @@ export function Sidebar() {
     const fetchCounts = async () => {
       try {
         const [deposits, withdrawals, messages] = await Promise.all([
-          webApi.get('/deposits'),
-          webApi.get('/withdrawals'),
+          webApi.get('/deposits').catch(() => []),
+          webApi.get('/withdrawals').catch(() => []),
           webApi.get('/messages/unread').catch(() => ({ count: 0 }))
         ]);
-        const depCount = deposits.filter((d: any) => d.status === 'Pending').length;
-        const withCount = withdrawals.filter((w: any) => w.status === 'Pending').length;
+        const depCount = Array.isArray(deposits) ? deposits.filter((d: any) => d.status === 'Pending').length : 0;
+        const withCount = Array.isArray(withdrawals) ? withdrawals.filter((w: any) => w.status === 'Pending').length : 0;
         setPendingDeposits(depCount);
         setPendingWithdrawals(withCount);
         if (messages?.count !== undefined) {

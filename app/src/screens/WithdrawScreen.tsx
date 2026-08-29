@@ -323,55 +323,24 @@ export function WithdrawScreen({
         >
           {/* Network Selection Tabs (Exchange Style) */}
           <Text style={styles.sectionTitle}>Select Network</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.networkTabs}>
-            {NETWORKS.map((net) => {
-              const isSelected = networkId === net.id;
-              return (
-                <Pressable
-                  key={net.id}
-                  disabled={!open}
-                  onPress={() => setNetworkId(net.id as NetworkId)}
-                  style={[
-                    styles.networkTab,
-                    isSelected && styles.networkTabSelected,
-                    !open && { opacity: 0.5 }
-                  ]}
-                >
-                  <Text style={[
-                    styles.networkTabText,
-                    isSelected && styles.networkTabTextSelected
-                  ]}>
-                    {net.label.split(' ')[0]} {/* e.g. TRC20 */}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+          <NetworkTabs
+            networks={NETWORKS.map(n => ({ id: n.id, label: n.label }))}
+            selectedId={networkId}
+            onSelect={setNetworkId}
+            disabled={!open}
+          />
 
           {/* Massive Amount Input Area */}
           <View style={styles.amountArea}>
             <Text style={styles.sectionTitle}>Withdraw Amount</Text>
-            <View style={[styles.massiveInputContainer, focusedField === 'amount' && styles.massiveInputFocused]}>
-              <TextInput
-                style={styles.massiveInput}
-                placeholder="0.00"
-                placeholderTextColor="rgba(255,255,255,0.2)"
-                keyboardType="numeric"
-                editable={open}
-                value={amount}
-                onChangeText={setAmount}
-                onFocus={() => setFocusedField('amount')}
-                onBlur={() => setFocusedField(null)}
-              />
-              <View style={styles.amountAddons}>
-                <Text style={styles.currencySuffix}>USDT</Text>
-                {open && (
-                  <Pressable onPress={() => setAmount(String(AVAILABLE))} style={styles.maxBtn}>
-                    <Text style={styles.maxBtnText}>MAX</Text>
-                  </Pressable>
-                )}
-              </View>
-            </View>
+            <MassiveAmountInput
+              amount={amount}
+              setAmount={setAmount}
+              focusedField={focusedField}
+              setFocusedField={setFocusedField}
+              editable={open}
+              onMaxPress={() => setAmount(String(AVAILABLE))}
+            />
             
             <View style={styles.balanceInfoRow}>
               <Text style={styles.availableText}>Available: <Text style={{color: colors.white, fontFamily: 'Outfit_600SemiBold'}}>{AVAILABLE.toFixed(2)} USDT</Text></Text>

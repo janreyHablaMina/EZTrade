@@ -3,6 +3,7 @@ export type KycStatus = "Verified" | "Not Verified" | "Pending" | "Rejected";
 
 export interface UserRecord {
   id: string;
+  dbId?: string | number;
   name: string;
   email: string;
   phone: string;

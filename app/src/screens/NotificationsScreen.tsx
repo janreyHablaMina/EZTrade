@@ -70,7 +70,7 @@ export function NotificationsScreen({ user, onBack }: NotificationsScreenProps) 
   const hasUnread = notifications.some(n => !n.is_read);
 
   return (
-    <SafeAreaView style={[styles.safeArea, { paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 16 : 0 }]}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 32 : 0 }]}>
       <View style={styles.header}>
         <Pressable onPress={onBack} style={styles.backButton}>
           <ArrowLeft size={24} color={colors.white} />
@@ -199,9 +199,9 @@ const styles = StyleSheet.create({
   },
   markAllButton: {
     backgroundColor: 'rgba(155, 92, 255, 0.15)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 100,
   },
   markAllText: {
     color: '#9b5cff',

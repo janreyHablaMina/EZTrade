@@ -45,7 +45,7 @@ type VipPlansTableProps = {
   onDelete?: (plan: VipPlan) => void;
   onToggleStatus?: (plan: VipPlan) => void;
   selectedIds?: string[];
-  onSelectAll?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onSelectAll?: () => void;
   onSelectOne?: (id: string) => void;
 };
 
@@ -65,8 +65,9 @@ export function VipPlansTable({
   onSelectAll,
   onSelectOne,
 }: VipPlansTableProps) {
-  const isAllSelected = paginatedPlans.length > 0 && paginatedPlans.every(p => selectedIds.includes(p.id));
-  const isSomeSelected = paginatedPlans.some(p => selectedIds.includes(p.id)) && !isAllSelected;
+  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+
+  const isAllSelected = paginatedPlans.length > 0 && selectedIds.length === paginatedPlans.length;
 
   return (
     <div className="mt-5 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex flex-col">
@@ -77,8 +78,7 @@ export function VipPlansTable({
               <th className="pb-3.5 pl-4 pr-2 font-medium w-[40px]">
                 <CustomCheckbox 
                   checked={isAllSelected}
-                  indeterminate={isSomeSelected}
-                  onChange={onSelectAll}
+                  onChange={() => onSelectAll?.()}
                 />
               </th>
               <th className="pb-3.5 pl-1 font-medium">Level</th>

@@ -7,6 +7,10 @@ export type DashboardStats = {
   active_vips: number;
   total_earnings: number;
   total_deposits: number;
+  admin_trade_capital?: number;
+  admin_gross_income?: number;
+  admin_total_deduction?: number;
+  admin_net_income?: number;
   deposits_by_status: {
     Completed: number;
     Pending: number;

@@ -20,17 +20,24 @@ class UserController extends Controller
         $totalBalance = User::where('role', '!=', 'Admin')->sum('balance');
         
         $totalDeduction = 0;
-        $usersWithApprovedDeposits = \App\Models\Deposit::with('user')->where('status', 'Approved')->select('user_id')->distinct()->get();
-        foreach ($usersWithApprovedDeposits as $record) {
-            $firstDeposit = \App\Models\Deposit::where('user_id', $record->user_id)->where('status', 'Approved')->orderBy('created_at', 'asc')->first();
-            if ($firstDeposit && $firstDeposit->user && $firstDeposit->user->referred_by) {
-                $rates = \App\Helpers\SettingsHelper::getReferralRates();
+        
+        $allUsers = User::all()->keyBy('id'); // N+1 Optimization: Load users into memory
+        $firstDeposits = \App\Models\Deposit::where('status', 'Approved')
+            ->whereIn('id', function($q) {
+                $q->select(\Illuminate\Support\Facades\DB::raw('MIN(id)'))->from('deposits')->where('status', 'Approved')->groupBy('user_id');
+            })->get();
+            
+        $rates = \App\Helpers\SettingsHelper::getReferralRates();
+
+        foreach ($firstDeposits as $firstDeposit) {
+            $user = $allUsers->get($firstDeposit->user_id);
+            if ($user && $user->referred_by) {
                 $level = 1;
-                $currentUplineId = $firstDeposit->user->referred_by;
+                $currentUplineId = $user->referred_by;
                 while ($currentUplineId && $level <= 3) {
-                    $upline = \App\Models\User::find($currentUplineId);
+                    $upline = $allUsers->get($currentUplineId);
                     if (!$upline) break;
-                    $totalDeduction += $firstDeposit->amount * $rates[$level];
+                    $totalDeduction += $firstDeposit->amount * ($rates[$level] ?? 0);
                     $currentUplineId = $upline->referred_by;
                     $level++;
                 }
