@@ -57,11 +57,24 @@ function MessagesPageContent() {
   useEffect(() => {
     const userIdParam = searchParams.get('userId');
     if (userIdParam) {
+      const id = parseInt(userIdParam);
+      // Set initial loading state
       setActiveUser({
-        id: parseInt(userIdParam),
-        email: 'Loading...', // Ideally we fetch the user's details, or it gets updated from fetchConversations
-        name: 'User ' + userIdParam
+        id: id,
+        email: 'Loading...',
+        name: 'User ' + id
       });
+      
+      // Fetch actual user details
+      webApi.get(`/users/${id}`)
+        .then((userData) => {
+          setActiveUser({
+            id: id,
+            email: userData.email || userData.user?.email || '',
+            name: userData.name || userData.user?.name || `User ${id}`
+          });
+        })
+        .catch(err => console.error("Failed to fetch user for direct message", err));
     }
     
     fetchConversations();
