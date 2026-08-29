@@ -47,7 +47,8 @@ export default function DepositsPage() {
       status: d.status,
       submittedAt: new Date(d.created_at).toLocaleString('en-US', {
         year: 'numeric', month: 'short', day: 'numeric',
-        hour: '2-digit', minute: '2-digit'
+        hour: '2-digit', minute: '2-digit',
+        timeZone: 'UTC'
       }),
       createdAt: d.created_at,
     }));

@@ -43,7 +43,8 @@ export default function WithdrawalsPage() {
       status: w.status,
       submittedAt: new Date(w.created_at).toLocaleString('en-US', {
         year: 'numeric', month: 'short', day: 'numeric',
-        hour: '2-digit', minute: '2-digit'
+        hour: '2-digit', minute: '2-digit',
+        timeZone: 'UTC'
       }),
       createdAt: w.created_at,
     }));

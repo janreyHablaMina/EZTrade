@@ -46,7 +46,8 @@ export default function TransactionsPage() {
       userId: d.user ? `EZT-${d.user.id.toString().padStart(4, '0')}` : 'N/A',
       dateTime: new Date(d.created_at).toLocaleString('en-US', {
         year: 'numeric', month: 'short', day: 'numeric',
-        hour: '2-digit', minute: '2-digit'
+        hour: '2-digit', minute: '2-digit',
+        timeZone: 'UTC'
       }),
       timestamp: new Date(d.created_at).getTime(),
       createdAt: d.created_at,
@@ -67,7 +68,8 @@ export default function TransactionsPage() {
       userId: w.user ? `EZT-${w.user.id.toString().padStart(4, '0')}` : 'N/A',
       dateTime: new Date(w.created_at).toLocaleString('en-US', {
         year: 'numeric', month: 'short', day: 'numeric',
-        hour: '2-digit', minute: '2-digit'
+        hour: '2-digit', minute: '2-digit',
+        timeZone: 'UTC'
       }),
       timestamp: new Date(w.created_at).getTime(),
       createdAt: w.created_at,
