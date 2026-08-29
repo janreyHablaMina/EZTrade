@@ -18,6 +18,8 @@ import { ConfirmModal } from '../components/ConfirmModal';
 import { Receipt, Eye, EyeOff, CheckCircle } from '../components/Icons';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { WithdrawSetupPassword } from '../components/withdraw/WithdrawSetupPassword';
+import { WithdrawReceipt } from '../components/withdraw/WithdrawReceipt';
 import {
   MIN_USDT,
   WITHDRAW_FEE_RATE,
@@ -60,13 +62,8 @@ export function WithdrawScreen({
   const [settings, setSettings] = useState<{ is_enabled: boolean; start_time: string; end_time: string } | null>(null);
   const [open, setOpen] = useState(true);
   const [withdrawalPassword, setWithdrawalPassword] = useState('');
-  const [setupPassword1, setSetupPassword1] = useState('');
-  const [setupPassword2, setSetupPassword2] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   
-  const [showPwdSetup1, setShowPwdSetup1] = useState(false);
-  const [showPwdSetup2, setShowPwdSetup2] = useState(false);
   const [showPwdWithdraw, setShowPwdWithdraw] = useState(false);
   
   const [hasPasswordLocal, setHasPasswordLocal] = useState(false);
@@ -157,27 +154,7 @@ export function WithdrawScreen({
     });
   };
 
-  const handleSetupPassword = () => {
-    if (!setupPassword1 || setupPassword1.length < 6) {
-      setModalState({ visible: true, title: 'Error', message: 'Password must be at least 6 characters.' });
-      return;
-    }
-    if (setupPassword1 !== setupPassword2) {
-      setModalState({ visible: true, title: 'Error', message: 'Passwords do not match.' });
-      return;
-    }
 
-    setIsSubmitting(true);
-    apiClient.post(`/users/${user?.id}/withdrawal-password`, {
-      password: setupPassword1
-    }).then((res) => {
-      setModalState({ visible: true, title: 'Secured!', message: 'Your withdrawal password has been set successfully. Please keep it safe, as it cannot be recovered.', isSuccess: true });
-    }).catch(err => {
-      setModalState({ visible: true, title: 'Error', message: err.message || 'Failed to set password.' });
-    }).finally(() => {
-      setIsSubmitting(false);
-    });
-  };
 
   const getFieldStyle = (fieldName: string, isError: boolean = false) => {
     return [
@@ -202,76 +179,11 @@ export function WithdrawScreen({
 
   if (user && !hasPassword) {
     return (
-      <>
-        <KeyboardAvoidingView style={styles.root} behavior="padding">
-        <ScreenHeader title="Setup Password" onBack={onBack} />
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <View style={[styles.card, styles.alertCard]}>
-            <Text style={[styles.successTitle, { color: '#ef4444', fontSize: 20 }]}>Important Notice</Text>
-            <Text style={[styles.intro, { color: '#fca5a5', fontSize: 15 }]}>
-              You must set a withdrawal password before you can withdraw funds. {'\n\n'}
-              <Text style={{ fontFamily: 'Outfit_800ExtraBold', color: '#ff8a8a' }}>WARNING:</Text> This password CANNOT be changed or recovered if you forget it. Please write it down and store it securely.
-            </Text>
-          </View>
-
-          <Text style={styles.fieldLabel}>Withdrawal Password</Text>
-          <View style={getFieldStyle('setup1')}>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter 6+ characters"
-              placeholderTextColor="rgba(255,255,255,0.32)"
-              secureTextEntry={!showPwdSetup1}
-              value={setupPassword1}
-              onChangeText={setSetupPassword1}
-              onFocus={() => setFocusedField('setup1')}
-              onBlur={() => setFocusedField(null)}
-            />
-            <Pressable
-              onPress={() => setShowPwdSetup1(!showPwdSetup1)}
-              style={styles.eyeBtn}
-            >
-              {showPwdSetup1 ? <EyeOff size={22} color="rgba(255,255,255,0.6)" /> : <Eye size={22} color="rgba(255,255,255,0.4)" />}
-            </Pressable>
-          </View>
-
-          <Text style={styles.fieldLabel}>Confirm Password</Text>
-          <View style={getFieldStyle('setup2')}>
-            <TextInput
-              style={styles.input}
-              placeholder="Re-enter password"
-              placeholderTextColor="rgba(255,255,255,0.32)"
-              secureTextEntry={!showPwdSetup2}
-              value={setupPassword2}
-              onChangeText={setSetupPassword2}
-              onFocus={() => setFocusedField('setup2')}
-              onBlur={() => setFocusedField(null)}
-            />
-            <Pressable
-              onPress={() => setShowPwdSetup2(!showPwdSetup2)}
-              style={styles.eyeBtn}
-            >
-              {showPwdSetup2 ? <EyeOff size={22} color="rgba(255,255,255,0.6)" /> : <Eye size={22} color="rgba(255,255,255,0.4)" />}
-            </Pressable>
-          </View>
-        </ScrollView>
-        <View style={styles.footer}>
-          <PrimaryButton
-            label={isSubmitting ? 'Setting up...' : 'Set Password'}
-            onPress={handleSetupPassword}
-            disabled={isSubmitting || !setupPassword1 || !setupPassword2}
-          />
-        </View>
-        </KeyboardAvoidingView>
-        <ConfirmModal
-          visible={modalState.visible}
-          title={modalState.title}
-          message={modalState.message}
-          hideCancel
-          confirmLabel="OK"
-          onConfirm={closeAndHandleModal}
-          onCancel={closeAndHandleModal}
-        />
-      </>
+      <WithdrawSetupPassword
+        onBack={onBack}
+        user={user}
+        onSuccess={() => setHasPasswordLocal(true)}
+      />
     );
   }
 
@@ -298,22 +210,12 @@ export function WithdrawScreen({
       />
 
       {submitted ? (
-        <ScrollView contentContainerStyle={styles.content} bounces={false}>
-          <View style={[styles.card, { padding: 32, alignItems: 'center', marginTop: 40 }]}>
-            <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(34, 197, 94, 0.15)', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
-              <CheckCircle size={40} color="#4ade80" />
-            </View>
-            <Text style={[styles.successTitle, { textAlign: 'center' }]}>Withdraw Requested</Text>
-            <Text style={[styles.intro, { textAlign: 'center', fontSize: 16 }]}>
-              You will receive <Text style={{ color: colors.white, fontFamily: 'Outfit_700Bold' }}>{receive.toFixed(2)} USDT</Text> on {displayNetwork}{' '}
-              after the {withdrawFeePercent}% fee.
-            </Text>
-            <View style={{ width: '100%', height: 1, backgroundColor: 'rgba(255,255,255,0.08)', marginVertical: 20 }} />
-            <Text style={{ fontFamily: 'Outfit_400Regular', color: 'rgba(255,255,255,0.5)', textAlign: 'center', lineHeight: 22 }}>
-              Status is pending until processed. Processing hours are from {settings?.start_time || hourClockLabel(WITHDRAW_PROCESS_FROM_HOUR)} to {settings?.end_time || '12:00 AM'}.
-            </Text>
-          </View>
-        </ScrollView>
+        <WithdrawReceipt
+          receive={receive}
+          displayNetwork={displayNetwork}
+          withdrawFeePercent={withdrawFeePercent}
+          settings={settings}
+        />
       ) : (
         <ScrollView
           contentContainerStyle={styles.content}

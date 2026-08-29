@@ -13,7 +13,9 @@ import {
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors } from '../theme/colors';
 import { Key, Zap, Clock, CheckCircle } from '../components/Icons';
+import { TradeInfoCard } from '../components/trade/TradeInfoCard';
 import { useTradeCode } from '../hooks/useTradeCode';
+import { useCountdown } from '../hooks/useCountdown';
 import { useHomeStats } from '../hooks/useHomeStats';
 import { AnimatedLoading } from '../components/AnimatedLoading';
 
@@ -26,70 +28,6 @@ type TradeScreenProps = {
 
 import { apiClient } from '../lib/api';
 
-function useCountdown() {
-  const [timeLeft, setTimeLeft] = useState({ h: '00', m: '00', s: '00' });
-  const [schedules, setSchedules] = useState<string[]>([]);
-  const [duration, setDuration] = useState(30);
-
-  useEffect(() => {
-    apiClient.get('/settings/trade')
-      .then(res => {
-        setSchedules(res.schedules || []);
-        setDuration(res.duration_minutes || 30);
-      })
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      let diff = 0;
-
-      if (!schedules || schedules.length === 0) {
-        // Fallback to midnight
-        const tomorrow = new Date(now);
-        tomorrow.setHours(24, 0, 0, 0);
-        diff = tomorrow.getTime() - now.getTime();
-      } else {
-        const sorted = [...schedules].sort();
-        let nextTime = null;
-
-        for (const t of sorted) {
-          const [hour, minute] = t.split(':').map(Number);
-          const target = new Date(now);
-          target.setHours(hour, minute, 0, 0);
-          if (target.getTime() > now.getTime()) {
-            nextTime = target;
-            break;
-          }
-        }
-
-        if (!nextTime) {
-          const [hour, minute] = sorted[0].split(':').map(Number);
-          nextTime = new Date(now);
-          nextTime.setDate(now.getDate() + 1);
-          nextTime.setHours(hour, minute, 0, 0);
-        }
-
-        diff = nextTime.getTime() - now.getTime();
-      }
-
-      const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
-      const m = Math.floor((diff / 1000 / 60) % 60);
-      const s = Math.floor((diff / 1000) % 60);
-
-      setTimeLeft({
-        h: h.toString().padStart(2, '0'),
-        m: m.toString().padStart(2, '0'),
-        s: s.toString().padStart(2, '0')
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [schedules]);
-
-  return { timeLeft, duration };
-}
 
 export function TradeScreen({ onBack, user }: TradeScreenProps) {
   const { loading } = useHomeStats(user);
@@ -269,25 +207,7 @@ export function TradeScreen({ onBack, user }: TradeScreenProps) {
       )}
 
       {/* Info Card */}
-      <LinearGradient
-        colors={['rgba(18, 16, 31, 0.8)', 'rgba(18, 16, 31, 0.5)']}
-        style={styles.infoCard}
-      >
-        <Text style={styles.infoTitle}>How it works</Text>
-        {[
-          'Admin broadcasts a unique trading code via notifications.',
-          `You have ${duration} minutes to enter the code in the Trade tab.`,
-          'A valid code instantly earns your active VIP plan\'s daily yield.',
-          'Each code can only be used once per user.',
-        ].map((step, index) => (
-          <View key={index} style={styles.infoRow}>
-            <View style={styles.stepBadge}>
-              <Text style={styles.stepBadgeText}>{index + 1}</Text>
-            </View>
-            <Text style={styles.infoText}>{step}</Text>
-          </View>
-        ))}
-      </LinearGradient>
+      <TradeInfoCard duration={duration} />
     </ScrollView>
   );
 }
@@ -510,46 +430,4 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.6)',
   },
   // Info card
-  infoCard: {
-    borderWidth: 1,
-    borderColor: 'rgba(167, 139, 250, 0.15)',
-    borderRadius: 20,
-    padding: 24,
-    gap: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  infoTitle: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 15,
-    color: colors.white,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  stepBadge: {
-    width: 24, height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(124, 58, 237, 0.35)',
-    marginTop: 1,
-  },
-  stepBadgeText: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 12,
-    color: colors.white,
-  },
-  infoText: {
-    flex: 1,
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.7)',
-    lineHeight: 19,
-  },
 });
