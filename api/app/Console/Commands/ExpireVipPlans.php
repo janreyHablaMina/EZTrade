@@ -40,24 +40,13 @@ class ExpireVipPlans extends Command
             $expiresAt = $unlockedAt->copy()->addDays($plan->duration_days);
 
             if (now()->greaterThanOrEqualTo($expiresAt)) {
-                // Return the capital to the user
-                $user->balance += $plan->min_deposit;
-                
-                // Reset their VIP plan
+                // Just reset their VIP plan, we KEEP the capital
                 $user->vip_plan_id = null;
                 $user->vip_plan_unlocked_at = null;
                 $user->save();
 
-                // Log the capital return
-                \App\Models\EarningsLog::create([
-                    'user_id' => $user->id,
-                    'amount' => $plan->min_deposit,
-                    'type' => 'Capital Return',
-                    'description' => 'Capital returned for expired ' . $plan->level . ' plan'
-                ]);
-
                 $expiredCount++;
-                $this->info("Expired {$plan->level} for user ID {$user->id}. Returned \${$plan->min_deposit}.");
+                $this->info("Expired {$plan->level} for user ID {$user->id}. Capital kept by platform.");
             }
         }
 
