@@ -18,7 +18,7 @@ const TABS = [
   { id: "App Announcements", icon: Bell },
   { id: "App Release", icon: Download },
   { id: "Referral Program", icon: Users },
-  { id: "Deposit Addresses", icon: Wallet },
+  { id: "Deposit Settings", icon: Wallet },
   { id: "Withdrawal Settings", icon: CreditCard },
   { id: "Trade Automation", icon: Activity },
 ];
@@ -96,7 +96,7 @@ export default function SettingsPage() {
             {activeTab === "App Announcements" && <AppAnnouncementsCard onShowToast={setToastMessage} />}
             {activeTab === "App Release" && <AppReleaseCard onShowToast={setToastMessage} />}
             { activeTab === "Referral Program" && <ReferralSettingsCard onShowToast={setToastMessage} /> }
-            { activeTab === "Deposit Addresses" && <DepositAddressesCard onShowToast={setToastMessage} /> }
+            { activeTab === "Deposit Settings" && <DepositAddressesCard onShowToast={setToastMessage} /> }
             { activeTab === "Withdrawal Settings" && <WithdrawalSettingsCard onShowToast={setToastMessage} /> }
             {activeTab === "Trade Automation" && <TradeAutomationCard onShowToast={setToastMessage} />}
           </div>

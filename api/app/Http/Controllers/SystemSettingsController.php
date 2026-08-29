@@ -23,11 +23,7 @@ class SystemSettingsController extends Controller
                 return [
                     'maintenance_mode' => false,
                     'maintenance_title' => 'Under Maintenance',
-                    'maintenance_message' => 'We are currently performing scheduled maintenance to improve the platform. Please check back later.',
-                    'min_deposit' => 10,
-                    'min_withdrawal' => 20,
-                    'deposit_fee_percent' => 0,
-                    'withdrawal_fee_percent' => 1
+                    'maintenance_message' => 'We are currently performing scheduled maintenance to improve the platform. Please check back later.'
                 ];
             case 'security_kyc':
                 return [
@@ -52,7 +48,9 @@ class SystemSettingsController extends Controller
                     'trc20_address' => 'TYourTRC20DepositAddressHere123',
                     'erc20_address' => '0xYourERC20DepositAddressHere123',
                     'polygon_address' => '0xYourPolygonDepositAddressHere123',
-                    'bep20_address' => '0xYourBEP20DepositAddressHere123'
+                    'bep20_address' => '0xYourBEP20DepositAddressHere123',
+                    'min_deposit' => 10,
+                    'deposit_fee_percent' => 0
                 ];
             default:
                 return [];
@@ -112,7 +110,9 @@ class SystemSettingsController extends Controller
 
     public function getAppStatus()
     {
-        $setting = DB::table('settings')->where('key', 'platform_controls')->first();
+        $platformControls = DB::table('settings')->where('key', 'platform_controls')->first();
+        $depositAddresses = DB::table('settings')->where('key', 'deposit_addresses')->first();
+        $withdrawalSettings = DB::table('settings')->where('key', 'withdrawal_settings')->first();
         
         $maintenanceMode = false;
         $maintenanceTitle = 'Under Maintenance';
@@ -121,8 +121,8 @@ class SystemSettingsController extends Controller
         $minWithdrawal = 20;
         $withdrawalFeePercent = 1;
 
-        if ($setting) {
-            $data = json_decode($setting->value, true);
+        if ($platformControls) {
+            $data = json_decode($platformControls->value, true);
             if (isset($data['maintenance_mode'])) {
                 $maintenanceMode = (bool) $data['maintenance_mode'];
             }
@@ -132,9 +132,17 @@ class SystemSettingsController extends Controller
             if (!empty($data['maintenance_message'])) {
                 $maintenanceMessage = $data['maintenance_message'];
             }
+        }
+
+        if ($depositAddresses) {
+            $data = json_decode($depositAddresses->value, true);
             if (isset($data['min_deposit'])) {
                 $minDeposit = (float) $data['min_deposit'];
             }
+        }
+
+        if ($withdrawalSettings) {
+            $data = json_decode($withdrawalSettings->value, true);
             if (isset($data['min_withdrawal'])) {
                 $minWithdrawal = (float) $data['min_withdrawal'];
             }

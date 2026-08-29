@@ -28,7 +28,7 @@ export function DepositAddressesCard({ onShowToast }: { onShowToast?: (msg: stri
   
   const [qrUrls, setQrUrls] = useState<QrUrls>({});
   const [qrFiles, setQrFiles] = useState<{ [key: string]: File | null }>({});
-  
+  const [limits, setLimits] = useState({ min_deposit: 10, deposit_fee_percent: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -46,6 +46,10 @@ export function DepositAddressesCard({ onShowToast }: { onShowToast?: (msg: stri
           erc20_qr: data.deposit_addresses.erc20_qr,
           polygon_qr: data.deposit_addresses.polygon_qr,
           bep20_qr: data.deposit_addresses.bep20_qr,
+        });
+        setLimits({
+          min_deposit: data.deposit_addresses.min_deposit || 10,
+          deposit_fee_percent: data.deposit_addresses.deposit_fee_percent || 0
         });
       }
       setIsLoading(false);
@@ -70,6 +74,8 @@ export function DepositAddressesCard({ onShowToast }: { onShowToast?: (msg: stri
       formData.append("erc20_address", addresses.erc20_address);
       formData.append("polygon_address", addresses.polygon_address);
       formData.append("bep20_address", addresses.bep20_address);
+      formData.append("min_deposit", limits.min_deposit.toString());
+      formData.append("deposit_fee_percent", limits.deposit_fee_percent.toString());
 
       if (qrFiles.trc20_qr) formData.append("trc20_qr", qrFiles.trc20_qr);
       if (qrFiles.erc20_qr) formData.append("erc20_qr", qrFiles.erc20_qr);
@@ -95,12 +101,12 @@ export function DepositAddressesCard({ onShowToast }: { onShowToast?: (msg: stri
         setQrFiles({});
       }
 
-      if (onShowToast) onShowToast("Deposit addresses saved successfully");
-      else alert("Deposit addresses saved!");
+      if (onShowToast) onShowToast("Deposit settings saved successfully");
+      else alert("Deposit settings saved!");
     } catch (err) {
       console.error(err);
       if (onShowToast) onShowToast("Failed to save settings");
-      else alert("Failed to save addresses");
+      else alert("Failed to save settings");
     } finally {
       setIsSaving(false);
     }
@@ -175,12 +181,33 @@ export function DepositAddressesCard({ onShowToast }: { onShowToast?: (msg: stri
           <Wallet className="h-5 w-5 text-purple-bright" />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-white">Deposit Addresses & QR Codes</h2>
-          <p className="text-sm text-muted-2">Configure the receiving wallets and their optional QR code images.</p>
+          <h2 className="text-lg font-bold text-white">Deposit Settings</h2>
+          <p className="text-sm text-muted-2">Configure minimum deposits, fees, and receiving wallets.</p>
         </div>
       </div>
 
       <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-6 mb-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-white">Minimum Deposit ($)</label>
+            <input
+              type="number"
+              value={limits.min_deposit}
+              onChange={(e) => setLimits(l => ({ ...l, min_deposit: Number(e.target.value) }))}
+              className="w-full rounded-xl border border-border bg-bg/50 px-4 py-2.5 text-sm text-white focus:border-purple-bright focus:outline-none transition-colors"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-white">Deposit Fee (%)</label>
+            <input
+              type="number"
+              value={limits.deposit_fee_percent}
+              onChange={(e) => setLimits(l => ({ ...l, deposit_fee_percent: Number(e.target.value) }))}
+              className="w-full rounded-xl border border-border bg-bg/50 px-4 py-2.5 text-sm text-white focus:border-purple-bright focus:outline-none transition-colors"
+            />
+          </div>
+        </div>
+
         {renderNetworkField("TRC20 (Tether/Tron)", "trc20_address", "trc20_qr")}
         {renderNetworkField("ERC20 (Ethereum)", "erc20_address", "erc20_qr")}
         {renderNetworkField("Polygon", "polygon_address", "polygon_qr")}

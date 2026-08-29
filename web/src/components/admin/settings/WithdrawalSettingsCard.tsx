@@ -8,6 +8,8 @@ export function WithdrawalSettingsCard({ onShowToast }: { onShowToast?: (msg: st
   const [isAutomationEnabled, setIsAutomationEnabled] = useState(false);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
+  const [minWithdrawal, setMinWithdrawal] = useState(20);
+  const [withdrawalFeePercent, setWithdrawalFeePercent] = useState(1);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -19,6 +21,8 @@ export function WithdrawalSettingsCard({ onShowToast }: { onShowToast?: (msg: st
           setIsAutomationEnabled(data.is_enabled ?? false);
           setStartTime(data.start_time || "09:00");
           setEndTime(data.end_time || "17:00");
+          setMinWithdrawal(data.min_withdrawal ?? 20);
+          setWithdrawalFeePercent(data.withdrawal_fee_percent ?? 1);
         }
       } catch (error) {
         console.error("Failed to fetch withdrawal settings:", error);
@@ -35,7 +39,9 @@ export function WithdrawalSettingsCard({ onShowToast }: { onShowToast?: (msg: st
       await webApi.post('/settings/withdrawal', {
         is_enabled: isAutomationEnabled,
         start_time: startTime,
-        end_time: endTime
+        end_time: endTime,
+        min_withdrawal: minWithdrawal,
+        withdrawal_fee_percent: withdrawalFeePercent
       });
       if (onShowToast) onShowToast("Withdrawal settings saved successfully");
     } catch (error) {
@@ -71,7 +77,26 @@ export function WithdrawalSettingsCard({ onShowToast }: { onShowToast?: (msg: st
 
       {/* Body */}
       <div className="p-5 space-y-8">
-        <div className="flex items-center justify-between">
+        <div className="grid grid-cols-2 gap-6 pb-2">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-white">Minimum Withdrawal ($)</label>
+            <Input
+              type="number"
+              value={minWithdrawal}
+              onChange={(e) => setMinWithdrawal(Number(e.target.value))}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-white">Withdrawal Fee (%)</label>
+            <Input
+              type="number"
+              value={withdrawalFeePercent}
+              onChange={(e) => setWithdrawalFeePercent(Number(e.target.value))}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between border-t border-border/50 pt-6">
           <div>
             <h3 className="text-sm font-semibold text-white">Enforce Time Limits</h3>
             <p className="text-xs text-muted-2 mt-1">If disabled, users can withdraw 24/7.</p>

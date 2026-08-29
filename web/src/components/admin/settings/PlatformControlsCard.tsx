@@ -116,45 +116,6 @@ export function PlatformControlsCard({ onShowToast }: { onShowToast?: (msg: stri
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-white">Minimum Deposit ($)</label>
-            <input
-              type="number"
-              value={controls.min_deposit}
-              onChange={(e) => setControls(c => ({ ...c, min_deposit: Number(e.target.value) }))}
-              className="w-full rounded-xl border border-border bg-bg/50 px-4 py-2.5 text-sm text-white focus:border-purple-bright focus:outline-none transition-colors"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-white">Minimum Withdrawal ($)</label>
-            <input
-              type="number"
-              value={controls.min_withdrawal}
-              onChange={(e) => setControls(c => ({ ...c, min_withdrawal: Number(e.target.value) }))}
-              className="w-full rounded-xl border border-border bg-bg/50 px-4 py-2.5 text-sm text-white focus:border-purple-bright focus:outline-none transition-colors"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-white">Deposit Fee (%)</label>
-            <input
-              type="number"
-              value={controls.deposit_fee_percent}
-              onChange={(e) => setControls(c => ({ ...c, deposit_fee_percent: Number(e.target.value) }))}
-              className="w-full rounded-xl border border-border bg-bg/50 px-4 py-2.5 text-sm text-white focus:border-purple-bright focus:outline-none transition-colors"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-white">Withdrawal Fee (%)</label>
-            <input
-              type="number"
-              value={controls.withdrawal_fee_percent}
-              onChange={(e) => setControls(c => ({ ...c, withdrawal_fee_percent: Number(e.target.value) }))}
-              className="w-full rounded-xl border border-border bg-bg/50 px-4 py-2.5 text-sm text-white focus:border-purple-bright focus:outline-none transition-colors"
-            />
-          </div>
-        </div>
-
         <div className="pt-2 flex justify-end">
           <button
             onClick={handleSave}

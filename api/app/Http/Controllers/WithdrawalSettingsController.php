@@ -15,12 +15,18 @@ class WithdrawalSettingsController extends Controller
             return response()->json([
                 'is_enabled' => false,
                 'start_time' => '09:00',
-                'end_time' => '17:00'
+                'end_time' => '17:00',
+                'min_withdrawal' => 20,
+                'withdrawal_fee_percent' => 1
             ]);
         }
 
         $data = json_decode($setting->value, true);
         $data['current_server_time'] = now()->format('H:i');
+        
+        if (!isset($data['min_withdrawal'])) $data['min_withdrawal'] = 20;
+        if (!isset($data['withdrawal_fee_percent'])) $data['withdrawal_fee_percent'] = 1;
+
         return response()->json($data);
     }
 
@@ -30,12 +36,16 @@ class WithdrawalSettingsController extends Controller
             'is_enabled' => 'required|boolean',
             'start_time' => 'required|string|regex:/^\d{2}:\d{2}$/',
             'end_time' => 'required|string|regex:/^\d{2}:\d{2}$/',
+            'min_withdrawal' => 'nullable|numeric|min:0',
+            'withdrawal_fee_percent' => 'nullable|numeric|min:0',
         ]);
 
         $payload = [
             'is_enabled' => $request->is_enabled,
             'start_time' => $request->start_time,
-            'end_time' => $request->end_time
+            'end_time' => $request->end_time,
+            'min_withdrawal' => $request->min_withdrawal ?? 20,
+            'withdrawal_fee_percent' => $request->withdrawal_fee_percent ?? 1
         ];
 
         DB::table('settings')->updateOrInsert(
