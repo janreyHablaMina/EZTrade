@@ -32,6 +32,18 @@ export default function App() {
   useEffect(() => {
     if (!fontsLoaded) return;
 
+    const { DeviceEventEmitter, Alert } = require('react-native');
+    const suspendListener = DeviceEventEmitter.addListener('account_suspended', async () => {
+      await SecureStore.deleteItemAsync('saved_user');
+      setUser(null);
+      setScreen('login');
+      Alert.alert(
+        'Account Suspended',
+        'Your account has been suspended or deactivated. Please contact support.',
+        [{ text: 'OK' }]
+      );
+    });
+
     SecureStore.getItemAsync('saved_user').then((savedUserStr) => {
       const timer = setTimeout(() => {
         if (savedUserStr) {
@@ -47,6 +59,10 @@ export default function App() {
         setScreen('onboarding');
       }, 2600);
     });
+
+    return () => {
+      suspendListener.remove();
+    };
   }, [fontsLoaded]);
 
   if (!fontsLoaded) {

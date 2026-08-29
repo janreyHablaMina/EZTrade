@@ -139,6 +139,10 @@ class UserController extends Controller
 
         $user->update($validated);
 
+        if (isset($validated['status']) && in_array($validated['status'], ['Suspended', 'Inactive'])) {
+            $user->tokens()->delete();
+        }
+
         return response()->json([
             'message' => 'User updated successfully',
             'user' => $user->load('vipPlan')

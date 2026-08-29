@@ -25,6 +25,10 @@ async function fetchJSON(endpoint: string, options: RequestInit = {}): Promise<a
     }
 
     if (!response.ok) {
+      if (response.status === 403 && data?.error === 'account_suspended') {
+        const { DeviceEventEmitter } = require('react-native');
+        DeviceEventEmitter.emit('account_suspended');
+      }
       throw new Error(data?.message || 'Something went wrong');
     }
 

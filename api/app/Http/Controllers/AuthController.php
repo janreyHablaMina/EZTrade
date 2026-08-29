@@ -109,6 +109,13 @@ class AuthController extends Controller
             ], 401);
         }
 
+        if ($user->status === 'Suspended' || $user->status === 'Inactive') {
+            return response()->json([
+                'error' => 'account_suspended',
+                'message' => 'Your account has been suspended or deactivated. Please contact support.'
+            ], 403);
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
