@@ -17,7 +17,8 @@ class VipPlanController extends Controller
     {
         $totalInvestors = \App\Models\User::whereNotNull('vip_plan_id')->count();
         $totalDeposited = \App\Models\Deposit::where('status', 'approved')->sum('amount');
-        $totalEarningsPaid = \App\Models\EarningsLog::sum('amount') + \App\Models\TradingCodeRedemption::sum('reward_amount');
+        $totalEarningsPaid = \App\Models\EarningsLog::whereIn('type', ['Daily User Cut', 'Daily Ambassador Cut'])->sum('amount') 
+                           + \App\Models\TradingCodeRedemption::sum('reward_amount');
         
         return response()->json([
             'total_investors' => $totalInvestors,
