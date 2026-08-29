@@ -338,7 +338,9 @@ export default function UsersPage() {
             }
           }}
           onEditUser={setEditingUser}
-          onNotifyUser={setNotifyingUser}
+          onMessageUser={(user) => {
+            router.push(`/dashboard/messages?userId=${user.dbId || user.id.replace('EZT-', '')}`);
+          }}
           onSuspendUser={(user) => setAccountAction({ user, action: 'suspend' })}
           onUnsuspendUser={(user) => setAccountAction({ user, action: 'unsuspend' })}
           onDeactivateUser={(user) => setAccountAction({ user, action: 'deactivate' })}

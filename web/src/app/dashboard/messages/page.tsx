@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Search, Send, User, MessageCircle, Loader2, Paperclip, X, Image as ImageIcon, Gift, Trash2, CheckCircle2 } from "lucide-react";
 import { webApi } from "@/lib/api";
+import { useSearchParams } from "next/navigation";
 
 type ConversationUser = {
   user: {
@@ -35,7 +36,10 @@ const GLOBAL_ROOM = {
   name: 'Global Announcements'
 };
 
-export default function MessagesPage() {
+import { Suspense } from "react";
+
+function MessagesPageContent() {
+  const searchParams = useSearchParams();
   const [conversations, setConversations] = useState<ConversationUser[]>([]);
   const [activeUser, setActiveUser] = useState<ConversationUser['user'] | null>(GLOBAL_ROOM);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -51,10 +55,19 @@ export default function MessagesPage() {
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const userIdParam = searchParams.get('userId');
+    if (userIdParam) {
+      setActiveUser({
+        id: parseInt(userIdParam),
+        email: 'Loading...', // Ideally we fetch the user's details, or it gets updated from fetchConversations
+        name: 'User ' + userIdParam
+      });
+    }
+    
     fetchConversations();
     const interval = setInterval(fetchConversations, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (activeUser) {
@@ -500,5 +513,13 @@ export default function MessagesPage() {
         </div>
       )}
     </AdminShell>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center text-muted-2">Loading messages...</div>}>
+      <MessagesPageContent />
+    </Suspense>
   );
 }

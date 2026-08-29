@@ -23,7 +23,7 @@ type UsersTableProps = {
   toggleSelectRow: (id: string) => void;
   onViewUser?: (user: UserRecord) => void;
   onEditUser?: (user: UserRecord) => void;
-  onNotifyUser?: (user: UserRecord) => void;
+  onMessageUser?: (user: UserRecord) => void;
   onSimulateTrade?: (user: UserRecord) => void;
   onSuspendUser?: (user: UserRecord) => void;
   onUnsuspendUser?: (user: UserRecord) => void;
@@ -46,7 +46,7 @@ export function UsersTable({
   toggleSelectRow,
   onViewUser,
   onEditUser,
-  onNotifyUser,
+  onMessageUser,
   onSimulateTrade,
   onSuspendUser,
   onUnsuspendUser,
@@ -92,11 +92,12 @@ export function UsersTable({
                 return (
                   <tr
                     key={user.id}
-                    className={`border-b border-border/45 last:border-0 hover:bg-white/[0.01] transition ${
+                    onClick={() => onViewUser?.(user)}
+                    className={`border-b border-border/45 last:border-0 hover:bg-white/[0.01] transition cursor-pointer ${
                       isChecked ? "bg-purple/5" : ""
                     }`}
                   >
-                    <td className="py-3.5 pl-1 pr-6">
+                    <td className="py-3.5 pl-1 pr-6" onClick={(e) => e.stopPropagation()}>
                       <CustomCheckbox
                         checked={isChecked}
                         onChange={() => toggleSelectRow(user.id)}
@@ -162,14 +163,14 @@ export function UsersTable({
                         </td>
                       </>
                     )}
-                    <td className="py-3.5 text-right pr-1">
+                    <td className="py-3.5 text-right pr-1" onClick={(e) => e.stopPropagation()}>
                         <TableActionsMenu estimatedHeight={350}>
                           <TableActionsMenuItem icon="👁" label="View User" onClick={() => onViewUser?.(user)} />
                           <TableActionsMenuItem icon="✏️" label="Edit User" onClick={() => onEditUser?.(user)} />
                           <TableActionsMenuItem
-                            icon="🔔"
-                            label="Send Notification"
-                            onClick={() => onNotifyUser?.(user)}
+                            icon="💬"
+                            label="Message User"
+                            onClick={() => onMessageUser?.(user)}
                           />
                           <TableActionsMenuDivider />
                         {user.status === "Suspended" ? (
