@@ -44,11 +44,12 @@ export default function VipPlansPage() {
   }, [plansData]);
 
   const stats = useMemo(() => {
-    if (!statsData) return { investors: 0, deposited: 0, earnings: 0 };
+    if (!statsData) return { investors: 0, deposited: 0, earnings: 0, adminProfit: 0 };
     return {
       investors: statsData.total_investors || 0,
       deposited: statsData.total_deposited || 0,
-      earnings: statsData.total_earnings_paid || 0
+      earnings: statsData.total_earnings_paid || 0,
+      adminProfit: statsData.admin_net_profit || 0
     };
   }, [statsData]);
 
@@ -257,36 +258,30 @@ export default function VipPlansPage() {
       </div>
 
       {/* KPI Cards Row */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Total Plans"
-          value={plansList.length.toString()}
-          subtext="Active VIP Plans"
+          label="Admin Net Profit"
+          value={`$${stats.adminProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          subtext="Total revenue kept by platform"
           icon={Crown}
-        />
-        <KpiCard
-          label="Active Plans"
-          value={plansList.filter(p => p.status === 'Active').length.toString()}
-          subtext="100% of total plans"
-          icon={Percent}
-          iconClassName="text-success"
+          iconClassName="text-purple-bright"
         />
         <KpiCard
           label="Total Investors"
           value={stats.investors.toLocaleString()}
-          subtext="Across all VIP plans"
+          subtext="Active VIP members"
           icon={Users}
         />
         <KpiCard
           label="Total Deposited"
           value={`$${stats.deposited.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          subtext="From all VIP plans"
+          subtext="Capital locked in plans"
           icon={Wallet}
         />
         <KpiCard
           label="Total Earnings Paid"
           value={`$${stats.earnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          subtext="Across all VIP plans"
+          subtext="Paid to users & ambassadors"
           icon={Coins}
         />
       </div>

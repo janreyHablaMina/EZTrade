@@ -22,11 +22,14 @@ class VipPlanController extends Controller
             
         $totalEarningsPaid = \App\Models\EarningsLog::whereIn('type', ['Daily Ambassador Cut'])->sum('amount') 
                            + \App\Models\TradingCodeRedemption::sum('reward_amount');
+                           
+        $adminNetProfit = \App\Models\EarningsLog::where('type', 'Daily Admin Cut')->sum('amount');
         
         return response()->json([
             'total_investors' => $totalInvestors,
             'total_deposited' => (float)$totalDeposited,
             'total_earnings_paid' => (float)$totalEarningsPaid,
+            'admin_net_profit' => (float)$adminNetProfit,
         ]);
     }
 
