@@ -8,9 +8,13 @@ use App\Models\VipPlan;
 
 class VipPlanController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(VipPlan::withCount('users')->orderBy('created_at', 'desc')->get());
+        $query = VipPlan::withCount('users')->orderBy('created_at', 'desc');
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+        return response()->json($query->get());
     }
 
     public function stats()

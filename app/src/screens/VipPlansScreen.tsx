@@ -28,7 +28,7 @@ export function VipPlansScreen({ user, onBack }: VipPlansScreenProps) {
   useEffect(() => {
     async function fetchPlans() {
       try {
-        const data = await apiClient.get('/vip-plans');
+        const data = await apiClient.get('/vip-plans?status=Active');
         const mapped = data.map((p: any) => ({
           id: p.id.toString(),
           name: p.level,
