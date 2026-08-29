@@ -89,6 +89,7 @@ class VipPlanController extends Controller
 
         $user->balance -= $plan->min_deposit;
         $user->vip_plan_id = $plan->id;
+        $user->vip_plan_unlocked_at = now();
         $user->save();
 
         // Referral bonus logic has been moved to DepositController
