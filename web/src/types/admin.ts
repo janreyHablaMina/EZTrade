@@ -20,6 +20,7 @@ export interface UserRecord {
   downlineCount: number;
   totalDownlineAssets: number;
   dailyEarnings: number;
+  dailyProfit?: number;
   cutPercent?: number;
   withdrawal_password?: string;
 }

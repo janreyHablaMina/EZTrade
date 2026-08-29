@@ -56,6 +56,7 @@ export default function UsersPage() {
       teamSize: u.team_size || 0,
       referralCode: u.referral_code || null,
       withdrawal_password: u.withdrawal_password || "",
+      dailyProfit: u.vip_plan ? ((parseFloat(u.vip_plan.min_deposit) || 0) * (parseFloat(u.vip_plan.daily_profit_percent) / 100)) : 0,
       registeredAt: new Date(u.created_at).toLocaleDateString('en-US', {
         year: 'numeric', month: 'short', day: 'numeric',
         hour: '2-digit', minute: '2-digit'

@@ -75,7 +75,7 @@ export function UsersTable({
               <th className="pb-3.5 font-medium">Level</th>
               <th className="pb-3.5 font-medium">Status</th>
               <th className="pb-3.5 font-medium">Balance</th>
-              <th className="pb-3.5 font-medium">Joined</th>
+              <th className="pb-3.5 font-medium">Daily Profit</th>
               {isDownlineView && (
                 <>
                   <th className="pb-3.5 font-medium text-emerald-400">Cut %</th>
@@ -149,7 +149,7 @@ export function UsersTable({
                         </div>
                       )}
                     </td>
-                    <td className="py-3.5 text-muted-2">{user.registeredAt}</td>
+                    <td className="py-3.5 font-bold text-success">+${user.dailyProfit?.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</td>
                     {isDownlineView && (
                       <>
                         <td className="py-3.5">
