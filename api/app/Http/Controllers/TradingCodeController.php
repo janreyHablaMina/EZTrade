@@ -123,6 +123,61 @@ class TradingCodeController extends Controller
         ]);
     }
 
+    public function generateAutomated(Request $request)
+    {
+        $setting = \Illuminate\Support\Facades\DB::table('settings')->where('key', 'trade_automation')->first();
+        if (!$setting) {
+            return response()->json(['message' => 'Trade automation config not found'], 400);
+        }
+
+        $config = json_decode($setting->value, true);
+        $tradesPerDay = $config['trades_per_day'] ?? 1;
+        $expiresInMinutes = $config['duration_minutes'] ?? 30;
+        
+        $profitPercentage = round(100 / $tradesPerDay, 2);
+        $code = strtoupper(Str::random(8));
+
+        $tradingCode = TradingCode::create([
+            'code' => $code,
+            'reward_type' => 'vip_yield',
+            'profit_percentage' => $profitPercentage,
+            'expires_at' => Carbon::now()->addMinutes($expiresInMinutes),
+        ]);
+
+        $dateStr = Carbon::now()->format('F j, Y');
+        $titleTemplate = $config['message_title'] ?? 'New Trading Signal Active!';
+        $contentTemplate = $config['message_content'] ?? "🚨 New Trading Code Available! 🚨\n\n🎟️ Code: {code}";
+
+        $userId = $request->input('user_id');
+
+        $replacedContent = str_replace(
+            ['{code}', '{profit}', '{duration}', '{dateStr}'],
+            [$code, $profitPercentage, $expiresInMinutes, $dateStr],
+            $contentTemplate
+        );
+
+        Notification::create([
+            'user_id' => $userId,
+            'title' => $titleTemplate,
+            'message' => $replacedContent,
+            'type' => 'Promotion',
+            'is_read' => false,
+        ]);
+
+        $msg = \App\Models\Message::create([
+            'sender_id' => 22,
+            'receiver_id' => $userId,
+            'content' => $replacedContent,
+            'is_read' => false,
+        ]);
+
+        return response()->json([
+            'message' => 'Automated trading code sent successfully',
+            'trading_code' => $tradingCode,
+            'chat_message' => $msg
+        ]);
+    }
+
     public function redeem(Request $request)
     {
         $request->validate([

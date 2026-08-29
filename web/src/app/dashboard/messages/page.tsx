@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Search, Send, User, MessageCircle, Loader2, Paperclip, X, Image as ImageIcon, Gift, Trash2, CheckCircle2 } from "lucide-react";
+import { Search, Send, User, MessageCircle, Loader2, Paperclip, X, Image as ImageIcon, Gift, Trash2, CheckCircle2, Zap } from "lucide-react";
 import { webApi } from "@/lib/api";
 import { useSearchParams } from "next/navigation";
 
@@ -202,6 +202,25 @@ function MessagesPageContent() {
     } catch (err) {
       console.error(err);
       alert("Failed to generate and send bonus code.");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleGenerateAutomatedCode = async () => {
+    if (isSending) return;
+    setIsSending(true);
+    try {
+      const payload = activeUser && activeUser.id !== 0 ? { user_id: activeUser.id } : {};
+      const res = await webApi.post("/trading-codes/automated", payload);
+      
+      if (res.chat_message) {
+        setMessages([...messages, res.chat_message]);
+        showToast("Automated Code Sent!");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate and send automated code.");
     } finally {
       setIsSending(false);
     }
@@ -431,6 +450,14 @@ function MessagesPageContent() {
                     title="Attach Image"
                   >
                     <Paperclip className="h-5 w-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGenerateAutomatedCode}
+                    className="h-11 w-11 shrink-0 rounded-xl bg-bg-deep border border-border flex items-center justify-center text-blue-500 hover:text-blue-400 hover:border-blue-500/30 transition-colors"
+                    title="Trigger Automated Trade"
+                  >
+                    <Zap className="h-5 w-5" />
                   </button>
                   <button
                     type="button"
