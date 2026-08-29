@@ -173,7 +173,6 @@ export function NotificationsScreen({ user, onBack }: NotificationsScreenProps) 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.bg,
   },
   header: {
     flexDirection: 'row',

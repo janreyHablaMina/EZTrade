@@ -98,7 +98,6 @@ export function SplashScreen({ fontsReady = true }: SplashScreenProps) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.bg,
   },
   content: {
     flex: 1,

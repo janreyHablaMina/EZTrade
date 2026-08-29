@@ -290,7 +290,6 @@ export function MessagesScreen({ onBack, user }: MessagesScreenProps) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.bg,
   },
   content: {
     padding: 16,
@@ -300,7 +299,6 @@ const styles = StyleSheet.create({
   tabContainer: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: colors.bg,
   },
   tabWrapper: {
     flexDirection: 'row',
@@ -387,7 +385,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.4)',
   },
   inputContainerWrapper: {
-    backgroundColor: colors.bgDeep,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.05)',
   },

@@ -2,9 +2,67 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo, useRef } from 'react';
 import { Animated, Dimensions, Platform, StyleSheet, View } from 'react-native';
 import { colors } from '../theme/colors';
+import { Bell, MessageCircle, Gift, CreditCard, ShieldCheck, Settings, Key, Zap, Clock, Lock, Receipt } from './Icons';
 
 const { width, height } = Dimensions.get('window');
 const useNativeDriver = Platform.OS !== 'web';
+
+const ICONS = [Bell, MessageCircle, Gift, CreditCard, ShieldCheck, Settings, Key, Zap, Clock, Lock, Receipt];
+
+function DoodlePattern() {
+  const doodles = useMemo(() => {
+    // Generate a grid of random icons
+    const cols = 5;
+    const rows = Math.ceil(height / (width / cols)) + 2;
+    const cellW = width / cols;
+    const cellH = cellW;
+    
+    const items = [];
+    for (let r = -1; r < rows; r++) {
+      for (let c = -1; c < cols; c++) {
+        // Pseudo-random selection based on row and col
+        const randSeed = Math.abs(Math.sin(r * 12.9898 + c * 78.233)) * 43758.5453;
+        const IconComponent = ICONS[Math.floor((randSeed * 100) % ICONS.length)];
+        
+        const offsetX = (randSeed * 100) % 20 - 10;
+        const offsetY = (randSeed * 200) % 20 - 10;
+        const rotation = (randSeed * 300) % 60 - 30; // -30deg to 30deg
+        const size = 16 + (randSeed * 100) % 8; // 16 to 24
+
+        items.push({
+          key: `${r}-${c}`,
+          IconComponent,
+          left: c * cellW + cellW / 2 + offsetX,
+          top: r * cellH + cellH / 2 + offsetY,
+          rotation: `${rotation}deg`,
+          size
+        });
+      }
+    }
+    return items;
+  }, []);
+
+  return (
+    <View style={[StyleSheet.absoluteFill, styles.noPointer, { opacity: 0.04 }]}>
+      {doodles.map((d) => {
+        const Icon = d.IconComponent;
+        return (
+          <View
+            key={d.key}
+            style={{
+              position: 'absolute',
+              left: d.left - d.size / 2,
+              top: d.top - d.size / 2,
+              transform: [{ rotate: d.rotation }],
+            }}
+          >
+            <Icon size={d.size} color="#ffffff" strokeWidth={1.5} />
+          </View>
+        );
+      })}
+    </View>
+  );
+}
 
 function StarField() {
   const stars = useMemo(
@@ -41,36 +99,6 @@ function StarField() {
 }
 
 export function NebulaBackground() {
-  const pulse = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: 4200,
-          useNativeDriver,
-        }),
-        Animated.timing(pulse, {
-          toValue: 0,
-          duration: 4200,
-          useNativeDriver,
-        }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [pulse]);
-
-  const glowScale = pulse.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.08],
-  });
-  const glowOpacity = pulse.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.55, 0.85],
-  });
-
   return (
     <View style={[StyleSheet.absoluteFill, styles.noPointer]}>
       <LinearGradient
@@ -79,22 +107,7 @@ export function NebulaBackground() {
         style={StyleSheet.absoluteFill}
       />
 
-      <Animated.View
-        style={[
-          styles.orb,
-          styles.orbTopRight,
-          { opacity: glowOpacity, transform: [{ scale: glowScale }] },
-        ]}
-      />
-      <Animated.View
-        style={[
-          styles.orb,
-          styles.orbBottomLeft,
-          { opacity: glowOpacity, transform: [{ scale: glowScale }] },
-        ]}
-      />
-      <View style={[styles.orb, styles.orbCenter]} />
-
+      <DoodlePattern />
       <StarField />
 
       <LinearGradient
@@ -108,31 +121,6 @@ export function NebulaBackground() {
 const styles = StyleSheet.create({
   noPointer: {
     pointerEvents: 'none',
-  },
-  orb: {
-    position: 'absolute',
-    borderRadius: 9999,
-  },
-  orbTopRight: {
-    width: width * 0.85,
-    height: width * 0.85,
-    top: -width * 0.25,
-    right: -width * 0.3,
-    backgroundColor: 'rgba(109, 40, 217, 0.35)',
-  },
-  orbBottomLeft: {
-    width: width * 1.1,
-    height: width * 1.1,
-    bottom: -width * 0.35,
-    left: -width * 0.45,
-    backgroundColor: 'rgba(124, 58, 237, 0.4)',
-  },
-  orbCenter: {
-    width: width * 0.7,
-    height: width * 0.7,
-    top: height * 0.18,
-    left: width * 0.15,
-    backgroundColor: 'rgba(79, 70, 229, 0.12)',
   },
   bottomFade: {
     position: 'absolute',

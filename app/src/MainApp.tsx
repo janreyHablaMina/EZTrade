@@ -245,9 +245,11 @@ export function MainApp({
     );
   } else if (overlay === 'messages') {
     screen = <MessagesScreen user={user} onBack={closeOverlay} />;
+  } else if (overlay === 'team') {
+    screen = <TeamScreen user={user} onBack={closeOverlay} />;
   } else if (overlay) {
     const OverlayScreen = OVERLAY_SCREENS[overlay];
-    screen = <OverlayScreen onBack={closeOverlay} />;
+    screen = <OverlayScreen onBack={closeOverlay} /> as any;
   } else if (tab === 'assets') {
     screen = <AssetsScreen user={user} onBack={() => setTab('home')} />;
   } else if (tab === 'profile') {

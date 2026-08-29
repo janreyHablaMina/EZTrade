@@ -1,13 +1,12 @@
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState, useEffect } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { FilterChips } from '../components/FilterChips';
 import { Copy } from '../components/Icons';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { copyToClipboard } from '../lib/clipboard';
 import { colors } from '../theme/colors';
-
-const REFERRAL_CODE = 'EZTRADE12';
-const REFERRAL_LINK = 'https://eztrade.app/r/EZTRADE12';
+import { apiClient } from '../lib/api';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const RATES = {
   1: 0.1,
@@ -15,60 +14,19 @@ const RATES = {
   3: 0.03,
 } as const;
 
-const TEAM = [
-  {
-    name: 'Maria Santos',
-    joined: 'Today',
-    plan: 'VIP 1',
-    level: 1,
-    deposit: 10,
-    status: 'Active',
-  },
-  {
-    name: 'Alex Chen',
-    joined: 'Yesterday',
-    plan: 'VIP 2',
-    level: 1,
-    deposit: 50,
-    status: 'Active',
-  },
-  {
-    name: 'Priya Shah',
-    joined: '2 days ago',
-    plan: '—',
-    level: 1,
-    deposit: 0,
-    status: 'Pending',
-  },
-  {
-    name: 'Noah Kim',
-    joined: 'Last week',
-    plan: 'VIP 1',
-    level: 2,
-    deposit: 10,
-    status: 'Active',
-  },
-  {
-    name: 'Liam Ortiz',
-    joined: 'Last week',
-    plan: 'VIP 1',
-    level: 2,
-    deposit: 10,
-    status: 'Active',
-  },
-  {
-    name: 'Sofia Reyes',
-    joined: 'Last week',
-    plan: 'VIP 1',
-    level: 3,
-    deposit: 10,
-    status: 'Active',
-  },
-] as const;
-
 const FILTERS = ['All', 'Level 1', 'Level 2', 'Level 3'] as const;
 
+type TeamMember = {
+  name: string;
+  joined: string;
+  plan: string;
+  level: 1 | 2 | 3;
+  deposit: number;
+  status: 'Active' | 'Pending';
+};
+
 type TeamScreenProps = {
+  user?: any;
   onBack?: () => void;
 };
 
@@ -80,72 +38,90 @@ function formatUsdt(value: number) {
   return value.toFixed(2);
 }
 
-export function TeamScreen({ onBack }: TeamScreenProps) {
-  const [copied, setCopied] = useState<'code' | 'link' | null>(null);
+export function TeamScreen({ user, onBack }: TeamScreenProps) {
+  const [copied, setCopied] = useState<boolean>(false);
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('All');
+  
+  const [loading, setLoading] = useState(true);
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [totalEarned, setTotalEarned] = useState(0);
+  const [referralCode, setReferralCode] = useState('');
 
-  const totalBonus = useMemo(
-    () =>
-      TEAM.reduce(
-        (sum, member) => sum + commissionFor(member.level, member.deposit),
-        0,
-      ),
-    [],
-  );
+  useEffect(() => {
+    if (!user?.id) return;
+    apiClient.get(`/users/${user.id}/team`)
+      .then((data) => {
+        setTeam(data.team || []);
+        setTotalEarned(data.total_earned || 0);
+        setReferralCode(data.referral_code || '');
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [user]);
 
-  const visible = TEAM.filter((member) => {
+  const visible = team.filter((member) => {
     if (filter === 'All') return true;
     return `Level ${member.level}` === filter;
   });
 
-  const handleCopy = async (kind: 'code' | 'link', value: string) => {
-    await copyToClipboard(value);
-    setCopied(kind);
-    setTimeout(() => setCopied(null), 1800);
+  const handleCopy = async () => {
+    if (!referralCode) return;
+    await copyToClipboard(referralCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
   };
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Team" onBack={onBack} />
+      <ScreenHeader title="Team & Referrals" onBack={onBack} />
 
+      {loading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#a855f7" />
+        </View>
+      ) : (
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.intro}>
-          Each time someone in your team deposits, you earn a cut of that
-          deposit: 10% level 1, 5% level 2, 3% level 3.
+          Invite friends to trade and earn a percentage of their very first deposit. The more they trade, the more you earn!
         </Text>
 
-        <View style={styles.card}>
-          <Text style={styles.fieldLabel}>Your referral code</Text>
-          <View style={styles.field}>
-            <Text style={styles.fieldValue}>{REFERRAL_CODE}</Text>
-            <Pressable
-              onPress={() => handleCopy('code', REFERRAL_CODE)}
-              hitSlop={10}
-            >
-              <Copy color={colors.white} size={18} />
-            </Pressable>
-          </View>
+        <Pressable onPress={handleCopy} style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.98 : 1 }] }]}>
+          <LinearGradient
+            colors={['#8B5CF6', '#C026D3']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.premiumCard}
+          >
+            <View style={styles.premiumCardInner}>
+              <View>
+                <Text style={styles.premiumCardLabel}>YOUR REFERRAL CODE</Text>
+                <Text style={styles.premiumCardCode}>{referralCode || '...'}</Text>
+              </View>
+              <View style={styles.copyButton}>
+                {copied ? (
+                  <Text style={styles.copiedText}>COPIED!</Text>
+                ) : (
+                  <Copy color={colors.white} size={22} />
+                )}
+              </View>
+            </View>
+          </LinearGradient>
+        </Pressable>
 
-          <Text style={styles.fieldLabel}>Invite link</Text>
-          <View style={[styles.field, styles.fieldLast]}>
-            <Text style={styles.linkText} numberOfLines={1}>
-              {REFERRAL_LINK}
-            </Text>
-            <Pressable
-              onPress={() => handleCopy('link', REFERRAL_LINK)}
-              hitSlop={10}
-            >
-              <Copy color={colors.white} size={18} />
-            </Pressable>
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>Team Size</Text>
+            <Text style={styles.statValue}>{String(team.length + 1)}</Text>
           </View>
-          {copied ? (
-            <Text style={styles.copied}>
-              {copied === 'code' ? 'Code copied' : 'Link copied'}
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>Total Earned</Text>
+            <Text style={[styles.statValue, styles.statGreen]}>
+              +${formatUsdt(totalEarned)}
             </Text>
-          ) : null}
+          </View>
         </View>
 
         <View style={styles.ratesRow}>
@@ -159,59 +135,60 @@ export function TeamScreen({ onBack }: TeamScreenProps) {
             <View key={item.level} style={styles.rateCard}>
               <Text style={styles.rateLevel}>{item.level}</Text>
               <Text style={styles.rateValue}>{item.rate}</Text>
-              <Text style={styles.rateHint}>of deposit</Text>
             </View>
           ))}
         </View>
 
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{String(TEAM.length)}</Text>
-            <Text style={styles.statLabel}>Team</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={[styles.statValue, styles.statGreen]}>
-              +{formatUsdt(totalBonus)}
-            </Text>
-            <Text style={styles.statLabel}>Earned</Text>
-          </View>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Invited Members</Text>
         </View>
-
-        <Text style={styles.sectionTitle}>Invited members</Text>
+        
         <FilterChips items={FILTERS} value={filter} onChange={setFilter} wrap />
 
         <View style={styles.list}>
-          {visible.map((member) => {
-            const earned = commissionFor(member.level, member.deposit);
-            const pending = member.status === 'Pending';
-            return (
-              <View key={member.name} style={styles.memberRow}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {member.name
-                      .split(' ')
-                      .map((part) => part[0])
-                      .join('')
-                      .slice(0, 2)}
+          {visible.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No members found.</Text>
+            </View>
+          ) : (
+            visible.map((member, i) => {
+              const earned = commissionFor(member.level, member.deposit);
+              const pending = member.status === 'Pending';
+              return (
+                <View key={member.name + i} style={styles.memberRow}>
+                  <LinearGradient
+                    colors={['rgba(139, 92, 246, 0.2)', 'rgba(192, 38, 211, 0.2)']}
+                    style={styles.avatar}
+                  >
+                    <Text style={styles.avatarText}>
+                      {member.name
+                        .split(' ')
+                        .map((part) => part[0])
+                        .join('')
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </Text>
+                  </LinearGradient>
+                  
+                  <View style={styles.memberCopy}>
+                    <Text style={styles.memberName}>{member.name}</Text>
+                    <Text style={styles.memberMeta}>
+                      Lv {member.level} <Text style={{color: 'rgba(255,255,255,0.2)'}}>•</Text> {member.plan} <Text style={{color: 'rgba(255,255,255,0.2)'}}>•</Text>{' '}
+                      {pending ? 'No deposit yet' : `$${member.deposit} in`}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[styles.earned, pending && styles.earnedPending]}
+                  >
+                    {pending ? '—' : `+$${formatUsdt(earned)}`}
                   </Text>
                 </View>
-                <View style={styles.memberCopy}>
-                  <Text style={styles.memberName}>{member.name}</Text>
-                  <Text style={styles.memberMeta}>
-                    Lv {member.level} · {member.plan} ·{' '}
-                    {pending ? 'No deposit yet' : `${member.deposit} USDT in`}
-                  </Text>
-                </View>
-                <Text
-                  style={[styles.earned, pending && styles.earnedPending]}
-                >
-                  {pending ? '—' : `+${formatUsdt(earned)}`}
-                </Text>
-              </View>
-            );
-          })}
+              );
+            })
+          )}
         </View>
       </ScrollView>
+      )}
     </View>
   );
 }
@@ -220,160 +197,179 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
+  loaderContainer: {
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center'
+  },
   content: {
     paddingHorizontal: 20,
-    paddingBottom: 28,
-    gap: 14,
+    paddingBottom: 40,
+    gap: 18,
   },
   intro: {
     fontFamily: 'Outfit_400Regular',
     fontSize: 14,
-    lineHeight: 20,
-    color: 'rgba(255,255,255,0.55)',
+    lineHeight: 22,
+    color: 'rgba(255,255,255,0.6)',
+    textAlign: 'center',
+    paddingHorizontal: 10,
+    marginBottom: 4,
   },
-  card: {
-    backgroundColor: colors.cardFill,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
+  premiumCard: {
     borderRadius: 24,
-    padding: 18,
+    padding: 2, // Border thickness
+    shadowColor: '#C026D3',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 10,
   },
-  fieldLabel: {
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.45)',
-    marginBottom: 8,
-  },
-  field: {
-    minHeight: 52,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(167, 139, 250, 0.22)',
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    paddingHorizontal: 14,
+  premiumCardInner: {
+    backgroundColor: 'rgba(15, 15, 15, 0.6)', // Glass effect
+    borderRadius: 22,
+    paddingVertical: 24,
+    paddingHorizontal: 24,
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
-    gap: 10,
   },
-  fieldLast: {
-    marginBottom: 0,
+  premiumCardLabel: {
+    fontFamily: 'Outfit_600SemiBold',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.6)',
+    letterSpacing: 1.5,
+    marginBottom: 4,
   },
-  fieldValue: {
-    flex: 1,
+  premiumCardCode: {
     fontFamily: 'Outfit_800ExtraBold',
-    fontSize: 18,
-    letterSpacing: 1,
+    fontSize: 32,
+    letterSpacing: 2,
     color: colors.white,
   },
-  linkText: {
+  copyButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  copiedText: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 10,
+    color: colors.white,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  statCard: {
     flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    gap: 6,
+  },
+  statValue: {
+    fontFamily: 'Outfit_800ExtraBold',
+    fontSize: 22,
+    color: colors.white,
+  },
+  statGreen: {
+    color: '#34d399',
+  },
+  statLabel: {
     fontFamily: 'Outfit_500Medium',
     fontSize: 13,
-    color: colors.white,
-  },
-  copied: {
-    marginTop: 10,
-    fontFamily: 'Outfit_500Medium',
-    fontSize: 12,
-    color: colors.green,
+    color: 'rgba(255,255,255,0.5)',
   },
   ratesRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
   },
   rateCard: {
     flex: 1,
-    backgroundColor: colors.cardFill,
+    backgroundColor: 'rgba(255,255,255,0.02)',
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: 'rgba(255,255,255,0.05)',
     borderRadius: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: 'center',
     gap: 2,
   },
   rateLevel: {
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.45)',
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.5)',
   },
   rateValue: {
     fontFamily: 'Outfit_800ExtraBold',
-    fontSize: 18,
-    color: colors.purpleBright,
+    fontSize: 20,
+    color: '#c084fc',
   },
-  rateHint: {
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.4)',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: colors.cardFill,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 16,
-    paddingVertical: 12,
-    alignItems: 'center',
-    gap: 4,
-  },
-  statValue: {
-    fontFamily: 'Outfit_800ExtraBold',
-    fontSize: 16,
-    color: colors.white,
-  },
-  statGreen: {
-    color: '#86efac',
-  },
-  statLabel: {
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.45)',
+  sectionHeader: {
+    marginTop: 10,
+    paddingBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
   },
   sectionTitle: {
     fontFamily: 'Outfit_700Bold',
-    fontSize: 16,
+    fontSize: 18,
     color: colors.white,
-    marginTop: 2,
   },
   list: {
-    gap: 8,
+    gap: 12,
+  },
+  emptyState: {
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    fontFamily: 'Outfit_400Regular',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.4)',
   },
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.cardFill,
+    gap: 16,
+    backgroundColor: 'rgba(255,255,255,0.02)',
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(124, 58, 237, 0.28)',
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(192, 38, 211, 0.3)',
   },
   avatarText: {
     fontFamily: 'Outfit_700Bold',
-    fontSize: 12,
+    fontSize: 14,
     color: colors.white,
+    letterSpacing: 1,
   },
   memberCopy: {
     flex: 1,
-    gap: 2,
+    gap: 4,
   },
   memberName: {
     fontFamily: 'Outfit_700Bold',
-    fontSize: 14,
+    fontSize: 16,
     color: colors.white,
   },
   memberMeta: {
@@ -382,11 +378,13 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.5)',
   },
   earned: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 13,
-    color: '#86efac',
+    fontFamily: 'Outfit_800ExtraBold',
+    fontSize: 16,
+    color: '#34d399',
   },
   earnedPending: {
-    color: 'rgba(255,255,255,0.35)',
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.3)',
   },
 });

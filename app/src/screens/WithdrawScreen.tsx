@@ -454,7 +454,6 @@ export function WithdrawScreen({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.bgDeep, // Using the deep dark background for exchange style
   },
   receiptBtn: {
     width: 44,
@@ -749,7 +748,6 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: Platform.OS === 'ios' ? 32 : 24,
     gap: 12,
-    backgroundColor: colors.bgDeep, // prevent scrolling beneath it looking weird
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.05)',
   },

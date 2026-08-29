@@ -132,7 +132,7 @@ export function TradeScreen({ onBack, user }: TradeScreenProps) {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View style={{ flex: 1 }}>
         <ScreenHeader title="Trade" onBack={onBack} padded={false} />
         <AnimatedLoading text="Loading Trading Data..." />
       </View>

@@ -267,7 +267,6 @@ export function DepositScreen({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.bgDeep,
   },
   content: {
     paddingHorizontal: 20,

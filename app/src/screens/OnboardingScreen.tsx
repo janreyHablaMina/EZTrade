@@ -131,7 +131,6 @@ export function OnboardingScreen({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.bg,
   },
   content: {
     flex: 1,

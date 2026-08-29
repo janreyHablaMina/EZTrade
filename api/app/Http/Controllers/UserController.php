@@ -191,4 +191,68 @@ class UserController extends Controller
             'user' => $user->load('vipPlan')
         ]);
     }
+    public function team($id)
+    {
+        $user = User::with('referrals.referrals.referrals')->findOrFail($id);
+        
+        $descendantIds = [];
+        $levelMap = [];
+        
+        foreach ($user->referrals as $l1) {
+            $descendantIds[] = $l1->id;
+            $levelMap[$l1->id] = 1;
+            foreach ($l1->referrals as $l2) {
+                $descendantIds[] = $l2->id;
+                $levelMap[$l2->id] = 2;
+                foreach ($l2->referrals as $l3) {
+                    $descendantIds[] = $l3->id;
+                    $levelMap[$l3->id] = 3;
+                }
+            }
+        }
+
+        $allUsers = User::with('vipPlan')->whereIn('id', $descendantIds)->get()->keyBy('id');
+        
+        $firstDeposits = [];
+        if (!empty($descendantIds)) {
+            $firstDeposits = \App\Models\Deposit::where('status', 'Approved')
+                ->whereIn('id', function($q) use ($descendantIds) {
+                    $q->select(\Illuminate\Support\Facades\DB::raw('MIN(id)'))
+                      ->from('deposits')
+                      ->where('status', 'Approved')
+                      ->whereIn('user_id', $descendantIds)
+                      ->groupBy('user_id');
+                })->get()->keyBy('user_id');
+        }
+
+        $team = [];
+        $totalBonus = 0;
+        $rates = \App\Helpers\SettingsHelper::getReferralRates();
+
+        foreach ($descendantIds as $memberId) {
+            $member = $allUsers->get($memberId);
+            if (!$member) continue;
+            
+            $level = $levelMap[$memberId];
+            $firstDep = isset($firstDeposits[$memberId]) ? $firstDeposits[$memberId] : null;
+            $depositAmount = $firstDep ? (float) $firstDep->amount : 0;
+            
+            $totalBonus += $depositAmount * ($rates[$level] ?? 0);
+            
+            $team[] = [
+                'name' => $member->name,
+                'joined' => $member->created_at->diffForHumans(),
+                'plan' => $member->vipPlan ? $member->vipPlan->level : '—',
+                'level' => $level,
+                'deposit' => $depositAmount,
+                'status' => $depositAmount > 0 ? 'Active' : 'Pending',
+            ];
+        }
+
+        return response()->json([
+            'referral_code' => $user->referral_code,
+            'total_earned' => $totalBonus,
+            'team' => $team
+        ]);
+    }
 }
