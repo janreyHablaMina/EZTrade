@@ -64,18 +64,8 @@ class MidnightController extends Controller
                     }
                 }
 
-                // Add to user balance
-                $user->balance += $dailyUserCut;
-                $user->save();
-                
-                // Log User Earnings
-                EarningsLog::create([
-                    'user_id' => $user->id,
-                    'source_user_id' => $user->id,
-                    'type' => 'Daily User Cut',
-                    'amount' => $dailyUserCut,
-                    'deposit_amount' => $dailyCapital,
-                ]);
+                // Users must manually trade to get their cut, so we DO NOT automatically add to their balance here.
+                // Admin and Ambassador still get their daily automated cuts based on the user's capital.
 
                 $netAdminCut = $dailyAdminCut;
 

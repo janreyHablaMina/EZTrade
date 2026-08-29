@@ -16,8 +16,11 @@ class VipPlanController extends Controller
     public function stats()
     {
         $totalInvestors = \App\Models\User::whereNotNull('vip_plan_id')->count();
-        $totalDeposited = \App\Models\Deposit::where('status', 'approved')->sum('amount');
-        $totalEarningsPaid = \App\Models\EarningsLog::whereIn('type', ['Daily User Cut', 'Daily Ambassador Cut'])->sum('amount') 
+        $totalDeposited = \App\Models\User::whereNotNull('vip_plan_id')
+            ->join('vip_plans', 'users.vip_plan_id', '=', 'vip_plans.id')
+            ->sum('vip_plans.min_deposit');
+            
+        $totalEarningsPaid = \App\Models\EarningsLog::whereIn('type', ['Daily Ambassador Cut'])->sum('amount') 
                            + \App\Models\TradingCodeRedemption::sum('reward_amount');
         
         return response()->json([
