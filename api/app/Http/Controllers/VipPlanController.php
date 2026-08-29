@@ -25,11 +25,14 @@ class VipPlanController extends Controller
                            
         $adminNetProfit = \App\Models\EarningsLog::where('type', 'Daily Admin Cut')->sum('amount');
         
+        $mostPopularPlan = \App\Models\VipPlan::withCount('users')->orderByDesc('users_count')->first();
+        
         return response()->json([
             'total_investors' => $totalInvestors,
             'total_deposited' => (float)$totalDeposited,
             'total_earnings_paid' => (float)$totalEarningsPaid,
             'admin_net_profit' => (float)$adminNetProfit,
+            'most_popular_plan' => $mostPopularPlan ? $mostPopularPlan->level : 'None',
         ]);
     }
 

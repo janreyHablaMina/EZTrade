@@ -44,12 +44,13 @@ export default function VipPlansPage() {
   }, [plansData]);
 
   const stats = useMemo(() => {
-    if (!statsData) return { investors: 0, deposited: 0, earnings: 0, adminProfit: 0 };
+    if (!statsData) return { investors: 0, deposited: 0, earnings: 0, adminProfit: 0, mostPopularPlan: 'N/A' };
     return {
       investors: statsData.total_investors || 0,
       deposited: statsData.total_deposited || 0,
       earnings: statsData.total_earnings_paid || 0,
-      adminProfit: statsData.admin_net_profit || 0
+      adminProfit: statsData.admin_net_profit || 0,
+      mostPopularPlan: statsData.most_popular_plan || 'N/A'
     };
   }, [statsData]);
 
@@ -258,12 +259,12 @@ export default function VipPlansPage() {
       </div>
 
       {/* KPI Cards Row */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <KpiCard
           label="Admin Net Profit"
           value={`$${stats.adminProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           subtext="Total revenue kept by platform"
-          icon={Crown}
+          icon={Wallet}
           iconClassName="text-purple-bright"
         />
         <KpiCard
@@ -277,6 +278,13 @@ export default function VipPlansPage() {
           value={`$${stats.deposited.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           subtext="Capital locked in plans"
           icon={Wallet}
+        />
+        <KpiCard
+          label="Most Popular Plan"
+          value={stats.mostPopularPlan}
+          subtext="Highest enrollment"
+          icon={Crown}
+          iconClassName="text-yellow-500"
         />
         <KpiCard
           label="Total Earnings Paid"
