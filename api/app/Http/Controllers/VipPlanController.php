@@ -17,11 +17,12 @@ class VipPlanController extends Controller
     {
         $totalInvestors = \App\Models\User::whereNotNull('vip_plan_id')->count();
         $totalDeposited = \App\Models\Deposit::where('status', 'approved')->sum('amount');
+        $totalEarningsPaid = \App\Models\EarningsLog::sum('amount') + \App\Models\TradingCodeRedemption::sum('reward_amount');
         
         return response()->json([
             'total_investors' => $totalInvestors,
             'total_deposited' => (float)$totalDeposited,
-            'total_earnings_paid' => 0, // Placeholder as no earnings table exists yet
+            'total_earnings_paid' => (float)$totalEarningsPaid,
         ]);
     }
 
