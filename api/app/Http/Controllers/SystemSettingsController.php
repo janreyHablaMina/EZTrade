@@ -12,8 +12,10 @@ class SystemSettingsController extends Controller
         'security_kyc',
         'app_announcements',
         'app_announcements',
+        'app_announcements',
         'referral_program',
-        'deposit_addresses'
+        'deposit_addresses',
+        'bonus_automation'
     ];
 
     private function getDefaultSettings($key)
@@ -42,6 +44,13 @@ class SystemSettingsController extends Controller
                     'level_2_percent' => 3,
                     'level_3_percent' => 1,
                     'flat_bonus_amount' => 0
+                ];
+            case 'bonus_automation':
+                return [
+                    'profit_percentage' => 50,
+                    'duration_minutes' => 60,
+                    'message_title' => 'Bonus Trading Signal Active!',
+                    'message_content' => "🚨 SURPRISE BONUS! 🚨\n\n📅 Generated on: {dateStr}\n\nPaste this code in the Trade tab NOW to earn {profit}% of your VIP plan limit!\n\n🎟️ Code: {code}\n⏳ Expires in: {duration} minutes"
                 ];
             case 'deposit_addresses':
                 return [

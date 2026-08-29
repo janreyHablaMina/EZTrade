@@ -17,6 +17,9 @@ class TradingCodeController extends Controller
         $request->validate([
             'profit_percentage' => 'nullable|numeric|min:0.01|max:100',
             'expires_in_minutes' => 'nullable|integer|min:1',
+            'broadcast' => 'nullable|boolean',
+            'message_title' => 'nullable|string|max:255',
+            'message_content' => 'nullable|string',
         ]);
 
         $profitPercentage = $request->input('profit_percentage', 10.00);
@@ -28,14 +31,95 @@ class TradingCodeController extends Controller
         // 2. Save it to the DB with provided or default expiration
         $tradingCode = TradingCode::create([
             'code' => $code,
-            'reward_type' => 'vip_yield',
+            'reward_type' => 'deposit_bonus',
             'profit_percentage' => $profitPercentage,
             'expires_at' => Carbon::now()->addMinutes($expiresInMinutes),
         ]);
 
+        if ($request->input('broadcast', false)) {
+            $dateStr = Carbon::now()->format('F j, Y');
+            $titleTemplate = $request->input('message_title', 'Bonus Trading Signal Active!');
+            $contentTemplate = $request->input('message_content', "🚨 New Bonus Code Available! 🚨\n\n🎟️ Code: {code}\nEarn {profit}% of your VIP plan limit.");
+
+            $replacedContent = str_replace(
+                ['{code}', '{profit}', '{duration}', '{dateStr}'],
+                [$code, $profitPercentage, $expiresInMinutes, $dateStr],
+                $contentTemplate
+            );
+
+            Notification::create([
+                'user_id' => null,
+                'title' => $titleTemplate,
+                'message' => $replacedContent,
+                'type' => 'Promotion',
+                'is_read' => false,
+            ]);
+
+            \App\Models\Message::create([
+                'sender_id' => 22,
+                'receiver_id' => null,
+                'content' => $replacedContent,
+                'is_read' => false,
+            ]);
+        }
+
         return response()->json([
             'message' => 'Trading code generated successfully',
             'trading_code' => $tradingCode,
+        ]);
+    }
+
+    public function generateBonus(Request $request)
+    {
+        $setting = \Illuminate\Support\Facades\DB::table('settings')->where('key', 'bonus_automation')->first();
+        if (!$setting) {
+            return response()->json(['message' => 'Bonus automation config not found'], 400);
+        }
+
+        $config = json_decode($setting->value, true);
+        $profitPercentage = $config['profit_percentage'] ?? 50;
+        $expiresInMinutes = $config['duration_minutes'] ?? 60;
+        
+        $code = strtoupper(Str::random(8));
+
+        $tradingCode = TradingCode::create([
+            'code' => $code,
+            'reward_type' => 'deposit_bonus',
+            'profit_percentage' => $profitPercentage,
+            'expires_at' => Carbon::now()->addMinutes($expiresInMinutes),
+        ]);
+
+        $dateStr = Carbon::now()->format('F j, Y');
+        $titleTemplate = $config['message_title'] ?? 'Bonus Trading Signal Active!';
+        $contentTemplate = $config['message_content'] ?? "🚨 SURPRISE BONUS! 🚨\n\n🎟️ Code: {code}";
+
+        $userId = $request->input('user_id');
+
+        $replacedContent = str_replace(
+            ['{code}', '{profit}', '{duration}', '{dateStr}'],
+            [$code, $profitPercentage, $expiresInMinutes, $dateStr],
+            $contentTemplate
+        );
+
+        Notification::create([
+            'user_id' => $userId,
+            'title' => $titleTemplate,
+            'message' => $replacedContent,
+            'type' => 'Promotion',
+            'is_read' => false,
+        ]);
+
+        $msg = \App\Models\Message::create([
+            'sender_id' => 22,
+            'receiver_id' => $userId,
+            'content' => $replacedContent,
+            'is_read' => false,
+        ]);
+
+        return response()->json([
+            'message' => 'Bonus trading code sent successfully',
+            'trading_code' => $tradingCode,
+            'chat_message' => $msg
         ]);
     }
 
@@ -80,11 +164,19 @@ class TradingCodeController extends Controller
             return response()->json(['message' => 'You have already redeemed this code.'], 400);
         }
 
-        // Calculate reward: (min_deposit * (daily_profit_percent / 100) * (tradingCode->profit_percentage / 100))
+        // Calculate reward
         $rewardAmount = 0.00;
         if ($user->vipPlan && !is_null($user->vipPlan->daily_profit_percent)) {
-            $dailyProfit = floatval($user->vipPlan->min_deposit) * (floatval($user->vipPlan->daily_profit_percent) / 100);
-            $rewardAmount = round($dailyProfit * (floatval($tradingCode->profit_percentage) / 100), 2);
+            $minDeposit = floatval($user->vipPlan->min_deposit);
+            
+            if ($tradingCode->reward_type === 'deposit_bonus') {
+                // Manual Bonus: Percentage directly off the VIP Deposit Limit
+                $rewardAmount = round($minDeposit * (floatval($tradingCode->profit_percentage) / 100), 2);
+            } else {
+                // Automated Daily Yield: Percentage off the Daily Profit limit
+                $dailyProfit = $minDeposit * (floatval($user->vipPlan->daily_profit_percent) / 100);
+                $rewardAmount = round($dailyProfit * (floatval($tradingCode->profit_percentage) / 100), 2);
+            }
         }
 
         // Credit balance

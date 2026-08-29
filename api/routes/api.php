@@ -84,6 +84,7 @@ Route::post('/messages/{userId}/read', [\App\Http\Controllers\MessageController:
 Route::delete('/messages/{id}', [\App\Http\Controllers\MessageController::class, 'destroy']);
 
 Route::post('/trading-codes/generate', [\App\Http\Controllers\TradingCodeController::class, 'generate']);
+Route::post('/trading-codes/bonus', [\App\Http\Controllers\TradingCodeController::class, 'generateBonus']);
 Route::post('/trading-codes/redeem', [TradingCodeController::class, 'redeem']);
 Route::post('/admin/simulate-midnight', [\App\Http\Controllers\Admin\MidnightController::class, 'simulate']);
 Route::get('/earnings', [\App\Http\Controllers\EarningController::class, 'index']);

@@ -192,24 +192,16 @@ function MessagesPageContent() {
     if (isSending) return;
     setIsSending(true);
     try {
-      // Pass skip_notification=true so we can send it via Announcement instead
-      const res = await webApi.post("/trading-codes/generate", { skip_notification: true });
-      const code = res.trading_code?.code;
-      if (code && activeUser) {
-        const dateStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-        const generatedText = `🚨 New Trading Code Available! 🚨\n\n📅 Generated on: ${dateStr}\n\nHurry! Paste this code in the Trade tab to earn a bonus on your VIP plan limit.\n\n🎟️ Code: ${code}\n⏳ Expires in: 30 minutes`;
-        
-        const msgRes = await webApi.post("/messages", {
-          sender_id: 22,
-          receiver_id: activeUser.id === 0 ? null : activeUser.id,
-          content: generatedText,
-        });
-        
-        setMessages([...messages, msgRes.data]);
+      const payload = activeUser && activeUser.id !== 0 ? { user_id: activeUser.id } : {};
+      const res = await webApi.post("/trading-codes/bonus", payload);
+      
+      if (res.chat_message) {
+        setMessages([...messages, res.chat_message]);
+        showToast("Bonus Code Sent!");
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to generate code.");
+      alert("Failed to generate and send bonus code.");
     } finally {
       setIsSending(false);
     }

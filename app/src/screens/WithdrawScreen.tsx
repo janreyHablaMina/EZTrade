@@ -20,6 +20,8 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { WithdrawSetupPassword } from '../components/withdraw/WithdrawSetupPassword';
 import { WithdrawReceipt } from '../components/withdraw/WithdrawReceipt';
+import { NetworkTabs } from '../components/NetworkTabs';
+import { MassiveAmountInput } from '../components/MassiveAmountInput';
 import {
   MIN_USDT,
   WITHDRAW_FEE_RATE,
@@ -62,6 +64,7 @@ export function WithdrawScreen({
   const [settings, setSettings] = useState<{ is_enabled: boolean; start_time: string; end_time: string } | null>(null);
   const [open, setOpen] = useState(true);
   const [withdrawalPassword, setWithdrawalPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   
   const [showPwdWithdraw, setShowPwdWithdraw] = useState(false);

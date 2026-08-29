@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Settings, Shield, Bell, Users, CreditCard, Activity, Lock, CheckCircle2, X, Download, Wallet } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { TradeAutomationCard } from "@/components/admin/settings/TradeAutomationCard";
+import { ManualBonusCard } from "@/components/admin/settings/ManualBonusCard";
 import { WithdrawalSettingsCard } from "@/components/admin/settings/WithdrawalSettingsCard";
 import { DepositAddressesCard } from "@/components/admin/settings/DepositAddressesCard";
 
@@ -21,6 +22,7 @@ const TABS = [
   { id: "Deposit Settings", icon: Wallet },
   { id: "Withdrawal Settings", icon: CreditCard },
   { id: "Trade Automation", icon: Activity },
+  { id: "Manual Bonus Code", icon: Settings },
 ];
 
 export default function SettingsPage() {
@@ -99,6 +101,7 @@ export default function SettingsPage() {
             { activeTab === "Deposit Settings" && <DepositAddressesCard onShowToast={setToastMessage} /> }
             { activeTab === "Withdrawal Settings" && <WithdrawalSettingsCard onShowToast={setToastMessage} /> }
             {activeTab === "Trade Automation" && <TradeAutomationCard onShowToast={setToastMessage} />}
+            {activeTab === "Manual Bonus Code" && <ManualBonusCard onShowToast={setToastMessage} />}
           </div>
         </div>
 
