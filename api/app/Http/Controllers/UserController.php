@@ -119,7 +119,7 @@ class UserController extends Controller
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|unique:users,email,' . $id,
             'phone' => 'nullable|string|max:20',
-            'role' => 'sometimes|in:User,Ambassador',
+            'role' => 'sometimes|in:User,Ambassador,Admin',
             'status' => 'sometimes|in:Active,Inactive,Suspended',
             'kyc_status' => 'sometimes|in:Verified,Not Verified',
             'vipLevel' => 'nullable|string',
